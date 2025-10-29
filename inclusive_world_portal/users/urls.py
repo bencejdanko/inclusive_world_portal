@@ -3,6 +3,7 @@ from django.urls import path
 from .views import user_detail_view
 from .views import user_redirect_view
 from .views import user_update_view
+from .views import opd_editor_redirect_view
 from .survey_views import (
     SurveyStartView,
     SurveySection1View,
@@ -40,6 +41,9 @@ urlpatterns = [
     path("dashboard/pcm/", pcm_dashboard_view, name="pcm_dashboard"),
     path("dashboard/manager/", manager_dashboard_view, name="manager_dashboard"),
     path("dashboard/admin/", admin_dashboard_view, name="admin_dashboard"),
+    
+    # One Page Description Editor
+    path("opd/", view=opd_editor_redirect_view, name="opd_editor"),
     
     # Discovery Survey URLs
     path("survey/start/", SurveyStartView.as_view(), name="survey_start"),

@@ -28,7 +28,7 @@ def get_navigation_items(user):
             },
             {
                 'label': _('One Page Description'),
-                'url': '#',  # TODO: Add URL when view is created
+                'url': reverse('users:opd_editor'),
                 'icon_class': 'bi bi-file-earmark-text',
             },
             {

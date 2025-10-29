@@ -1,0 +1,53 @@
+{% extends "base_portal.html" %}
+{% load static i18n %}
+
+{% block page_title %}Admin Dashboard{% endblock %}
+
+{% block content %}
+<div class="row">
+  <div class="col-12 mb-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h2 class="h4 mb-3">Admin Dashboard</h2>
+        <p class="text-muted mb-0">System-wide statistics and administration tools.</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3 mb-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <h3 class="display-4">{{ total_users }}</h3>
+        <p class="text-muted mb-0">Total Users</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3 mb-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <h3 class="display-4">{{ total_members }}</h3>
+        <p class="text-muted mb-0">Members</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3 mb-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <h3 class="display-4">{{ total_volunteers }}</h3>
+        <p class="text-muted mb-0">Volunteers</p>
+      </div>
+    </div>
+  </div>
+  
+  <div class="col-md-3 mb-4">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body text-center">
+        <h3 class="display-4">{{ total_staff }}</h3>
+        <p class="text-muted mb-0">Staff</p>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

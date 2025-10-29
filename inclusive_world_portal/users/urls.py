@@ -19,12 +19,27 @@ from .survey_views import (
     SurveySection12View,
     SurveyCompleteView,
 )
+from .dashboard_views import (
+    dashboard_view,
+    member_dashboard_view,
+    volunteer_dashboard_view,
+    pcm_dashboard_view,
+    manager_dashboard_view,
+    admin_dashboard_view,
+)
 
 app_name = "users"
 urlpatterns = [
     path("~redirect/", view=user_redirect_view, name="redirect"),
     path("~update/", view=user_update_view, name="update"),
-    path("<str:username>/", view=user_detail_view, name="detail"),
+    
+    # Dashboard URLs (must come before <str:username>/ pattern)
+    path("dashboard/", dashboard_view, name="dashboard"),
+    path("dashboard/member/", member_dashboard_view, name="member_dashboard"),
+    path("dashboard/volunteer/", volunteer_dashboard_view, name="volunteer_dashboard"),
+    path("dashboard/pcm/", pcm_dashboard_view, name="pcm_dashboard"),
+    path("dashboard/manager/", manager_dashboard_view, name="manager_dashboard"),
+    path("dashboard/admin/", admin_dashboard_view, name="admin_dashboard"),
     
     # Discovery Survey URLs
     path("survey/start/", SurveyStartView.as_view(), name="survey_start"),
@@ -41,4 +56,7 @@ urlpatterns = [
     path("survey/11/", SurveySection11View.as_view(), name="survey_section_11"),
     path("survey/12/", SurveySection12View.as_view(), name="survey_section_12"),
     path("survey/complete/", SurveyCompleteView.as_view(), name="survey_complete"),
+    
+    # User detail (must be last as it's a catch-all pattern)
+    path("<str:username>/", view=user_detail_view, name="detail"),
 ]

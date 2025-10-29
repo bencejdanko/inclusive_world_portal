@@ -7,6 +7,7 @@ from django.views.generic import DetailView
 from django.views.generic import RedirectView
 from django.views.generic import UpdateView
 
+from inclusive_world_portal.users.forms import UserProfileForm
 from inclusive_world_portal.users.models import User
 
 
@@ -21,8 +22,8 @@ user_detail_view = UserDetailView.as_view()
 
 class UserUpdateView(LoginRequiredMixin, SuccessMessageMixin, UpdateView):
     model = User
-    fields = ["name"]
-    success_message = _("Information successfully updated")
+    form_class = UserProfileForm
+    success_message = _("Profile successfully updated")
 
     def get_success_url(self) -> str:
         assert self.request.user.is_authenticated  # type guard

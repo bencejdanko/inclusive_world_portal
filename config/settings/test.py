@@ -2,9 +2,17 @@
 With these settings, tests run faster.
 """
 
-from .base import *  # noqa: F403
+from pathlib import Path
+
+import environ
+
+# Read .env file BEFORE importing base settings so DATABASE_URL is available
+BASE_DIR = Path(__file__).resolve(strict=True).parent.parent.parent
+env = environ.Env()
+env.read_env(str(BASE_DIR / ".env"))
+
+from .base import *  # noqa: F403, E402
 from .base import TEMPLATES
-from .base import env
 
 # GENERAL
 # ------------------------------------------------------------------------------

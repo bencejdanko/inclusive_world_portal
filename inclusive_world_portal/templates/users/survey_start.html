@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Discovery Survey{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow">
+        <div class="card-body p-5">
+          <h1 class="display-4 mb-4">Discovery Survey</h1>
+          
+          <p class="lead">Welcome to your Discovery Survey! This survey helps us get to know you better and create your personalized One Page Profile.</p>
+          
+          {% if survey.is_complete %}
+            <div class="alert alert-success">
+              <h4 class="alert-heading">✓ Survey Complete!</h4>
+              <p>You completed this survey on {{ survey.completed_at|date:"F d, Y" }}.</p>
+              <hr>
+              <p class="mb-0">You can review or update your responses at any time.</p>
+            </div>
+          {% else %}
+            <div class="alert alert-info">
+              <h5>Before You Start:</h5>
+              <ul class="mb-0">
+                <li>The survey is divided into 12 sections</li>
+                <li>You can save and return at any time</li>
+                <li>All fields are optional - answer what you're comfortable with</li>
+                <li>This helps us create your One Page Profile</li>
+              </ul>
+            </div>
+          {% endif %}
+          
+          <div class="card bg-light mb-4">
+            <div class="card-body">
+              <h5 class="card-title">Prerequisites Check:</h5>
+              <ul class="list-unstyled mb-0">
+                <li>
+                  {% if profile_complete %}
+                    <span class="text-success">✓</span> Profile Information Complete
+                  {% else %}
+                    <span class="text-warning">○</span> Profile Information 
+                    <a href="{% url 'users:update' %}" class="btn btn-sm btn-outline-primary ms-2">Complete Profile</a>
+                  {% endif %}
+                </li>
+                <li>
+                  {% if survey.is_complete %}
+                    <span class="text-success">✓</span> Discovery Survey Complete
+                  {% else %}
+                    <span class="text-warning">○</span> Discovery Survey
+                  {% endif %}
+                </li>
+              </ul>
+              
+              {% if user.can_purchase_programs %}
+                <div class="alert alert-success mt-3 mb-0">
+                  <strong>✓ Ready to Enroll!</strong> You can now purchase and enroll in programs.
+                </div>
+              {% else %}
+                <div class="alert alert-warning mt-3 mb-0">
+                  <strong>Note:</strong> Complete both your profile and this survey to enroll in programs.
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          
+          <div class="d-grid gap-2">
+            {% if survey.is_complete %}
+              <a href="{% url 'users:survey_section_1' %}" class="btn btn-primary btn-lg">
+                Review/Update Survey
+              </a>
+            {% else %}
+              <a href="{% url 'users:survey_section_1' %}" class="btn btn-primary btn-lg">
+                Start Survey
+              </a>
+            {% endif %}
+            <a href="{% url 'users:detail' user.username %}" class="btn btn-outline-secondary">
+              Back to Profile
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

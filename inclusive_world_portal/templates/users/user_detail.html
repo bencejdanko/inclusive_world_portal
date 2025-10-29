@@ -3,42 +3,138 @@
 {% load static %}
 
 {% block title %}
-  User: 
-  
-    {{ object.username }}
-  
-  
+  User: {{ object.username }}
 {% endblock title %}
+
 {% block content %}
-  <div class="container">
+  <div class="container mt-4">
     <div class="row">
-      <div class="col-sm-12">
-        <h2>
+      <div class="col-lg-4 mb-4">
+        <!-- Profile Picture -->
+        <div class="card">
+          <div class="card-body text-center">
+            {% if object.profile_picture %}
+              <img src="{{ object.profile_picture.url }}" alt="Profile Picture" class="rounded-circle img-fluid mb-3" style="max-width: 200px;">
+            {% else %}
+              <div class="bg-secondary rounded-circle d-inline-flex align-items-center justify-content-center mb-3" style="width: 200px; height: 200px;">
+                <span class="text-white" style="font-size: 4rem;">{{ object.username|first|upper }}</span>
+              </div>
+            {% endif %}
+            <h2 class="mb-1">{{ object.username }}</h2>
+            {% if object.name %}
+              <p class="text-muted mb-3">{{ object.name }}</p>
+            {% endif %}
+            
+            {% if object == request.user %}
+              <a class="btn btn-primary w-100 mb-2" href="{% url 'users:update' %}">Edit Profile</a>
+              <a class="btn btn-success w-100 mb-2" href="{% url 'users:survey_start' %}">
+                {% if object.survey_is_complete %}
+                  ✓ Discovery Survey
+                {% else %}
+                  Complete Discovery Survey
+                {% endif %}
+              </a>
+              <div class="d-grid gap-2">
+                <a class="btn btn-outline-secondary btn-sm" href="{% url 'account_email' %}">Manage Email</a>
+                <a class="btn btn-outline-secondary btn-sm" href="{% url 'mfa_index' %}">MFA Settings</a>
+              </div>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+      
+      <div class="col-lg-8">
+        <!-- Profile Information -->
+        <div class="card mb-4">
+          <div class="card-header">
+            <h5 class="mb-0">Profile Information</h5>
+          </div>
+          <div class="card-body">
+            <div class="row mb-2">
+              <div class="col-sm-4 fw-bold">Email:</div>
+              <div class="col-sm-8">{{ object.email|default:"Not provided" }}</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-sm-4 fw-bold">Phone:</div>
+              <div class="col-sm-8">{{ object.phone_no|default:"Not provided" }}</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-sm-4 fw-bold">Age:</div>
+              <div class="col-sm-8">{{ object.age|default:"Not provided" }}</div>
+            </div>
+            <div class="row mb-2">
+              <div class="col-sm-4 fw-bold">Grade:</div>
+              <div class="col-sm-8">{{ object.grade|default:"Not provided" }}</div>
+            </div>
+            {% if object.bio %}
+              <div class="row">
+                <div class="col-sm-4 fw-bold">Bio:</div>
+                <div class="col-sm-8">{{ object.bio }}</div>
+              </div>
+            {% endif %}
+          </div>
+        </div>
         
-        
-          {{ object.username }}
-        
-      </h2>
-      {% if object.name %}
-        <p>{{ object.name }}</p>
-      {% endif %}
-    </div>
-  </div>
-  {% if object == request.user %}
-    <!-- Action buttons -->
-    <div class="row">
-      <div class="col-sm-12">
-        <a class="btn btn-primary" href="{% url 'users:update' %}" role="button">My Info</a>
-        <a class="btn btn-primary"
-           href="{% url 'account_email' %}"
-           role="button">E-Mail</a>
-        <a class="btn btn-primary"
-           href="{% url 'mfa_index' %}"
-           role="button">MFA</a>
-        <!-- Your Stuff: Custom user template urls -->
+        {% if object == request.user %}
+          <!-- Parent/Guardian Information -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Parent/Guardian Information</h5>
+            </div>
+            <div class="card-body">
+              <div class="row mb-2">
+                <div class="col-sm-4 fw-bold">Name:</div>
+                <div class="col-sm-8">{{ object.parent_guardian_name|default:"Not provided" }}</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-sm-4 fw-bold">Phone:</div>
+                <div class="col-sm-8">{{ object.parent_guardian_phone|default:"Not provided" }}</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-sm-4 fw-bold">Email:</div>
+                <div class="col-sm-8">{{ object.parent_guardian_email|default:"Not provided" }}</div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- Emergency Contact Information -->
+          <div class="card mb-4">
+            <div class="card-header">
+              <h5 class="mb-0">Emergency Contact Information</h5>
+            </div>
+            <div class="card-body">
+              <div class="row mb-2">
+                <div class="col-sm-4 fw-bold">Name:</div>
+                <div class="col-sm-8">
+                  {% if object.emergency_contact_first_name or object.emergency_contact_last_name %}
+                    {{ object.emergency_contact_first_name }} {{ object.emergency_contact_last_name }}
+                  {% else %}
+                    Not provided
+                  {% endif %}
+                </div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-sm-4 fw-bold">Relationship:</div>
+                <div class="col-sm-8">{{ object.emergency_contact_relationship|default:"Not provided" }}</div>
+              </div>
+              <div class="row mb-2">
+                <div class="col-sm-4 fw-bold">Phone:</div>
+                <div class="col-sm-8">{{ object.emergency_contact_phone|default:"Not provided" }}</div>
+              </div>
+              {% if object.emergency_contact_secondary_phone %}
+                <div class="row mb-2">
+                  <div class="col-sm-4 fw-bold">Secondary Phone:</div>
+                  <div class="col-sm-8">{{ object.emergency_contact_secondary_phone }}</div>
+                </div>
+              {% endif %}
+              <div class="row mb-2">
+                <div class="col-sm-4 fw-bold">Email:</div>
+                <div class="col-sm-8">{{ object.emergency_contact_email|default:"Not provided" }}</div>
+              </div>
+            </div>
+          </div>
+        {% endif %}
       </div>
     </div>
-    <!-- End Action buttons -->
-  {% endif %}
-</div>
+  </div>
 {% endblock content %}

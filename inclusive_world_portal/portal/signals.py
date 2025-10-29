@@ -3,17 +3,13 @@ from django.dispatch import receiver
 from django.conf import settings
 import django.db.models as models
 
-from .models import Enrollment, Program, UserProfile, UserRole, UserRoleType
+from .models import Enrollment, Program, UserRole, UserRoleType
 
 @receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_profile_and_default_role(sender, instance, created, **kwargs):
+def create_default_role(sender, instance, created, **kwargs):
+    """Assign default member role to new users."""
     if not created:
         return
-    # Create profile with whatever you have (fill later via forms)
-    UserProfile.objects.get_or_create(
-        user=instance,
-        defaults={"first_name": instance.first_name or "", "last_name": instance.last_name or "", "email": instance.email},
-    )
     # Assign default "member" role if none exists
     UserRole.objects.get_or_create(user=instance, role=UserRoleType.MEMBER)
 

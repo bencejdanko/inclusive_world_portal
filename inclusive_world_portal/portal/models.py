@@ -71,7 +71,7 @@ class UserProfile(models.Model):
     )
     first_name = models.CharField(max_length=255)
     last_name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, null=True, blank=True)
     phone_no = models.CharField(max_length=64, blank=True)
     status = models.CharField(max_length=32, choices=UserStatus.choices, default=UserStatus.PENDING)
     bio = models.TextField(blank=True)

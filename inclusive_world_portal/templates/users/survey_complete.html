@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+
+{% block title %}Survey Complete!{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <div class="card shadow">
+        <div class="card-body p-5 text-center">
+          <div class="mb-4">
+            <svg xmlns="http://www.w3.org/2000/svg" width="80" height="80" fill="currentColor" class="bi bi-check-circle text-success" viewBox="0 0 16 16">
+              <path d="M8 15A7 7 0 1 1 8 1a7 7 0 0 1 0 14zm0 1A8 8 0 1 0 8 0a8 8 0 0 0 0 16z"/>
+              <path d="M10.97 4.97a.235.235 0 0 0-.02.022L7.477 9.417 5.384 7.323a.75.75 0 0 0-1.06 1.06L6.97 11.03a.75.75 0 0 0 1.079-.02l3.992-4.99a.75.75 0 0 0-1.071-1.05z"/>
+            </svg>
+          </div>
+          
+          <h1 class="display-4 mb-3">Thank You!</h1>
+          <p class="lead">Your Discovery Survey is complete.</p>
+          
+          {% if can_purchase %}
+            <div class="alert alert-success mt-4">
+              <h4 class="alert-heading">✓ You're All Set!</h4>
+              <p class="mb-0">Your profile and survey are complete. You can now browse and enroll in programs.</p>
+            </div>
+          {% else %}
+            <div class="alert alert-warning mt-4">
+              <h5 class="alert-heading">One More Step!</h5>
+              <p class="mb-0">Please complete your profile information to enroll in programs.</p>
+              <a href="{% url 'users:update' %}" class="btn btn-warning mt-2">Complete Profile</a>
+            </div>
+          {% endif %}
+          
+          <div class="mt-5">
+            <h5>What's Next?</h5>
+            <p>We'll use your responses to create your personalized One Page Profile. This helps our team understand how to best support you in your learning journey.</p>
+          </div>
+          
+          <div class="d-grid gap-2 mt-4">
+            {% if can_purchase %}
+              <a href="#" class="btn btn-primary btn-lg">Browse Programs</a>
+            {% endif %}
+            <a href="{% url 'users:detail' user.username %}" class="btn btn-outline-primary">View My Profile</a>
+            <a href="{% url 'users:survey_start' %}" class="btn btn-outline-secondary">Review Survey Responses</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

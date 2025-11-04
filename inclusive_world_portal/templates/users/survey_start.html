@@ -1,86 +1,203 @@
-{% extends "base.html" %}
+{% extends "base_portal.html" %}
 
 {% block title %}Discovery Survey{% endblock %}
 
+{% block page_title %}Discovery Questions{% endblock page_title %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  .discovery-hero {
+    background: linear-gradient(135deg, var(--color-brand-blue-peacock) 0%, var(--color-dark-blue-peacock) 100%);
+    color: white;
+    padding: var(--space-2xl);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    text-align: center;
+    border-bottom: 4px solid var(--color-brand-splashy-aqua);
+  }
+  
+  .discovery-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin-bottom: var(--space-md);
+  }
+  
+  .discovery-hero .lead {
+    font-size: 1.125rem;
+    opacity: 0.95;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  
+  .survey-status-card {
+    background: linear-gradient(to bottom right, var(--color-brand-afterglow-yellow) 0%, var(--color-brand-mauvelous-pink) 100%);
+    border: 2px solid var(--color-brand-ardent-coral);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    margin: var(--space-xl) 0;
+  }
+  
+  .survey-status-card h5 {
+    color: var(--color-brand-black-olive);
+    font-weight: 700;
+    margin-bottom: var(--space-md);
+  }
+  
+  .status-check {
+    display: flex;
+    align-items: center;
+    padding: var(--space-sm) 0;
+    color: var(--color-brand-black-olive);
+    font-weight: 500;
+  }
+  
+  .status-check i {
+    font-size: 1.25rem;
+    margin-right: var(--space-sm);
+  }
+  
+  .btn-start-survey {
+    background: linear-gradient(135deg, var(--color-brand-berry) 0%, var(--color-dark-berry) 100%);
+    color: white;
+    font-size: 1.25rem;
+    font-weight: 700;
+    padding: 1rem 2.5rem;
+    border-radius: var(--radius-lg);
+    border: none;
+    box-shadow: var(--shadow-lg);
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+  
+  .btn-start-survey:hover {
+    transform: translateY(-3px);
+    box-shadow: var(--shadow-xl);
+    color: white;
+  }
+  
+  .btn-back {
+    background: white;
+    color: var(--color-brand-blue-peacock);
+    border: 2px solid var(--color-brand-blue-peacock);
+    padding: 0.75rem 2rem;
+    font-weight: 600;
+    border-radius: var(--radius-lg);
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+  
+  .btn-back:hover {
+    background: var(--color-brand-blue-peacock);
+    color: white;
+  }
+  
+  .info-box {
+    background: rgba(0, 139, 156, 0.1);
+    border-left: 4px solid var(--color-brand-splashy-aqua);
+    padding: var(--space-lg);
+    border-radius: var(--radius-md);
+    margin: var(--space-xl) 0;
+  }
+  
+  .info-box h5 {
+    color: var(--color-brand-blue-peacock);
+    font-weight: 700;
+    margin-bottom: var(--space-md);
+  }
+  
+  .info-box ul {
+    color: var(--color-brand-black-olive);
+    margin-bottom: 0;
+  }
+  
+  .info-box li {
+    margin-bottom: var(--space-sm);
+  }
+</style>
+{% endblock %}
+
 {% block content %}
-<div class="container mt-5">
-  <div class="row justify-content-center">
+<div class="row justify-content-center">
     <div class="col-lg-8">
-      <div class="card shadow">
+      <div class="card shadow-lg" style="border: 2px solid var(--color-brand-blue-peacock); border-radius: var(--radius-xl); overflow: hidden;">
+        <div class="discovery-hero">
+          <h1><i class="bi bi-compass me-3"></i>Discovery Survey</h1>
+          <p class="lead">Welcome! This survey helps us get to know you better and create your personalized One Page Profile.</p>
+        </div>
         <div class="card-body p-5">
-          <h1 class="display-4 mb-4">Discovery Survey</h1>
-          
-          <p class="lead">Welcome to your Discovery Survey! This survey helps us get to know you better and create your personalized One Page Profile.</p>
           
           {% if survey.is_complete %}
-            <div class="alert alert-success">
-              <h4 class="alert-heading">✓ Survey Complete!</h4>
-              <p>You completed this survey on {{ survey.completed_at|date:"F d, Y" }}.</p>
-              <hr>
-              <p class="mb-0">You can review or update your responses at any time.</p>
+            <div class="alert alert-success" style="background: var(--color-badge-light-green); border-left: 4px solid var(--color-badge-dark-green);">
+              <h4 class="alert-heading" style="color: var(--color-badge-dark-green);"><i class="bi bi-check-circle-fill me-2"></i>Survey Complete!</h4>
+              <p style="color: var(--color-badge-dark-green);">You completed this survey on {{ survey.completed_at|date:"F d, Y" }}.</p>
+              <hr style="border-color: var(--color-badge-dark-green); opacity: 0.3;">
+              <p class="mb-0" style="color: var(--color-badge-dark-green);">You can review or update your responses at any time.</p>
             </div>
           {% else %}
-            <div class="alert alert-info">
-              <h5>Before You Start:</h5>
-              <ul class="mb-0">
-                <li>The survey is divided into 12 sections</li>
-                <li>You can save and return at any time</li>
-                <li>All fields are optional - answer what you're comfortable with</li>
-                <li>This helps us create your One Page Profile</li>
+            <div class="info-box">
+              <h5><i class="bi bi-info-circle me-2"></i>Before You Start:</h5>
+              <ul>
+                <li><strong>12 Sections:</strong> The survey is divided into manageable sections</li>
+                <li><strong>Save Anytime:</strong> You can save and return at your convenience</li>
+                <li><strong>All Optional:</strong> Answer what you're comfortable with</li>
+                <li><strong>Your Profile:</strong> Helps us create your One Page Profile</li>
               </ul>
             </div>
           {% endif %}
           
-          <div class="card bg-light mb-4">
-            <div class="card-body">
-              <h5 class="card-title">Prerequisites Check:</h5>
-              <ul class="list-unstyled mb-0">
-                <li>
-                  {% if profile_complete %}
-                    <span class="text-success">✓</span> Profile Information Complete
-                  {% else %}
-                    <span class="text-warning">○</span> Profile Information 
-                    <a href="{% url 'users:update' %}" class="btn btn-sm btn-outline-primary ms-2">Complete Profile</a>
-                  {% endif %}
-                </li>
-                <li>
-                  {% if survey.is_complete %}
-                    <span class="text-success">✓</span> Discovery Survey Complete
-                  {% else %}
-                    <span class="text-warning">○</span> Discovery Survey
-                  {% endif %}
-                </li>
-              </ul>
-              
-              {% if user.can_purchase_programs %}
-                <div class="alert alert-success mt-3 mb-0">
-                  <strong>✓ Ready to Enroll!</strong> You can now purchase and enroll in programs.
-                </div>
+          <div class="survey-status-card">
+            <h5><i class="bi bi-clipboard-check me-2"></i>Status Check</h5>
+            <div class="status-check">
+              {% if profile_complete %}
+                <i class="bi bi-check-circle-fill text-success"></i>
+                <span>Profile Information Complete</span>
               {% else %}
-                <div class="alert alert-warning mt-3 mb-0">
-                  <strong>Note:</strong> Complete both your profile and this survey to enroll in programs.
-                </div>
+                <i class="bi bi-circle text-warning"></i>
+                <span>Profile Information</span>
+                <a href="{% url 'users:update' %}" class="btn btn-sm btn-survey-outline ms-3" style="padding: 0.35rem 1rem;">Complete Profile</a>
               {% endif %}
             </div>
+            <div class="status-check">
+              {% if survey.is_complete %}
+                <i class="bi bi-check-circle-fill text-success"></i>
+                <span>Discovery Survey Complete</span>
+              {% else %}
+                <i class="bi bi-circle text-warning"></i>
+                <span>Discovery Survey</span>
+              {% endif %}
+            </div>
+            
+            {% if user.can_purchase_programs %}
+              <div class="alert alert-success mt-3 mb-0" style="background: var(--color-badge-light-green); border: 2px solid var(--color-badge-dark-green);">
+                <strong style="color: var(--color-badge-dark-green);"><i class="bi bi-check-circle-fill me-2"></i>Ready to Enroll!</strong>
+                <span style="color: var(--color-badge-dark-green);"> You can now purchase and enroll in programs.</span>
+              </div>
+            {% else %}
+              <div class="alert alert-warning mt-3 mb-0" style="background: var(--color-badge-light-yellow); border: 2px solid var(--color-badge-dark-yellow);">
+                <strong style="color: var(--color-badge-dark-yellow);"><i class="bi bi-exclamation-triangle-fill me-2"></i>Note:</strong>
+                <span style="color: var(--color-badge-dark-yellow);"> Complete both your profile and this survey to enroll in programs.</span>
+              </div>
+            {% endif %}
           </div>
           
-          <div class="d-grid gap-2">
+          <div class="d-grid gap-3 mt-4">
             {% if survey.is_complete %}
-              <a href="{% url 'users:survey_section_1' %}" class="btn btn-primary btn-lg">
-                Review/Update Survey
+              <a href="{% url 'users:survey_section_1' %}" class="btn-start-survey text-center">
+                <i class="bi bi-pencil-square me-2"></i>Review/Update Survey
               </a>
             {% else %}
-              <a href="{% url 'users:survey_section_1' %}" class="btn btn-primary btn-lg">
-                Start Survey
+              <a href="{% url 'users:survey_section_1' %}" class="btn-start-survey text-center">
+                <i class="bi bi-play-circle-fill me-2"></i>Start Survey
               </a>
             {% endif %}
-            <a href="{% url 'users:detail' user.username %}" class="btn btn-outline-secondary">
-              Back to Profile
+            <a href="{% url 'users:detail' user.username %}" class="btn-back text-center">
+              <i class="bi bi-arrow-left me-2"></i>Back to Profile
             </a>
           </div>
         </div>
       </div>
     </div>
   </div>
-</div>
 {% endblock %}

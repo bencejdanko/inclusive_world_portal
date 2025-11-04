@@ -85,6 +85,13 @@
                    class="nav-link {% if request.path == item.url %}active{% endif %}">
                   <i class="{{ item.icon_class }}"></i>
                   <span>{{ item.label }}</span>
+                  {% if item.show_completion %}
+                    {% if item.is_complete %}
+                      <i class="bi bi-check-circle-fill text-success ms-auto" title="Complete"></i>
+                    {% else %}
+                      <i class="bi bi-exclamation-circle-fill text-warning ms-auto" title="Incomplete"></i>
+                    {% endif %}
+                  {% endif %}
                 </a>
               </div>
             {% endfor %}

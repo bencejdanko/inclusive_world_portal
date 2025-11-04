@@ -1,0 +1,133 @@
+version: '3.9'
+
+services:
+  postgres:
+    image: postgres:17-alpine
+    container_name: inclusive_world_portal_postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    env_file:
+      - .env.docker
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-inclusive_world_portal}
+      - POSTGRES_USER=${POSTGRES_USER:-postgres}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    container_name: inclusive_world_portal_redis
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app_network
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: inclusive_world_portal_django
+    volumes:
+      - static_volume:/app/staticfiles
+      - media_volume:/app/inclusive_world_portal/media
+    env_file:
+      - .env.docker
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-inclusive_world_portal}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/admin/login/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - app_network
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+
+  celeryworker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: inclusive_world_portal_celeryworker
+    volumes:
+      - media_volume:/app/inclusive_world_portal/media
+    env_file:
+      - .env.docker
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-inclusive_world_portal}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app_network
+    restart: unless-stopped
+    command: celery -A config.celery_app worker -l info
+
+  celerybeat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: production
+    container_name: inclusive_world_portal_celerybeat
+    volumes:
+      - celerybeat_schedule:/app
+    env_file:
+      - .env.docker
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-inclusive_world_portal}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - app_network
+    restart: unless-stopped
+    command: celery -A config.celery_app beat -l info --scheduler django_celery_beat.schedulers:DatabaseScheduler
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  static_volume:
+    driver: local
+  media_volume:
+    driver: local
+  celerybeat_schedule:
+    driver: local
+
+networks:
+  app_network:
+    driver: bridge

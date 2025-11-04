@@ -1,0 +1,74 @@
+version: '3.9'
+
+# Development overrides for docker-compose.yml
+# This file is automatically loaded with docker-compose.yml
+# For production, use: docker-compose -f docker-compose.yml up
+
+services:
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development  # Use development stage with dev dependencies
+    container_name: inclusive_world_portal_django_dev
+    volumes:
+      # Mount source code for hot-reloading
+      - ./:/app:delegated
+      - /app/.venv  # Exclude .venv from mount to preserve container dependencies
+      - static_volume:/app/staticfiles
+      - media_volume:/app/inclusive_world_portal/media
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.local
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-inclusive_world_portal}
+      - REDIS_URL=redis://redis:6379/0
+      - DJANGO_DEBUG=True
+    ports:
+      - "8000:8000"
+    command: >
+      sh -c "
+        python manage.py migrate --noinput &&
+        python manage.py runserver 0.0.0.0:8000
+      "
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  celeryworker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: inclusive_world_portal_celeryworker_dev
+    volumes:
+      - ./:/app:delegated
+      - /app/.venv
+      - media_volume:/app/inclusive_world_portal/media
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.local
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-inclusive_world_portal}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      django:
+        condition: service_healthy
+    command: celery -A config.celery_app worker -l debug
+
+  celerybeat:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: development
+    container_name: inclusive_world_portal_celerybeat_dev
+    volumes:
+      - ./:/app:delegated
+      - /app/.venv
+    environment:
+      - DJANGO_SETTINGS_MODULE=config.settings.local
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-inclusive_world_portal}
+      - REDIS_URL=redis://redis:6379/0
+    depends_on:
+      django:
+        condition: service_healthy
+    command: celery -A config.celery_app beat -l debug --scheduler django_celery_beat.schedulers:DatabaseScheduler

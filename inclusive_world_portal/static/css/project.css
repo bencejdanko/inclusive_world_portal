@@ -17,9 +17,6 @@
   font-display: swap;
 }
 
-/* ============================================
-   CSS CUSTOM PROPERTIES (DESIGN TOKENS)
-   ============================================ */
 :root {
   /* Brand Colors - Primary Palette */
   --color-brand-berry: #7F4857;
@@ -511,7 +508,6 @@ textarea:focus {
   width: var(--sidebar-width);
   height: 100vh;
   background: var(--color-card-bg);
-  box-shadow: var(--shadow-lg);
   transition: transform 0.3s ease-in-out;
   z-index: 1030;
   display: flex;
@@ -587,6 +583,12 @@ textarea:focus {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+}
+
+.nav-link i.ms-auto {
+  margin-right: 0;
+  margin-left: auto;
+  font-size: 1rem;
 }
 
 .sidebar-footer {
@@ -882,10 +884,6 @@ textarea:focus {
 
   .content-container {
     padding: var(--space-md);
-  }
-
-  .page-title {
-    font-size: 1.25rem;
   }
   
   .auth-form-side {

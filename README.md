@@ -77,14 +77,193 @@ The system is set up with reasonable defaults, including 404 logging and integra
 
 You must set the DSN url in production.
 
-## Deployment
+## Docker Setup (Recommended)
 
-The following details how to deploy this application.
+This project includes a production-ready Docker setup with support for both development and production environments.
 
-## Run locally
+### Prerequisites
+
+- Docker (20.10+)
+- Docker Compose (2.0+)
+
+### Quick Start (Development)
+
+1. **Build and start all services**:
+   ```bash
+   docker-compose up -d
+   ```
+
+   This automatically:
+   - Starts PostgreSQL with persistent data
+   - Starts Redis for caching and Celery
+   - Runs database migrations
+   - Starts Django with hot-reloading
+   - Starts Celery worker and beat scheduler
+
+2. **View logs**:
+   ```bash
+   docker-compose logs -f django
+   ```
+
+3. **Create a superuser** (if not using the default):
+   ```bash
+   docker-compose exec django python manage.py createsuperuser
+   ```
+
+4. **Access the application**:
+   - Django: http://localhost:8000
+   - Admin: http://localhost:8000/admin/
+
+### Production Deployment
+
+1. **Update environment variables**:
+   ```bash
+   cp .env.docker.example .env.docker
+   # Edit .env.docker with production values
+   ```
+
+2. **Deploy with production settings**:
+   ```bash
+   docker-compose -f docker-compose.yml up -d
+   ```
+
+   Production mode:
+   - Uses Gunicorn with optimized worker configuration
+   - Disables debug mode
+   - Enables security headers
+   - Uses persistent volumes for data
+
+### Docker Commands
+
+**Start services**:
+```bash
+docker-compose up -d
+```
+
+**Stop services**:
+```bash
+docker-compose down
+```
+
+**Rebuild services** (after code changes):
+```bash
+docker-compose up -d --build
+```
+
+**View all logs**:
+```bash
+docker-compose logs -f
+```
+
+**Run management commands**:
+```bash
+docker-compose exec django python manage.py <command>
+```
+
+**Access Django shell**:
+```bash
+docker-compose exec django python manage.py shell
+```
+
+**Run migrations**:
+```bash
+docker-compose exec django python manage.py migrate
+```
+
+**Collect static files** (production):
+```bash
+docker-compose exec django python manage.py collectstatic --noinput
+```
+
+**Access database**:
+```bash
+docker-compose exec postgres psql -U postgres -d inclusive_world_portal
+```
+
+**Clean up volumes** (⚠️ deletes all data):
+```bash
+docker-compose down -v
+```
+
+### Services Architecture
+
+The Docker setup includes:
+
+- **postgres**: PostgreSQL 17 Alpine with persistent data volume
+- **redis**: Redis 7 Alpine for caching and Celery broker
+- **django**: Django application with Gunicorn (production) or runserver (dev)
+- **celeryworker**: Celery worker for async tasks
+- **celerybeat**: Celery beat for scheduled tasks
+
+### Development vs Production
+
+**Development** (default with `docker-compose up`):
+- Uses `docker-compose.override.yml` automatically
+- Hot-reloading enabled (code changes reflect immediately)
+- Django debug toolbar enabled
+- Console email backend
+- SQLite or local PostgreSQL
+
+**Production** (with `docker-compose -f docker-compose.yml up`):
+- No override file loaded
+- Gunicorn with 4 workers
+- All security headers enabled
+- SMTP email backend
+- Optimized static file serving
+
+### Persistent Data
+
+All data is stored in Docker volumes:
+- `postgres_data`: Database data
+- `redis_data`: Redis persistence
+- `media_volume`: User-uploaded files
+- `static_volume`: Static files (CSS, JS, images)
+- `celerybeat_schedule`: Celery beat schedule database
+
+These volumes persist between container restarts and updates.
+
+### Troubleshooting
+
+**Port already in use**:
+```bash
+# Change the port mapping in docker-compose.yml
+ports:
+  - "8001:8000"  # Use port 8001 instead
+```
+
+**Reset database**:
+```bash
+docker-compose down -v
+docker-compose up -d
+```
+
+**View detailed logs**:
+```bash
+docker-compose logs --tail=100 -f django
+```
+
+**Container won't start**:
+```bash
+# Check container status
+docker-compose ps
+
+# View specific container logs
+docker-compose logs <service-name>
+
+# Restart a specific service
+docker-compose restart <service-name>
+```
+
+## Local Development (Without Docker)
+
+### Run locally
 
 ```
 set -a; [ -f .env ] && . .env; set +a
 
 uv run python manage.py runserver 0.0.0.0:8000
 ```
+
+## Deployment
+
+The following details how to deploy this application.

@@ -20,7 +20,7 @@ def get_navigation_items(user):
     
     # Member navigation
     if role == 'member':
-        return [
+        nav_items = [
             {
                 'label': _('Dashboard'),
                 'url': reverse('users:member_dashboard'),
@@ -32,9 +32,18 @@ def get_navigation_items(user):
                 'icon_class': 'bi bi-file-earmark-text',
             },
             {
-                'label': _('Profile & Registration'),
-                'url': reverse('users:update'),
-                'icon_class': 'bi bi-pencil-square',
+                'label': _('Profile'),
+                'url': reverse('users:detail', kwargs={'username': user.username}),
+                'icon_class': 'bi bi-person-circle',
+                'show_completion': True,
+                'is_complete': user.profile_is_complete,
+            },
+            {
+                'label': _('Discovery Questions'),
+                'url': reverse('users:survey_start'),
+                'icon_class': 'bi bi-clipboard-check',
+                'show_completion': True,
+                'is_complete': user.survey_is_complete,
             },
             {
                 'label': _('Fees'),
@@ -51,12 +60,8 @@ def get_navigation_items(user):
                 'url': '#',  # TODO: Add URL when view is created
                 'icon_class': 'bi bi-layers',
             },
-            {
-                'label': _('My Surveys'),
-                'url': reverse('users:survey_start'),
-                'icon_class': 'bi bi-file-text',
-            },
         ]
+        return nav_items
     
     # Volunteer navigation
     elif role == 'volunteer':

@@ -9,6 +9,7 @@ from inclusive_world_portal.portal.models import DocumentState
 class DocumentForm(forms.Form):
     """
     Form for editing documents with Quill rich text editor.
+    Configured to use brand fonts (Montserrat) for WYSIWYG consistency with PDF export.
     """
     title = forms.CharField(
         max_length=255,
@@ -16,7 +17,10 @@ class DocumentForm(forms.Form):
         initial="One Page Description",
         widget=forms.HiddenInput()
     )
-    content = QuillFormField()
+    content = QuillFormField(
+        # Quill configuration to match PDF export styling
+        # The editor will use CSS variables from project.css (Montserrat font)
+    )
     state = forms.ChoiceField(
         choices=DocumentState.choices,
         initial=DocumentState.DRAFT,

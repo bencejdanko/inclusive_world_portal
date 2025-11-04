@@ -11,6 +11,541 @@
 <link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
 <!-- django-quill-editor Media -->
 {{ form.media.css }}
+<style>
+    /* Document Editor Styles - Aligned with Design System */
+    .document-editor-container {
+        max-width: 1000px;
+        margin: 0 auto;
+    }
+    
+    .editor-card {
+        background-color: var(--color-card-bg);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+        padding: var(--space-xl);
+        margin-bottom: var(--space-lg);
+    }
+    
+    .document-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-xl);
+        padding-bottom: var(--space-lg);
+        border-bottom: 2px solid var(--color-border);
+    }
+    
+    .document-subtitle {
+        font-size: 0.9375rem;
+        color: var(--color-muted-foreground);
+        margin: 0;
+    }
+    
+    .document-controls {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+    }
+    
+    .document-controls select {
+        min-width: 140px;
+        padding: 0.625rem 1rem;
+        border: 2px solid var(--color-input-border);
+        border-radius: var(--radius-lg);
+        background-color: var(--color-background);
+        font-family: var(--font-sans);
+        font-size: 0.9375rem;
+        font-weight: 500;
+        color: var(--color-foreground);
+        transition: all 0.2s ease;
+        cursor: pointer;
+    }
+    
+    .document-controls select:focus {
+        outline: none;
+        border-color: var(--color-brand-blue-peacock);
+        box-shadow: 0 0 0 3px rgba(0, 73, 79, 0.1);
+    }
+    
+    .document-controls select:hover {
+        border-color: var(--color-brand-blue-peacock);
+    }
+    
+    .editor-wrapper {
+        margin-bottom: var(--space-xl);
+        background: var(--color-background);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        border: 2px solid var(--color-border);
+        transition: border-color 0.2s ease;
+    }
+    
+    .editor-wrapper:focus-within {
+        border-color: var(--color-brand-blue-peacock);
+        box-shadow: 0 0 0 3px rgba(0, 73, 79, 0.1);
+    }
+    
+    /* Quill editor customization to match design system */
+    .ql-toolbar.ql-snow {
+        border: none;
+        border-bottom: 2px solid var(--color-border);
+        background: var(--color-muted);
+        padding: var(--space-md);
+        font-family: var(--font-sans);
+    }
+    
+    .ql-container.ql-snow {
+        border: none;
+        font-family: var(--font-sans);
+        font-size: 1rem;
+        min-height: 400px;
+    }
+    
+    .ql-editor {
+        padding: var(--space-xl);
+        min-height: 400px;
+        background: white;
+    }
+    
+    .ql-editor.ql-blank::before {
+        color: var(--color-muted-foreground);
+        font-style: normal;
+        opacity: 0.6;
+    }
+    
+    /* Scope all shared styles to .ql-editor for preview */
+    .ql-editor {
+        font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, Helvetica, sans-serif;
+        font-size: 11pt;
+        line-height: 1.6;
+        color: #404040;
+    }
+    
+    .ql-editor h1 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 2em;
+        margin: 0.67em 0;
+        font-weight: 700;
+        line-height: 1.2;
+    }
+    
+    .ql-editor h2 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1.5em;
+        margin: 0.75em 0;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+    
+    .ql-editor h3 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1.25em;
+        margin: 0.83em 0;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+    
+    .ql-editor h4 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1.1em;
+        margin: 1em 0;
+        font-weight: 600;
+        line-height: 1.4;
+    }
+    
+    .ql-editor h5 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 1em;
+        margin: 1.33em 0;
+        font-weight: 600;
+        line-height: 1.5;
+    }
+    
+    .ql-editor h6 {
+        font-family: 'Montserrat', sans-serif;
+        font-size: 0.875em;
+        margin: 1.67em 0;
+        font-weight: 600;
+        line-height: 1.5;
+    }
+    
+    .ql-editor p {
+        font-family: 'Montserrat', sans-serif;
+        margin: 1em 0;
+        line-height: 1.6;
+    }
+    
+    .ql-editor strong,
+    .ql-editor b {
+        font-weight: 700;
+    }
+    
+    .ql-editor em,
+    .ql-editor i {
+        font-style: italic;
+    }
+    
+    .ql-editor u {
+        text-decoration: underline;
+    }
+    
+    .ql-editor s,
+    .ql-editor strike {
+        text-decoration: line-through;
+    }
+    
+    .ql-editor a {
+        color: #008B9C;
+        text-decoration: underline;
+    }
+    
+    .ql-editor a:hover {
+        color: #006A78;
+    }
+    
+    .ql-editor ul,
+    .ql-editor ol {
+        font-family: 'Montserrat', sans-serif;
+        margin: 1em 0;
+        padding-left: 2em;
+    }
+    
+    .ql-editor li {
+        font-family: 'Montserrat', sans-serif;
+        margin: 0.5em 0;
+        line-height: 1.6;
+    }
+    
+    .ql-editor blockquote {
+        font-family: 'Montserrat', sans-serif;
+        border-left: 4px solid #008B9C;
+        margin: 1.5em 0;
+        padding-left: 1em;
+        padding-top: 0.5em;
+        padding-bottom: 0.5em;
+        color: #595959;
+        font-style: italic;
+    }
+    
+    .ql-editor code {
+        font-family: 'Courier New', monospace;
+        background-color: #F2F2F2;
+        padding: 0.2em 0.4em;
+        border-radius: 3px;
+        font-size: 0.9em;
+    }
+    
+    .ql-editor pre {
+        font-family: 'Courier New', monospace;
+        background-color: #F2F2F2;
+        padding: 1em;
+        border-radius: 4px;
+        overflow-x: auto;
+        margin: 1em 0;
+    }
+    
+    .ql-editor pre code {
+        background-color: transparent;
+        padding: 0;
+    }
+    
+    .ql-editor sub {
+        vertical-align: sub;
+        font-size: 0.75em;
+    }
+    
+    .ql-editor sup {
+        vertical-align: super;
+        font-size: 0.75em;
+    }
+    
+    .ql-editor hr {
+        border: none;
+        border-top: 2px solid #E5E7EB;
+        margin: 2em 0;
+    }
+    
+    /* End of shared styles */
+    
+    /* Custom color picker styling */
+    .ql-snow .ql-picker.ql-color .ql-picker-label,
+    .ql-snow .ql-picker.ql-background .ql-picker-label {
+        border: 1px solid var(--color-input-border);
+        border-radius: var(--radius-sm);
+        padding: 2px 4px;
+    }
+    
+    .ql-snow .ql-picker.ql-color .ql-picker-label:hover,
+    .ql-snow .ql-picker.ql-background .ql-picker-label:hover {
+        border-color: var(--color-brand-blue-peacock);
+    }
+    
+    .ql-snow .ql-picker.ql-color .ql-picker-options,
+    .ql-snow .ql-picker.ql-background .ql-picker-options {
+        background: var(--color-card-bg);
+        border: 2px solid var(--color-border);
+        border-radius: var(--radius-md);
+        box-shadow: var(--shadow-lg);
+        padding: var(--space-sm);
+    }
+    
+    .ql-snow .ql-picker.ql-color .ql-picker-item,
+    .ql-snow .ql-picker.ql-background .ql-picker-item {
+        border: 1px solid var(--color-border);
+        border-radius: var(--radius-sm);
+        margin: 2px;
+        width: 24px;
+        height: 24px;
+    }
+    
+    .ql-snow .ql-picker.ql-color .ql-picker-item:hover,
+    .ql-snow .ql-picker.ql-background .ql-picker-item:hover {
+        border-color: var(--color-brand-blue-peacock);
+        border-width: 2px;
+        transform: scale(1.1);
+    }
+    
+    .ql-snow .ql-picker.ql-color .ql-picker-item.ql-selected,
+    .ql-snow .ql-picker.ql-background .ql-picker-item.ql-selected {
+        border-color: var(--color-brand-blue-peacock);
+        border-width: 2px;
+        box-shadow: 0 0 0 2px rgba(0, 73, 79, 0.2);
+    }
+    
+    .export-button {
+        padding: 0.625rem 1.25rem;
+        background-color: var(--color-brand-splashy-aqua);
+        color: white;
+        border: none;
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        font-family: var(--font-sans);
+        font-size: 0.9375rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+        white-space: nowrap;
+    }
+    
+    .export-button:hover {
+        background-color: #006A78;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .export-button i {
+        font-size: 1.125rem;
+    }
+    
+    .autogenerate-button {
+        padding: 0.625rem 1.25rem;
+        background-color: var(--color-brand-blue-peacock);
+        color: white;
+        border: none;
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        font-family: var(--font-sans);
+        font-size: 0.9375rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+        white-space: nowrap;
+    }
+    
+    .autogenerate-button:hover {
+        background-color: var(--color-dark-blue-peacock);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .autogenerate-button:disabled {
+        background-color: var(--color-muted-foreground);
+        cursor: not-allowed;
+        transform: none;
+        opacity: 0.6;
+    }
+    
+    .autogenerate-button i {
+        font-size: 1.125rem;
+    }
+    
+    .save-button-wrapper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: var(--space-lg);
+        border-top: 2px solid var(--color-border);
+    }
+    
+    .save-button {
+        padding: 0.875rem 2rem;
+        background-color: var(--color-brand-blue-peacock);
+        color: white;
+        border: none;
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        font-family: var(--font-sans);
+        font-size: 1rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+    }
+    
+    .save-button:hover {
+        background-color: var(--color-dark-blue-peacock);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .save-button:disabled {
+        background-color: var(--color-muted-foreground);
+        cursor: not-allowed;
+        transform: none;
+    }
+    
+    .save-button i {
+        font-size: 1.125rem;
+    }
+    
+    .helper-text {
+        color: var(--color-muted-foreground);
+        font-size: 0.875rem;
+        display: flex;
+        align-items: center;
+        gap: var(--space-xs);
+    }
+    
+    .helper-text i {
+        font-size: 1rem;
+        color: var(--color-brand-splashy-aqua);
+    }
+    
+    /* Scroll helper buttons */
+    .scroll-helper-btn {
+        position: fixed;
+        right: 2rem;
+        width: 56px;
+        height: 56px;
+        background-color: var(--color-brand-blue-peacock);
+        color: white;
+        border: none;
+        border-radius: 50%;
+        cursor: pointer;
+        font-size: 1.5rem;
+        box-shadow: var(--shadow-lg);
+        transition: all 0.3s ease;
+        z-index: 1000;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        opacity: 0;
+        visibility: hidden;
+        transform: translateY(20px);
+    }
+    
+    .scroll-helper-btn.visible {
+        opacity: 1;
+        visibility: visible;
+        transform: translateY(0);
+    }
+    
+    .scroll-helper-btn:hover {
+        background-color: var(--color-dark-blue-peacock);
+        transform: scale(1.1);
+        box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+    }
+    
+    .scroll-helper-btn:active {
+        transform: scale(0.95);
+    }
+    
+    .scroll-helper-btn i {
+        transition: transform 0.3s ease;
+    }
+    
+    .scroll-to-top-btn {
+        bottom: 6rem;
+    }
+    
+    .scroll-to-top-btn:hover i {
+        transform: translateY(-3px);
+    }
+    
+    .scroll-to-bottom-btn {
+        bottom: 2rem;
+    }
+    
+    .scroll-to-bottom-btn:hover i {
+        transform: translateY(3px);
+    }
+    
+    /* Hidden title field (kept for form submission) */
+    #id_title {
+        display: none;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .document-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--space-md);
+        }
+        
+        .document-controls {
+            width: 100%;
+            flex-direction: column;
+        }
+        
+        .document-controls select,
+        .export-button {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .save-button-wrapper {
+            flex-direction: column;
+            gap: var(--space-md);
+            align-items: flex-start;
+        }
+        
+        .save-button {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .helper-text {
+            width: 100%;
+        }
+        
+        .scroll-helper-btn {
+            right: 1rem;
+            width: 48px;
+            height: 48px;
+            font-size: 1.25rem;
+        }
+        
+        .scroll-to-top-btn {
+            bottom: 5rem;
+        }
+        
+        .scroll-to-bottom-btn {
+            bottom: 1rem;
+        }
+    }
+</style>
 {% endblock %}
 
 {% block javascript %}
@@ -21,116 +556,541 @@
 {{ form.media.js }}
 {% endblock %}
 
-{% block extra_css %}
-<style>
-    .document-editor-container {
-        max-width: 900px;
-        margin: 0 auto;
-    }
-    
-    .document-controls {
-        display: flex;
-        justify-content: flex-end;
-        align-items: center;
-        gap: 12px;
-        margin-bottom: 20px;
-        padding: 12px 15px;
-        background-color: #f8f9fa;
-        border-radius: 8px;
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-    }
-    
-    .document-controls select {
-        min-width: 120px;
-        padding: 6px 12px;
-        border: 1px solid #ced4da;
-        border-radius: 4px;
-        background-color: white;
-        font-size: 0.9rem;
-    }
-    
-    .editor-wrapper {
-        margin-bottom: 20px;
-    }
-    
-    .export-button {
-        padding: 8px 16px;
-        background-color: #28a745;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 0.9rem;
-        transition: background-color 0.2s;
-        text-decoration: none;
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        white-space: nowrap;
-    }
-    
-    .export-button:hover {
-        background-color: #218838;
-        color: white;
-        text-decoration: none;
-    }
-    
-    .save-button-wrapper {
-        display: flex;
-        justify-content: flex-start;
-        margin-top: 15px;
-    }
-    
-    .save-button {
-        padding: 10px 24px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 1rem;
-        transition: background-color 0.2s;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-    }
-    
-    .save-button:hover {
-        background-color: #0056b3;
-    }
-    
-    .save-button:disabled {
-        background-color: #6c757d;
-        cursor: not-allowed;
-    }
-</style>
-{% endblock %}
-
 {% block content %}
 <div class="document-editor-container">
-    <form method="post">
-        {% csrf_token %}
-        {{ form.title }}
+    <div class="editor-card">
+        <form method="post" id="documentForm">
+            {% csrf_token %}
+            {{ form.title }}
+            
+            <!-- Header section with title and controls -->
+            <div class="document-header">
+    
+                <div class="document-controls">
+                    {{ form.state }}
+                    <button type="button" id="autogenerateBtn" class="autogenerate-button" title="Generate from Discovery Survey">
+                        <i class="bi bi-magic"></i>
+                        <span>Auto-Generate</span>
+                    </button>
+                    <a href="{% url 'users:export_document_pdf' %}" class="export-button" title="Create New Export">
+                        <i class="bi bi-file-earmark-plus-fill"></i>
+                        <span>Create Export</span>
+                    </a>
+                </div>
+            </div>
+            
+            <!-- Rich text editor -->
+            <div class="editor-wrapper">
+                {{ form.content }}
+            </div>
+            
+            <!-- Footer with save button -->
+            <div class="save-button-wrapper">
+                <div class="helper-text">
+                    <i class="bi bi-info-circle-fill"></i>
+                    <span>Your changes are saved when you click the Save button</span>
+                </div>
+                <button type="submit" class="save-button">
+                    <i class="bi bi-check-circle-fill"></i>
+                    <span>Save Document</span>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Document Exports Section -->
+    {% if document_exports %}
+    <div class="editor-card">
+        <h2 style="margin-top: 0; color: var(--color-brand-blue-peacock); font-size: 1.5rem; margin-bottom: var(--space-lg);">
+            <i class="bi bi-file-earmark-arrow-down"></i> Document Exports
+        </h2>
         
-        <!-- Controls bar at the top -->
-        <div class="document-controls">
-            {{ form.state }}
-            <a href="{% url 'users:export_document_pdf' %}" class="export-button" target="_blank">
-                <i class="bi bi-file-earmark-pdf"></i> Export PDF
-            </a>
+        {% if active_export %}
+        <div style="background: linear-gradient(135deg, #008B9C15 0%, #00494F15 100%); padding: var(--space-md); border-radius: var(--radius-md); margin-bottom: var(--space-lg); border: 2px solid #008B9C;">
+            <div style="display: flex; align-items: center; gap: var(--space-sm); color: var(--color-brand-blue-peacock); font-weight: 600;">
+                <i class="bi bi-check-circle-fill" style="font-size: 1.25rem;"></i>
+                <span>Active OPD: {{ active_export.created_at|date:"F j, Y g:i A" }}</span>
+            </div>
         </div>
+        {% else %}
+        <div style="background: linear-gradient(135deg, #FFF1C215 0%, #F6D18B15 100%); padding: var(--space-md); border-radius: var(--radius-md); margin-bottom: var(--space-lg); border: 2px solid #F6D18B;">
+            <div style="display: flex; align-items: center; gap: var(--space-sm); color: var(--color-brand-black-olive); font-weight: 600;">
+                <i class="bi bi-info-circle-fill" style="font-size: 1.25rem;"></i>
+                <span>No active OPD selected. Please select one below.</span>
+            </div>
+        </div>
+        {% endif %}
         
-        <!-- Editor content -->
-        <div class="editor-wrapper">
-            {{ form.content }}
+        <div style="display: grid; gap: var(--space-md);">
+            {% for export in document_exports %}
+            <div class="export-item" style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-md); background: var(--color-background); border: 2px solid {% if export.is_active %}var(--color-brand-splashy-aqua){% else %}var(--color-border){% endif %}; border-radius: var(--radius-lg); transition: all 0.2s ease;">
+                <div style="display: flex; align-items: center; gap: var(--space-md); flex: 1;">
+                    <!-- Radio button for active selection -->
+                    <label style="display: flex; align-items: center; cursor: pointer; margin: 0;">
+                        <input type="radio" 
+                               name="active_export" 
+                               value="{{ export.export_id }}"
+                               class="active-radio"
+                               data-export-id="{{ export.export_id }}"
+                               {% if export.is_active %}checked{% endif %}
+                               style="width: 20px; height: 20px; cursor: pointer; margin: 0;">
+                        <span style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">Set as active OPD</span>
+                    </label>
+                    
+                    <div style="flex: 1;">
+                        <div style="font-weight: 600; color: var(--color-foreground); margin-bottom: var(--space-xs);">
+                            {{ export.get_filename }}
+                        </div>
+                        <div style="font-size: 0.875rem; color: var(--color-muted-foreground);">
+                            Created: {{ export.created_at|date:"F j, Y g:i A" }}
+                            {% if export.is_active %}
+                            <span style="color: var(--color-brand-splashy-aqua); font-weight: 600; margin-left: var(--space-sm);">
+                                <i class="bi bi-check-circle-fill"></i> Active
+                            </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div style="display: flex; gap: var(--space-sm); align-items: center;">
+                    <a href="{% url 'users:preview_document_export' export.export_id %}" 
+                       class="btn-icon" 
+                       title="Preview PDF"
+                       style="padding: 0.5rem; background: var(--color-brand-blue-peacock); color: white; border-radius: var(--radius-md); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                        <i class="bi bi-eye-fill" style="font-size: 1.125rem;"></i>
+                    </a>
+                    <button type="button" 
+                            class="btn-icon delete-export-btn" 
+                            data-export-id="{{ export.export_id }}"
+                            title="Delete Export"
+                            style="padding: 0.5rem; background: var(--color-destructive, #dc2626); color: white; border: none; border-radius: var(--radius-md); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
+                        <i class="bi bi-trash" style="font-size: 1.125rem;"></i>
+                    </button>
+                </div>
+            </div>
+            {% endfor %}
         </div>
-        
-        <!-- Save button at bottom -->
-        <div class="save-button-wrapper">
-            <button type="submit" class="save-button">
-                <i class="bi bi-save"></i> Save Document
-            </button>
-        </div>
-    </form>
+    </div>
+    {% endif %}
 </div>
+
+<!-- Scroll helper buttons -->
+<button type="button" class="scroll-helper-btn scroll-to-top-btn" id="scrollToTopBtn" title="Scroll to Top">
+    <i class="bi bi-arrow-up-circle-fill"></i>
+</button>
+<button type="button" class="scroll-helper-btn scroll-to-bottom-btn" id="scrollToBottomBtn" title="Scroll to Save Button">
+    <i class="bi bi-arrow-down-circle-fill"></i>
+</button>
+
+<script>
+    // Scroll helper buttons functionality
+    const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+    const scrollToBottomBtn = document.getElementById('scrollToBottomBtn');
+    const saveButtonWrapper = document.querySelector('.save-button-wrapper');
+    
+    // Show/hide buttons based on scroll position
+    function toggleScrollButtons() {
+        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+        const windowHeight = window.innerHeight;
+        const documentHeight = document.documentElement.scrollHeight;
+        const distanceFromBottom = documentHeight - (scrollTop + windowHeight);
+        
+        // Show scroll-to-top button if we've scrolled down more than 300px
+        if (scrollTop > 300) {
+            scrollToTopBtn.classList.add('visible');
+        } else {
+            scrollToTopBtn.classList.remove('visible');
+        }
+        
+        // Show scroll-to-bottom button if we're more than 300px from the bottom
+        if (distanceFromBottom > 300) {
+            scrollToBottomBtn.classList.add('visible');
+        } else {
+            scrollToBottomBtn.classList.remove('visible');
+        }
+    }
+    
+    // Smooth scroll to top
+    scrollToTopBtn.addEventListener('click', function() {
+        window.scrollTo({ 
+            top: 0, 
+            behavior: 'smooth' 
+        });
+    });
+    
+    // Smooth scroll to save button
+    scrollToBottomBtn.addEventListener('click', function() {
+        saveButtonWrapper.scrollIntoView({ 
+            behavior: 'smooth', 
+            block: 'end'
+        });
+    });
+    
+    // Listen for scroll events
+    window.addEventListener('scroll', toggleScrollButtons);
+    
+    // Initial check on page load
+    document.addEventListener('DOMContentLoaded', toggleScrollButtons);
+    
+    // Add visual feedback when form is being submitted
+    document.getElementById('documentForm').addEventListener('submit', function(e) {
+        const saveButton = this.querySelector('.save-button');
+        saveButton.disabled = true;
+        saveButton.innerHTML = '<i class="bi bi-hourglass-split"></i> <span>Saving...</span>';
+    });
+    
+    // Auto-generate document from survey data
+    document.getElementById('autogenerateBtn').addEventListener('click', function() {
+        const btn = this;
+        const originalHTML = btn.innerHTML;
+        
+        // Get the Quill instance
+        const quillInstance = getQuillInstance();
+        
+        if (!quillInstance) {
+            alert('Editor not ready. Please wait a moment and try again.');
+            return;
+        }
+        
+        // Confirm before overwriting
+        const currentContent = quillInstance.root.innerHTML.trim();
+        if (currentContent && currentContent !== '<p><br></p>' && currentContent !== '') {
+            if (!confirm('This will replace your current document content with a template generated from your Discovery Survey. Do you want to continue?')) {
+                return;
+            }
+        }
+        
+        // Disable button and show loading state
+        btn.disabled = true;
+        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> <span>Generating...</span>';
+        
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Make AJAX request to autogenerate endpoint
+        fetch('{% url "users:autogenerate_document" %}', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                // Update Quill editor with generated content
+                quillInstance.root.innerHTML = data.html;
+                
+                // Show success message
+                alert(data.message || 'Document generated successfully! Please review and save.');
+                
+                // Re-enable button
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            } else {
+                // Show error message
+                alert(data.error || 'Failed to generate document. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred while generating the document. Please try again.');
+            btn.disabled = false;
+            btn.innerHTML = originalHTML;
+        });
+    });
+    
+    // Function to get Quill editor instance
+    function getQuillInstance() {
+        // Try multiple ways to get the Quill instance
+        
+        // Method 1: Check if it's stored globally
+        if (window.quill) {
+            return window.quill;
+        }
+        
+        // Method 2: Look for the Quill container
+        const qlContainer = document.querySelector('.ql-container');
+        if (qlContainer && qlContainer.__quill) {
+            return qlContainer.__quill;
+        }
+        
+        // Method 3: Check parent elements
+        const qlEditor = document.querySelector('.ql-editor');
+        if (qlEditor) {
+            let parent = qlEditor.parentElement;
+            while (parent) {
+                if (parent.__quill) {
+                    return parent.__quill;
+                }
+                parent = parent.parentElement;
+            }
+        }
+        
+        // Method 4: Check if Quill has global instances
+        if (typeof Quill !== 'undefined' && Quill.find) {
+            const editor = document.querySelector('.ql-editor');
+            if (editor) {
+                return Quill.find(editor.parentElement);
+            }
+        }
+        
+        return null;
+    }
+    
+    // Store quill instance globally and customize color palette when initialized
+    document.addEventListener('DOMContentLoaded', function() {
+        // Wait for Quill to be initialized by django-quill-editor
+        setTimeout(function() {
+            const quillInstance = getQuillInstance();
+            if (quillInstance) {
+                window.quill = quillInstance;
+                
+                // Customize Quill color palette with brand colors
+                customizeQuillColorPalette();
+            }
+        }, 500);
+    });
+    
+    // Function to customize Quill's color palette with brand colors
+    function customizeQuillColorPalette() {
+        // Define custom color palette with Inclusive World brand colors
+        const brandColors = [
+            // Primary Brand Colors
+            '#7F4857',  // Berry (primary headers)
+            '#00494F',  // Blue Peacock (secondary headers)
+            '#008B9C',  // Splashy Aqua (links, accents)
+            '#404040',  // Black Olive (body text)
+            '#595959',  // Davys Grey (muted text)
+            
+            // Accent Colors
+            '#E97568',  // Ardent Coral
+            '#F6D18B',  // Afterglow Yellow
+            '#F2ACA4',  // Mauvelous Pink
+            '#D5BBC2',  // Pale Silver Pink
+            
+            // Additional Standard Colors
+            '#000000',  // Black
+            '#FFFFFF',  // White
+            '#F2F2F2',  // Anti-flash White
+        ];
+        
+        // Inject custom color palette into Quill toolbar
+        const style = document.createElement('style');
+        style.innerHTML = `
+            /* Custom color picker with brand colors */
+            .ql-snow .ql-color-picker .ql-picker-options [data-value]:not([data-value=""]) {
+                display: none;
+            }
+            .ql-snow .ql-background-picker .ql-picker-options [data-value]:not([data-value=""]) {
+                display: none;
+            }
+        `;
+        document.head.appendChild(style);
+        
+        // Add brand color swatches to color and background pickers
+        setTimeout(function() {
+            const colorPicker = document.querySelector('.ql-color .ql-picker-options');
+            const backgroundPicker = document.querySelector('.ql-background .ql-picker-options');
+            
+            if (colorPicker) {
+                // Clear existing colors
+                colorPicker.innerHTML = '<span class="ql-picker-item" data-value="" aria-label="Default"></span>';
+                
+                // Add brand colors
+                brandColors.forEach(color => {
+                    const item = document.createElement('span');
+                    item.classList.add('ql-picker-item');
+                    item.setAttribute('data-value', color);
+                    item.style.backgroundColor = color;
+                    item.setAttribute('aria-label', color);
+                    colorPicker.appendChild(item);
+                });
+            }
+            
+            if (backgroundPicker) {
+                // Clear existing colors
+                backgroundPicker.innerHTML = '<span class="ql-picker-item" data-value="" aria-label="No background"></span>';
+                
+                // Add brand colors (lighter variants work better for backgrounds)
+                const backgroundColors = [
+                    '#F2F2F2',  // Anti-flash White
+                    '#FFF1C2',  // Light Yellow
+                    '#FDD2CF',  // Light Red
+                    '#CCE6FF',  // Light Blue
+                    '#B8E9B2',  // Light Green
+                    '#D5BBC2',  // Pale Silver Pink
+                    '#F2ACA4',  // Mauvelous Pink
+                    '#F6D18B',  // Afterglow Yellow
+                ];
+                
+                backgroundColors.forEach(color => {
+                    const item = document.createElement('span');
+                    item.classList.add('ql-picker-item');
+                    item.setAttribute('data-value', color);
+                    item.style.backgroundColor = color;
+                    item.setAttribute('aria-label', color);
+                    backgroundPicker.appendChild(item);
+                });
+            }
+        }, 600);
+    }
+    
+    // Export management functions
+    document.addEventListener('DOMContentLoaded', function() {
+        // Get CSRF token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        
+        // Track the previously selected radio button to allow deselection
+        let previouslySelected = null;
+        
+        // Find initially selected radio
+        document.querySelectorAll('.active-radio').forEach(radio => {
+            if (radio.checked) {
+                previouslySelected = radio;
+            }
+        });
+        
+        // Handle radio button clicks for active export selection
+        // Using 'click' instead of 'change' to detect clicks on already-selected radios
+        document.querySelectorAll('.active-radio').forEach(radio => {
+            radio.addEventListener('click', function(e) {
+                const exportId = this.getAttribute('data-export-id');
+                
+                // Check if clicking the already-selected radio (to deselect)
+                if (previouslySelected === this && this.checked) {
+                    // Prevent default to manually handle the state
+                    e.preventDefault();
+                    
+                    // Uncheck the radio
+                    this.checked = false;
+                    previouslySelected = null;
+                    
+                    // Disable all radios during the request
+                    document.querySelectorAll('.active-radio').forEach(r => r.disabled = true);
+                    
+                    // Call backend to deactivate
+                    fetch(`/users/documents/exports/${exportId}/toggle-active/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken
+                        },
+                        credentials: 'same-origin'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Reload page to show updated status
+                            location.reload();
+                        } else {
+                            alert(data.error || 'Failed to update active status.');
+                            document.querySelectorAll('.active-radio').forEach(r => r.disabled = false);
+                            location.reload();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                        document.querySelectorAll('.active-radio').forEach(r => r.disabled = false);
+                        location.reload();
+                    });
+                } else if (this.checked) {
+                    // Selecting a new radio (or re-selecting after deselect)
+                    previouslySelected = this;
+                    
+                    // Disable all radios during the request
+                    document.querySelectorAll('.active-radio').forEach(r => r.disabled = true);
+                    
+                    fetch(`/users/documents/exports/${exportId}/toggle-active/`, {
+                        method: 'POST',
+                        headers: {
+                            'X-CSRFToken': csrfToken
+                        },
+                        credentials: 'same-origin'
+                    })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            // Reload page to show updated active status
+                            location.reload();
+                        } else {
+                            alert(data.error || 'Failed to update active status.');
+                            // Re-enable radios and revert selection
+                            document.querySelectorAll('.active-radio').forEach(r => r.disabled = false);
+                            location.reload();
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('An error occurred. Please try again.');
+                        // Re-enable radios and revert selection
+                        document.querySelectorAll('.active-radio').forEach(r => r.disabled = false);
+                        location.reload();
+                    });
+                }
+            });
+        });
+        
+        // Handle delete export buttons
+        document.querySelectorAll('.delete-export-btn').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const exportId = this.getAttribute('data-export-id');
+                
+                if (!confirm('Are you sure you want to delete this export? This action cannot be undone.')) {
+                    return;
+                }
+                
+                const originalHTML = this.innerHTML;
+                this.disabled = true;
+                this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
+                
+                fetch(`/users/documents/exports/${exportId}/delete/`, {
+                    method: 'POST',
+                    headers: {
+                        'X-CSRFToken': csrfToken
+                    },
+                    credentials: 'same-origin'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Remove the export item from DOM
+                        this.closest('.export-item').remove();
+                        
+                        // Check if no exports left
+                        const exportItems = document.querySelectorAll('.export-item');
+                        if (exportItems.length === 0) {
+                            // Reload page to show empty state
+                            location.reload();
+                        }
+                    } else {
+                        alert(data.error || 'Failed to delete export.');
+                        this.disabled = false;
+                        this.innerHTML = originalHTML;
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred. Please try again.');
+                    this.disabled = false;
+                    this.innerHTML = originalHTML;
+                });
+            });
+        });
+        
+        // Add hover effects to icon buttons
+        document.querySelectorAll('.btn-icon').forEach(btn => {
+            btn.addEventListener('mouseenter', function() {
+                this.style.transform = 'scale(1.1)';
+                this.style.boxShadow = 'var(--shadow-md)';
+            });
+            btn.addEventListener('mouseleave', function() {
+                this.style.transform = 'scale(1)';
+                this.style.boxShadow = 'none';
+            });
+        });
+    });
+</script>
 {% endblock %}

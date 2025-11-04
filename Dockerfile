@@ -88,9 +88,17 @@ RUN apk add --no-cache \
     pango \
     gdk-pixbuf-dev \
     gdk-pixbuf \
+    fontconfig-dev \
+    fontconfig \
+    ttf-dejavu \
+    ttf-liberation \
+    font-noto \
     bash \
     curl \
     git
+
+# Configure fontconfig cache
+RUN fc-cache -fv
 
 # Create app user
 RUN addgroup -g 1000 django && \
@@ -143,9 +151,17 @@ RUN apk add --no-cache \
     cairo \
     pango \
     gdk-pixbuf \
+    fontconfig \
+    # Fonts for PDF generation
+    ttf-dejavu \
+    ttf-liberation \
+    font-noto \
     # Additional utilities
     bash \
     curl
+
+# Configure fontconfig cache
+RUN fc-cache -fv
 
 # Create app user
 RUN addgroup -g 1000 django && \

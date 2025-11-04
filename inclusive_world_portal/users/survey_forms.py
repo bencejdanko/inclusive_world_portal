@@ -116,12 +116,18 @@ class SurveySection6Form(forms.ModelForm):
 class SurveySection7Form(forms.ModelForm):
     """Section 7: Communication"""
     
-    communication_style = forms.CharField(
-        label="Communication Style",
-        required=False,
-        widget=forms.Textarea(attrs={'rows': 4, 'placeholder': 'e.g., Uses words, sign language, gestures, devices, pictures...'}),
-        help_text="Stores communication preferences: words, sign language, gestures, devices, etc."
-    )
+    # Communication style checkboxes stored as JSON
+    uses_words = forms.BooleanField(label="Uses words in English/Other Language", required=False)
+    can_initiate_conversations = forms.BooleanField(label="Can initiate conversations", required=False)
+    communicates_nonverbal = forms.BooleanField(label="Communicates without using words", required=False)
+    can_articulate_needs = forms.BooleanField(label="Can clearly articulate needs/desires", required=False)
+    uses_sign_language = forms.BooleanField(label="Uses American Sign Language/Other Sign Language", required=False)
+    needs_electronic_device = forms.BooleanField(label="Electronic device needed", required=False)
+    uses_pictures = forms.BooleanField(label="Uses pictures/picture board", required=False)
+    uses_augmented_system = forms.BooleanField(label="Uses augmented communication system", required=False)
+    uses_pointing_gesturing = forms.BooleanField(label="Uses pointing and gesturing", required=False)
+    other_language = forms.CharField(label="Other language other than English", required=False, widget=forms.TextInput(attrs={'placeholder': 'Specify language...'}))
+    communication_other = forms.CharField(label="Other communication methods", required=False, widget=forms.Textarea(attrs={'rows': 2, 'placeholder': 'Describe any other communication methods...'}))
     
     class Meta:
         model = DiscoverySurvey
@@ -131,7 +137,6 @@ class SurveySection7Form(forms.ModelForm):
             'how_communicate_happy',
             'what_makes_you_sad',
             'how_communicate_sad',
-            'communication_style',
         ]
         widgets = {
             'how_communicate_needs': forms.Textarea(attrs={'rows': 3}),
@@ -140,22 +145,61 @@ class SurveySection7Form(forms.ModelForm):
             'what_makes_you_sad': forms.Textarea(attrs={'rows': 3}),
             'how_communicate_sad': forms.Textarea(attrs={'rows': 2}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Load communication style from JSON if exists
+        if self.instance and self.instance.pk and self.instance.communication_style:
+            comm_style = self.instance.communication_style
+            if isinstance(comm_style, dict):
+                self.fields['uses_words'].initial = comm_style.get('uses_words', False)
+                self.fields['can_initiate_conversations'].initial = comm_style.get('can_initiate_conversations', False)
+                self.fields['communicates_nonverbal'].initial = comm_style.get('communicates_nonverbal', False)
+                self.fields['can_articulate_needs'].initial = comm_style.get('can_articulate_needs', False)
+                self.fields['uses_sign_language'].initial = comm_style.get('uses_sign_language', False)
+                self.fields['needs_electronic_device'].initial = comm_style.get('needs_electronic_device', False)
+                self.fields['uses_pictures'].initial = comm_style.get('uses_pictures', False)
+                self.fields['uses_augmented_system'].initial = comm_style.get('uses_augmented_system', False)
+                self.fields['uses_pointing_gesturing'].initial = comm_style.get('uses_pointing_gesturing', False)
+                self.fields['other_language'].initial = comm_style.get('other_language', '')
+                self.fields['communication_other'].initial = comm_style.get('communication_other', '')
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Save communication style as JSON
+        instance.communication_style = {
+            'uses_words': self.cleaned_data.get('uses_words', False),
+            'can_initiate_conversations': self.cleaned_data.get('can_initiate_conversations', False),
+            'communicates_nonverbal': self.cleaned_data.get('communicates_nonverbal', False),
+            'can_articulate_needs': self.cleaned_data.get('can_articulate_needs', False),
+            'uses_sign_language': self.cleaned_data.get('uses_sign_language', False),
+            'needs_electronic_device': self.cleaned_data.get('needs_electronic_device', False),
+            'uses_pictures': self.cleaned_data.get('uses_pictures', False),
+            'uses_augmented_system': self.cleaned_data.get('uses_augmented_system', False),
+            'uses_pointing_gesturing': self.cleaned_data.get('uses_pointing_gesturing', False),
+            'other_language': self.cleaned_data.get('other_language', ''),
+            'communication_other': self.cleaned_data.get('communication_other', ''),
+        }
+        if commit:
+            instance.save()
+        return instance
 
 
 class SurveySection8Form(forms.ModelForm):
     """Section 8: Learning Preferences"""
     
-    learning_style = forms.CharField(
-        label="How do you like to learn?",
-        required=False,
-        widget=forms.Textarea(attrs={'rows': 3, 'placeholder': 'e.g., Visual, auditory, kinesthetic, hands-on...'}),
-        help_text="How do you like to learn? Visual, auditory, kinesthetic, etc."
-    )
+    # Learning style checkboxes stored as JSON
+    learning_visual = forms.BooleanField(label="Visual learner (pictures, diagrams, charts)", required=False)
+    learning_auditory = forms.BooleanField(label="Auditory learner (listening, discussions)", required=False)
+    learning_kinesthetic = forms.BooleanField(label="Kinesthetic learner (hands-on, movement)", required=False)
+    learning_reading = forms.BooleanField(label="Reading/Writing learner", required=False)
+    learning_social = forms.BooleanField(label="Social learner (group work)", required=False)
+    learning_solitary = forms.BooleanField(label="Solitary learner (working alone)", required=False)
+    learning_other = forms.CharField(label="Other learning preferences", required=False, widget=forms.TextInput(attrs={'placeholder': 'Describe other learning styles...'}))
     
     class Meta:
         model = DiscoverySurvey
         fields = [
-            'learning_style',
             'working_environment_preferences',
             'virtual_learning_help',
             'supportive_devices',
@@ -165,6 +209,53 @@ class SurveySection8Form(forms.ModelForm):
             'virtual_learning_help': forms.Textarea(attrs={'rows': 3}),
             'supportive_devices': forms.Textarea(attrs={'rows': 2}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Load learning style from JSON if exists
+        if self.instance and self.instance.pk and self.instance.learning_style:
+            learn_style = self.instance.learning_style
+            if isinstance(learn_style, dict):
+                self.fields['learning_visual'].initial = learn_style.get('visual', False)
+                self.fields['learning_auditory'].initial = learn_style.get('auditory', False)
+                self.fields['learning_kinesthetic'].initial = learn_style.get('kinesthetic', False)
+                self.fields['learning_reading'].initial = learn_style.get('reading', False)
+                self.fields['learning_social'].initial = learn_style.get('social', False)
+                self.fields['learning_solitary'].initial = learn_style.get('solitary', False)
+                self.fields['learning_other'].initial = learn_style.get('other', '')
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Save learning style as JSON
+        styles = []
+        if self.cleaned_data.get('learning_visual'):
+            styles.append('visual')
+        if self.cleaned_data.get('learning_auditory'):
+            styles.append('auditory')
+        if self.cleaned_data.get('learning_kinesthetic'):
+            styles.append('kinesthetic')
+        if self.cleaned_data.get('learning_reading'):
+            styles.append('reading/writing')
+        if self.cleaned_data.get('learning_social'):
+            styles.append('social')
+        if self.cleaned_data.get('learning_solitary'):
+            styles.append('solitary')
+        
+        other = self.cleaned_data.get('learning_other', '')
+        
+        instance.learning_style = {
+            'visual': self.cleaned_data.get('learning_visual', False),
+            'auditory': self.cleaned_data.get('learning_auditory', False),
+            'kinesthetic': self.cleaned_data.get('learning_kinesthetic', False),
+            'reading': self.cleaned_data.get('learning_reading', False),
+            'social': self.cleaned_data.get('learning_social', False),
+            'solitary': self.cleaned_data.get('learning_solitary', False),
+            'other': other,
+            'summary': ', '.join(styles) + (f', {other}' if other else ''),
+        }
+        if commit:
+            instance.save()
+        return instance
 
 
 class SurveySection9Form(forms.ModelForm):
@@ -185,12 +276,13 @@ class SurveySection9Form(forms.ModelForm):
 class SurveySection10Form(forms.ModelForm):
     """Section 10: Employment & Career Goals"""
     
-    available_to_work_on = forms.CharField(
-        label="When are you available to work?",
-        required=False,
-        widget=forms.Textarea(attrs={'rows': 2, 'placeholder': 'e.g., Weekdays, weekends, mornings, afternoons...'}),
-        help_text="Days/times available for work"
-    )
+    # Availability checkboxes
+    available_weekdays = forms.BooleanField(label="Weekdays", required=False)
+    available_weekends = forms.BooleanField(label="Weekends", required=False)
+    available_mornings = forms.BooleanField(label="Mornings", required=False)
+    available_afternoons = forms.BooleanField(label="Afternoons", required=False)
+    available_evenings = forms.BooleanField(label="Evenings", required=False)
+    available_other = forms.CharField(label="Other availability", required=False, widget=forms.TextInput(attrs={'placeholder': 'Specify other times...'}))
     
     class Meta:
         model = DiscoverySurvey
@@ -199,7 +291,6 @@ class SurveySection10Form(forms.ModelForm):
             'jobs_interested_in',
             'dream_job',
             'employment_goals',
-            'available_to_work_on',
             'hours_per_week_working',
         ]
         widgets = {
@@ -209,17 +300,61 @@ class SurveySection10Form(forms.ModelForm):
             'employment_goals': forms.Textarea(attrs={'rows': 4}),
             'hours_per_week_working': forms.TextInput(attrs={'placeholder': 'e.g., 10-15 hours'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Load availability from JSON if exists
+        if self.instance and self.instance.pk and self.instance.available_to_work_on:
+            availability = self.instance.available_to_work_on
+            if isinstance(availability, dict):
+                self.fields['available_weekdays'].initial = availability.get('weekdays', False)
+                self.fields['available_weekends'].initial = availability.get('weekends', False)
+                self.fields['available_mornings'].initial = availability.get('mornings', False)
+                self.fields['available_afternoons'].initial = availability.get('afternoons', False)
+                self.fields['available_evenings'].initial = availability.get('evenings', False)
+                self.fields['available_other'].initial = availability.get('other', '')
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Save availability as JSON
+        times = []
+        if self.cleaned_data.get('available_weekdays'):
+            times.append('Weekdays')
+        if self.cleaned_data.get('available_weekends'):
+            times.append('Weekends')
+        if self.cleaned_data.get('available_mornings'):
+            times.append('Mornings')
+        if self.cleaned_data.get('available_afternoons'):
+            times.append('Afternoons')
+        if self.cleaned_data.get('available_evenings'):
+            times.append('Evenings')
+        
+        other = self.cleaned_data.get('available_other', '')
+        
+        instance.available_to_work_on = {
+            'weekdays': self.cleaned_data.get('available_weekdays', False),
+            'weekends': self.cleaned_data.get('available_weekends', False),
+            'mornings': self.cleaned_data.get('available_mornings', False),
+            'afternoons': self.cleaned_data.get('available_afternoons', False),
+            'evenings': self.cleaned_data.get('available_evenings', False),
+            'other': other,
+            'summary': ', '.join(times) + (f', {other}' if other else ''),
+        }
+        if commit:
+            instance.save()
+        return instance
 
 
 class SurveySection11Form(forms.ModelForm):
     """Section 11: Why Inclusive World & Additional Info"""
     
-    how_heard_about_us = forms.CharField(
-        label="How did you hear about us?",
-        required=False,
-        widget=forms.Textarea(attrs={'rows': 2, 'placeholder': 'e.g., Family/Friends, Social Media, Internet Search, Events...'}),
-        help_text="Sources: Family/Friends, Social Media, etc."
-    )
+    # How heard about us checkboxes
+    heard_family_friends = forms.BooleanField(label="Family/Friends", required=False)
+    heard_social_media = forms.BooleanField(label="Social Media", required=False)
+    heard_internet_search = forms.BooleanField(label="Internet Search", required=False)
+    heard_event = forms.BooleanField(label="Event/Community Activity", required=False)
+    heard_school = forms.BooleanField(label="School/Educational Institution", required=False)
+    heard_other = forms.CharField(label="Other source", required=False, widget=forms.TextInput(attrs={'placeholder': 'How else did you hear about us...'}))
     
     class Meta:
         model = DiscoverySurvey
@@ -229,7 +364,6 @@ class SurveySection11Form(forms.ModelForm):
             'community_activities_interest',
             'has_ged_or_diploma',
             'training_courses_completed',
-            'how_heard_about_us',
         ]
         widgets = {
             'why_interested_in_iw': forms.Textarea(attrs={'rows': 4}),
@@ -237,6 +371,49 @@ class SurveySection11Form(forms.ModelForm):
             'community_activities_interest': forms.Textarea(attrs={'rows': 3}),
             'training_courses_completed': forms.Textarea(attrs={'rows': 2}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Load how_heard_about_us from JSON if exists
+        if self.instance and self.instance.pk and self.instance.how_heard_about_us:
+            sources = self.instance.how_heard_about_us
+            if isinstance(sources, dict):
+                self.fields['heard_family_friends'].initial = sources.get('family_friends', False)
+                self.fields['heard_social_media'].initial = sources.get('social_media', False)
+                self.fields['heard_internet_search'].initial = sources.get('internet_search', False)
+                self.fields['heard_event'].initial = sources.get('event', False)
+                self.fields['heard_school'].initial = sources.get('school', False)
+                self.fields['heard_other'].initial = sources.get('other', '')
+    
+    def save(self, commit=True):
+        instance = super().save(commit=False)
+        # Save how_heard_about_us as JSON
+        sources = []
+        if self.cleaned_data.get('heard_family_friends'):
+            sources.append('Family/Friends')
+        if self.cleaned_data.get('heard_social_media'):
+            sources.append('Social Media')
+        if self.cleaned_data.get('heard_internet_search'):
+            sources.append('Internet Search')
+        if self.cleaned_data.get('heard_event'):
+            sources.append('Event')
+        if self.cleaned_data.get('heard_school'):
+            sources.append('School')
+        
+        other = self.cleaned_data.get('heard_other', '')
+        
+        instance.how_heard_about_us = {
+            'family_friends': self.cleaned_data.get('heard_family_friends', False),
+            'social_media': self.cleaned_data.get('heard_social_media', False),
+            'internet_search': self.cleaned_data.get('heard_internet_search', False),
+            'event': self.cleaned_data.get('heard_event', False),
+            'school': self.cleaned_data.get('heard_school', False),
+            'other': other,
+            'summary': ', '.join(sources) + (f', {other}' if other else ''),
+        }
+        if commit:
+            instance.save()
+        return instance
 
 
 class SurveySection12Form(forms.ModelForm):

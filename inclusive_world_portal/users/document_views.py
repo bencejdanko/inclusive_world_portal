@@ -1,19 +1,22 @@
 """
 Views for user document management with Quill editor.
 """
+import json
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
-from django.http import HttpResponse
+from django.http import HttpResponse, JsonResponse
 from django.shortcuts import redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.urls import reverse
+from django.views.decorators.clickjacking import xframe_options_sameorigin
 from django.utils.translation import gettext_lazy as _
 from django.views.generic import FormView
 from weasyprint import HTML, CSS
 
 from inclusive_world_portal.portal.models import Document
 from inclusive_world_portal.users.document_forms import DocumentForm
+from inclusive_world_portal.users.models import DiscoverySurvey
 
 
 class DocumentEditorView(LoginRequiredMixin, FormView):
@@ -41,6 +44,8 @@ class DocumentEditorView(LoginRequiredMixin, FormView):
         return initial
     
     def get_context_data(self, **kwargs):
+        from inclusive_world_portal.portal.models import DocumentExport
+        
         context = super().get_context_data(**kwargs)
         
         # Get the document for context
@@ -50,8 +55,19 @@ class DocumentEditorView(LoginRequiredMixin, FormView):
             defaults={'content': '', 'state': 'draft'}
         )
         
+        # Get all exports for this document, ordered by creation date (newest first)
+        exports = DocumentExport.objects.filter(
+            user=self.request.user,
+            document=document
+        ).order_by('-created_at')
+        
+        # Get the active export
+        active_export = exports.filter(is_active=True).first()
+        
         context['document'] = document
         context['document_title'] = document.title
+        context['document_exports'] = exports
+        context['active_export'] = active_export
         return context
     
     def form_valid(self, form):
@@ -86,72 +102,425 @@ document_editor_view = DocumentEditorView.as_view()
 def export_document_pdf(request):
     """
     Export the user's One Page Description document as a PDF.
+    Saves the PDF to MinIO/S3 storage and creates a DocumentExport record.
     """
     import json
+    import logging
+    from django.core.files.base import ContentFile
+    from inclusive_world_portal.portal.models import DocumentExport
+    from datetime import datetime
     
-    # Get the user's document
-    document = get_object_or_404(
-        Document,
-        user=request.user,
-        title="One Page Description"
-    )
+    logger = logging.getLogger(__name__)
     
-    # Extract HTML content from django-quill-editor format
-    # The content is stored as JSON: {"delta": {...}, "html": "..."}
     try:
-        content_data = json.loads(document.content)
-        html_content_only = content_data.get('html', '')
-    except (json.JSONDecodeError, TypeError):
-        # If it's not JSON, use as-is (fallback)
-        html_content_only = document.content
-    
-    # Create HTML for PDF - WYSIWYG style (what you see is what you get)
-    pdf_html = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="utf-8">
-        <title>{document.title}</title>
-        <style>
-            @page {{
-                size: A4;
-                margin: 2cm;
-            }}
-            body {{
-                font-family: Arial, Helvetica, sans-serif;
-                font-size: 11pt;
-                line-height: 1.6;
-                color: #000;
-            }}
-            /* Quill editor default styles for PDF */
-            h1 {{ font-size: 2em; margin: 0.67em 0; }}
-            h2 {{ font-size: 1.5em; margin: 0.75em 0; }}
-            h3 {{ font-size: 1.17em; margin: 0.83em 0; }}
-            p {{ margin: 1em 0; }}
-            strong {{ font-weight: bold; }}
-            em {{ font-style: italic; }}
-            u {{ text-decoration: underline; }}
-            a {{ color: #06c; text-decoration: underline; }}
-            ul, ol {{ margin: 1em 0; padding-left: 2em; }}
-            blockquote {{
-                border-left: 4px solid #ccc;
-                margin: 1em 0;
-                padding-left: 1em;
-                color: #666;
-            }}
-        </style>
-    </head>
-    <body>
-        {html_content_only}
-    </body>
-    </html>
+        # Get the user's document
+        document = get_object_or_404(
+            Document,
+            user=request.user,
+            title="One Page Description"
+        )
+        
+        # Extract HTML content from django-quill-editor format
+        # The content is stored as JSON: {"delta": {...}, "html": "..."}
+        try:
+            content_data = json.loads(document.content)
+            html_content_only = content_data.get('html', '')
+        except (json.JSONDecodeError, TypeError):
+            # If it's not JSON, use as-is (fallback)
+            html_content_only = document.content
+        
+        # Check if document has content
+        if not html_content_only or html_content_only.strip() == '':
+            messages.warning(request, _('Your document is empty. Please add some content before exporting.'))
+            return redirect('users:document_editor')
+        
+        # Get the logo path and font paths for embedding in PDF
+        from django.conf import settings
+        import base64
+        import os
+        
+        logo_path = os.path.join(settings.BASE_DIR, 'inclusive_world_portal', 'static', 'images', 'inclusive-world-logo.png')
+        logo_data_uri = ''
+        
+        try:
+            with open(logo_path, 'rb') as logo_file:
+                logo_base64 = base64.b64encode(logo_file.read()).decode('utf-8')
+                logo_data_uri = f'data:image/png;base64,{logo_base64}'
+        except Exception as e:
+            logger.warning(f"Could not load logo for PDF: {e}")
+        
+        # Get user's profile picture for PDF header
+        profile_picture_data_uri = ''
+        if request.user.profile_picture:
+            try:
+                # Open profile picture file and convert to base64
+                with request.user.profile_picture.open('rb') as profile_file:
+                    profile_base64 = base64.b64encode(profile_file.read()).decode('utf-8')
+                    # Detect image type (png, jpg, etc.)
+                    file_ext = request.user.profile_picture.name.split('.')[-1].lower()
+                    mime_type = 'image/jpeg' if file_ext in ['jpg', 'jpeg'] else f'image/{file_ext}'
+                    profile_picture_data_uri = f'data:{mime_type};base64,{profile_base64}'
+            except Exception as e:
+                logger.warning(f"Could not load profile picture for PDF: {e}")
+        
+        # Get font paths for Montserrat (brand font)
+        montserrat_font_path = os.path.join(settings.BASE_DIR, 'inclusive_world_portal', 'static', 'fonts', 'Montserrat-VariableFont_wght.ttf')
+        
+        # Load shared document styles (single source of truth for editor and PDF)
+        shared_styles_path = os.path.join(settings.BASE_DIR, 'inclusive_world_portal', 'templates', 'users', '_document_shared_styles.css')
+        try:
+            with open(shared_styles_path, 'r') as f:
+                shared_styles = f.read()
+                # Replace template variable with actual font path for PDF
+                shared_styles = shared_styles.replace('{{ montserrat_font_url }}', f'file://{montserrat_font_path}')
+        except Exception as e:
+            logger.warning(f"Could not load shared styles: {e}")
+            # Fallback to basic styles if shared styles file is missing
+            shared_styles = f"""
+                @font-face {{
+                    font-family: 'Montserrat';
+                    src: url('file://{montserrat_font_path}') format('truetype');
+                    font-weight: 100 900;
+                }}
+                body {{ font-family: 'Montserrat', sans-serif; font-size: 11pt; line-height: 1.6; }}
+            """
+        
+        # Create HTML for PDF with shared styles and running header on every page
+        pdf_html = f"""        <!DOCTYPE html>        <html>        <head>            <meta charset="utf-8">            <title>{document.title}</title>            <style>                /* PDF-specific page setup with running header */                @page {{                    size: A4;                    margin-top: 1.5cm;
+                    margin-bottom: 0.5cm;
+                    margin-left: 0.5cm;
+                    margin-right: 0.5cm;
+                    margin-top: 3cm;
+                    
+                    /* Display the header on every page */
+                    @top-left {{
+                        content: element(header);
+                        width: 100%;
+                    }}
+                }}
+                
+                /* Running header element - positioned at top of every page */
+                .running-header {{
+                    position: running(header);
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    padding-bottom: 0.3cm;
+                    border-bottom: 1px solid #ddd;
+                    width: 100%;
+                }}
+                
+                .running-header .logo {{
+                    max-width: 60px;
+                    height: auto;
+                }}
+                
+                .running-header .profile-picture {{
+                    max-width: 80px;
+                    max-height: 80px;
+                    width: auto;
+                    height: auto;
+                    border-radius: 4px;
+                    object-fit: cover;
+                }}
+                                
+                /* Shared document styles - single source of truth */                {shared_styles}            </style>        </head>        <body>            <!-- Running header that appears on every page -->            <div class="running-header">                <div class="logo-container">                    {'<img class="logo" src="' + logo_data_uri + '" alt="Inclusive World">' if logo_data_uri else '<div style="width:100px;"></div>'}                </div>                <div class="profile-container">                    {'<img class="profile-picture" src="' + profile_picture_data_uri + '" alt="Profile Picture">' if profile_picture_data_uri else '<div style="width:80px;"></div>'}                </div>            </div>                        <div class="pdf-content document-content">                {html_content_only}            </div>        </body>        </html>        """
+        
+        # Configure WeasyPrint with font configuration
+        try:
+            # Create font configuration for WeasyPrint
+            font_config = None
+            if os.path.exists(montserrat_font_path):
+                from weasyprint.text.fonts import FontConfiguration
+                font_config = FontConfiguration()
+            
+            # Generate PDF with explicit font configuration and presentational hints
+            # CRITICAL: presentational_hints=True preserves ALL inline styles from the editor,
+            # including colors, font sizes, and other formatting applied by users in Quill.
+            # This ensures true WYSIWYG - the PDF matches exactly what users see in the editor.
+            pdf_bytes = HTML(string=pdf_html).write_pdf(
+                presentational_hints=True,
+                font_config=font_config,
+            )
+        except Exception as pdf_error:
+            logger.error(f"PDF generation error: {pdf_error}", exc_info=True)
+            messages.error(
+                request, 
+                _('An error occurred while generating the PDF. Please try again or contact support if the problem persists.')
+            )
+            return redirect('users:document_editor')
+        
+        # Save PDF to storage (MinIO/S3 or filesystem)
+        timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        filename = f'one_page_description_{request.user.username}_{timestamp}.pdf'
+        
+        # Create new export record (NOT automatically active)
+        export = DocumentExport.objects.create(
+            user=request.user,
+            document=document,
+            is_active=False
+        )
+        
+        # Save the PDF file
+        export.file.save(filename, ContentFile(pdf_bytes), save=True)
+        
+        logger.info(f"Successfully created PDF export {export.export_id} for user {request.user.username}")
+        messages.success(
+            request,
+            _('Document exported successfully! Select the radio button to set it as your active OPD.')
+        )
+        return redirect('users:document_editor')
+        
+    except Exception as e:
+        logger.error(f"Unexpected error in PDF export: {e}", exc_info=True)
+        messages.error(
+            request,
+            _('An unexpected error occurred. Please try again later.')
+        )
+        return redirect('users:document_editor')
+
+
+@login_required
+def autogenerate_document_from_survey(request):
     """
+    Generate One Page Profile document from Discovery Survey responses.
+    Returns JSON with the generated HTML content.
+    """
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
     
-    # Generate PDF
-    pdf = HTML(string=pdf_html).write_pdf()
+    try:
+        # Get the user's discovery survey
+        survey = get_object_or_404(DiscoverySurvey, user=request.user)
+        
+        # Get template context from survey
+        context = survey.get_template_context()
+        
+        # Generate HTML content for One Page Profile
+        html_content = generate_one_page_profile_html(context)
+        
+        return JsonResponse({
+            'success': True,
+            'html': html_content,
+            'message': 'Document template generated successfully!'
+        })
+        
+    except DiscoverySurvey.DoesNotExist:
+        return JsonResponse({
+            'success': False,
+            'error': 'Please complete the Discovery Survey first before generating your profile.'
+        }, status=400)
+    except Exception as e:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"Error generating document from survey: {e}", exc_info=True)
+        return JsonResponse({
+            'success': False,
+            'error': 'An error occurred while generating the document. Please try again.'
+        }, status=500)
+
+
+def generate_one_page_profile_html(context):
+    """
+    Generate HTML content for One Page Profile based on survey data.
+    Applies brand colors: Berry (#7F4857) for H1/H2, Blue Peacock (#00494F) for H3.
+    Note: No blank lines between elements to prevent Quill from creating empty paragraphs.
+    """
+    # Extract data from context with fallbacks for empty values
+    fname = context.get('fname', '')
+    lname = context.get('lname', '')
     
-    # Create response
-    response = HttpResponse(pdf, content_type='application/pdf')
-    response['Content-Disposition'] = f'attachment; filename="one_page_description_{request.user.username}.pdf"'
+    # Brand colors: Berry for primary headers, Blue Peacock for secondary
+    # IMPORTANT: No blank lines between HTML elements to avoid extra spacing in Quill editor
+    html = f"""<h1><span style="color: #7F4857;">Name: {fname} {lname}</span></h1><h2><span style="color: #7F4857;">One Page Profile</span></h2><h3><span style="color: #00494F;">What people appreciate about me / What people like and admire about me</span></h3><p>{context.get('about_you_great_things') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">What is important to me</span></h3><h4>Who are the people that you are closest to?</h4><p>{context.get('about_you_who_is_on_your_team') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">Things I Like to Do</span></h3><h4>Hobbies:</h4><p>{context.get('hobbies') or '<em>Not provided</em>'}</p><h4>Activities:</h4><p>{context.get('activities') or '<em>Not provided</em>'}</p><h4>Entertainment:</h4><p>{context.get('entertainment') or '<em>Not provided</em>'}</p><h4>Food:</h4><p>{context.get('food') or '<em>Not provided</em>'}</p><h4>Favorite People:</h4><p>{context.get('favorite_people') or '<em>Not provided</em>'}</p><h4>Favorite Outings:</h4><p>{context.get('favorite_outings') or '<em>Not provided</em>'}</p><h4>Routines and Rituals:</h4><p>{context.get('routines_and_rituals') or '<em>Not provided</em>'}</p><h4>Good Day / Bad Day:</h4><p>{context.get('good_day_bad_day') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">What are your hopes and dreams?</span></h3><p>{context.get('hopes_and_dreams', context.get('goals_and_expectations', '<em>Not provided</em>'))}</p><h4>What do you think is important TO you?</h4><p>{context.get('important_to_you') or '<em>Not provided</em>'}</p><h4>What do you think is important FOR you?</h4><p>{context.get('important_for_you') or '<em>Not provided</em>'}</p><h4>Your perfect day? What would you do from the time you wake up until you go to bed?</h4><p>{context.get('perfect_day_description') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">Learning and Growth</span></h3><h4>Do you have any specific desired areas of growth?</h4><p>{context.get('desired_growth_areas') or '<em>Not provided</em>'}</p><h4>What skills would you like to develop?</h4><p>{context.get('skills_to_develop') or '<em>Not provided</em>'}</p><h4>What new things would you like to learn?</h4><p>{context.get('about_you_things_you_want_to_learn') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">School Experience</span></h3><h4>What have you learned at school that you liked?</h4><p>{context.get('about_you_learned_at_school_liked') or '<em>Not provided</em>'}</p><h4>What have you learned at school that you didn't like?</h4><p>{context.get('about_you_learned_at_school_didnt_like') or '<em>Not provided</em>'}</p><h4>What are 3 ways your IEP is working for you?</h4><p>{context.get('about_you_iep_working') or '<em>Not provided</em>'}</p><h4>What are 3 ways your IEP isn't working for you?</h4><p>{context.get('about_you_iep_not_working') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">Communication</span></h3><h4>How do you ordinarily communicate your needs?</h4><p>{context.get('how_communicate_needs') or '<em>Not provided</em>'}</p><h4>What makes you happy?</h4><p>{context.get('about_you_happy') or '<em>Not provided</em>'}</p><h4>How do you communicate that?</h4><p>{context.get('how_communicate_happy') or '<em>Not provided</em>'}</p><h4>What makes you sad/mad/frustrated?</h4><p>{context.get('about_you_sad') or '<em>Not provided</em>'}</p><h4>How do you communicate that?</h4><p>{context.get('how_communicate_sad') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">Why I am interested in Inclusive World</span></h3><p>{context.get('why_are_you_interested') or '<em>Not provided</em>'}</p><h4>Goals and Expectations:</h4><p>{context.get('goals_and_expectations') or '<em>Not provided</em>'}</p><h4>Community Activities you heard about, haven't tried, but would like to learn more about?</h4><p>{context.get('community_activities_interest') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">Volunteering/Jobs Experience</span></h3><p>{context.get('about_you_jobs') or '<em>Not provided</em>'}</p><h4>What are your employment goals?</h4><p>{context.get('employment_goals') or '<em>Not provided</em>'}</p><h4>Volunteering/Jobs Interest:</h4><p>{context.get('jobs_interested_in') or '<em>Not provided</em>'} during {context.get('available_to_work_on') or '<em>Not provided</em>'} for {context.get('hours_per_week_working') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">How to support me</span></h3><h4>I am a {context.get('about_you_how_to_learn') or '<em>___</em>'} learner</h4><p>{context.get('about_your_working_environment') or '<em>Not provided</em>'}</p><h4>Virtual learning help:</h4><p>{context.get('virtual_learning_help') or '<em>Not provided</em>'}</p><h4>Supportive devices:</h4><p>{context.get('supportive_devices') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">Education & Training</span></h3><p><strong>Has GED or High School Diploma:</strong> {context.get('has_ged_or_diploma') or '<em>Not specified</em>'}</p><h4>Training courses completed or certifications:</h4><p>{context.get('training_courses_completed') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">My Vision of the Future</span></h3><h4>What is your dream job?</h4><p>{context.get('dream_job') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">Communication Style</span></h3><p><strong>Uses words in English/Other Language:</strong> {context.get('communication_uses_words') or '<em>Not specified</em>'}</p><p><strong>Can initiate conversations:</strong> {context.get('communication_initiate') or '<em>Not specified</em>'}</p><p><strong>Communicates without using words:</strong> {context.get('communication_nonverbal') or '<em>Not specified</em>'}</p><p><strong>Can clearly articulate needs/desires:</strong> {context.get('communication_articulate') or '<em>Not specified</em>'}</p><p><strong>American Sign Language/Other Sign Language:</strong> {context.get('communication_sign') or '<em>Not specified</em>'}</p><p><strong>Electronic device needed:</strong> {context.get('communication_device') or '<em>Not specified</em>'}</p><p><strong>Through pictures/picture board:</strong> {context.get('communication_pictures') or '<em>Not specified</em>'}</p><p><strong>Augmented System:</strong> {context.get('communication_augmented') or '<em>Not specified</em>'}</p><p><strong>Pointing and Gestering:</strong> {context.get('communication_gestures') or '<em>Not specified</em>'}</p><p><strong>Other language other than English:</strong> {context.get('communication_other_language') or '<em>Not specified</em>'}</p><h3><span style="color: #00494F;">Characteristics that I like in people I work with (preferred)</span></h3><h4>What would you like in a staff? Ideal Person?</h4><p>{context.get('ideal_staff_characteristics') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">Characteristics that I dislike in people I work with</span></h3><h4>What would you not like to have in a staff?</h4><p>{context.get('disliked_staff_characteristics') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">Day Program Recommendations</span></h3><p><em>Summarize areas they would like support in:</em></p><p>{context.get('day_program_recommendations') or '<em>Not provided</em>'}</p><h3><span style="color: #00494F;">Support Information (For Staff)</span></h3><h4>Risk Factors or Important Considerations:</h4><p>{context.get('risk_factors') or '<em>Not provided</em>'}</p>"""
     
-    return response
+    # Return without calling strip() to preserve the exact HTML structure
+    return html
+
+
+# -------------------------
+# Document Export Management Views
+# -------------------------
+
+@login_required
+def preview_document_export(request, export_id):
+    """
+    Preview a specific document export PDF within the portal layout.
+    Renders a template with embedded PDF viewer.
+    """
+    from inclusive_world_portal.portal.models import DocumentExport
+    from django.shortcuts import render
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get the export, ensuring it belongs to the current user
+        export = get_object_or_404(
+            DocumentExport,
+            export_id=export_id,
+            user=request.user
+        )
+        
+        logger.info(f"User {request.user.username} previewed export {export_id}")
+        
+        return render(request, 'users/document_preview.html', {
+            'export': export,
+        })
+        
+    except Exception as e:
+        logger.error(f"Error previewing export {export_id}: {e}", exc_info=True)
+        messages.error(request, _('Could not preview the file. Please try again.'))
+        return redirect('users:document_editor')
+
+
+@login_required
+@xframe_options_sameorigin
+def preview_document_export_pdf(request, export_id):
+    """
+    Serve the actual PDF file for embedding in the preview page.
+    Uses Content-Disposition: inline to display in browser's PDF viewer.
+    Allows embedding within same origin using X-Frame-Options: SAMEORIGIN.
+    """
+    from inclusive_world_portal.portal.models import DocumentExport
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get the export, ensuring it belongs to the current user
+        export = get_object_or_404(
+            DocumentExport,
+            export_id=export_id,
+            user=request.user
+        )
+        
+        # Serve the file inline for browser preview
+        response = HttpResponse(export.file.read(), content_type='application/pdf')
+        response['Content-Disposition'] = f'inline; filename="{export.get_filename()}"'
+        
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error serving PDF for preview {export_id}: {e}", exc_info=True)
+        messages.error(request, _('Could not load the PDF. Please try again.'))
+        return redirect('users:document_editor')
+
+
+@login_required
+def download_document_export(request, export_id):
+    """
+    Download a specific document export PDF.
+    """
+    from inclusive_world_portal.portal.models import DocumentExport
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    try:
+        # Get the export, ensuring it belongs to the current user
+        export = get_object_or_404(
+            DocumentExport,
+            export_id=export_id,
+            user=request.user
+        )
+        
+        # Serve the file
+        response = HttpResponse(export.file.read(), content_type='application/pdf')
+        response['Content-Disposition'] = f'attachment; filename="{export.get_filename()}"'
+        
+        logger.info(f"User {request.user.username} downloaded export {export_id}")
+        return response
+        
+    except Exception as e:
+        logger.error(f"Error downloading export {export_id}: {e}", exc_info=True)
+        messages.error(request, _('Could not download the file. Please try again.'))
+        return redirect('users:document_editor')
+
+
+@login_required
+def delete_document_export(request, export_id):
+    """
+    Delete a document export record and file.
+    """
+    from inclusive_world_portal.portal.models import DocumentExport
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        # Get the export, ensuring it belongs to the current user
+        export = get_object_or_404(
+            DocumentExport,
+            export_id=export_id,
+            user=request.user
+        )
+        
+        # Delete the file from storage
+        if export.file:
+            export.file.delete(save=False)
+        
+        # Delete the record
+        export.delete()
+        
+        logger.info(f"User {request.user.username} deleted export {export_id}")
+        messages.success(request, _('Export deleted successfully.'))
+        return JsonResponse({'success': True})
+        
+    except Exception as e:
+        logger.error(f"Error deleting export {export_id}: {e}", exc_info=True)
+        return JsonResponse({'error': 'Could not delete the export'}, status=500)
+
+
+@login_required
+def toggle_active_export(request, export_id):
+    """
+    Toggle which export is marked as active (current OPD).
+    If the export is already active, deactivate it.
+    If it's not active, activate it and deactivate all others.
+    """
+    from inclusive_world_portal.portal.models import DocumentExport
+    import logging
+    
+    logger = logging.getLogger(__name__)
+    
+    if request.method != 'POST':
+        return JsonResponse({'error': 'Method not allowed'}, status=405)
+    
+    try:
+        # Get the export, ensuring it belongs to the current user
+        export = get_object_or_404(
+            DocumentExport,
+            export_id=export_id,
+            user=request.user
+        )
+        
+        # Check if this export is already active
+        if export.is_active:
+            # Deactivate it
+            export.is_active = False
+            export.save()
+            logger.info(f"User {request.user.username} deactivated export {export_id}")
+            messages.success(request, _('Active OPD cleared. No OPD is currently active.'))
+            return JsonResponse({'success': True, 'action': 'deactivated'})
+        else:
+            # Deactivate all other exports for this user and document
+            DocumentExport.objects.filter(
+                user=request.user,
+                document=export.document
+            ).exclude(export_id=export_id).update(is_active=False)
+            
+            # Activate this one
+            export.is_active = True
+            export.save()
+            
+            logger.info(f"User {request.user.username} set export {export_id} as active")
+            messages.success(request, _('Active OPD updated successfully.'))
+            return JsonResponse({'success': True, 'action': 'activated'})
+        
+    except Exception as e:
+        logger.error(f"Error toggling active export {export_id}: {e}", exc_info=True)
+        return JsonResponse({'error': 'Could not update active status'}, status=500)

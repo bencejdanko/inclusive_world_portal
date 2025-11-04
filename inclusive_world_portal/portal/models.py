@@ -345,3 +345,66 @@ class Document(models.Model):
 
     def __str__(self):
         return f"{self.title} - {self.user.username}"
+
+
+class DocumentExport(models.Model):
+    """
+    Tracks PDF exports of documents.
+    Stores the exported PDF file and metadata.
+    Users can have multiple exports and toggle which one is "active".
+    
+    Storage Configuration:
+    - By default, uses Django's default file storage (STORAGES["default"])
+    - For production with S3/MinIO, configure in settings:
+        STORAGES = {
+            "default": {
+                "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+                "OPTIONS": {
+                    "access_key": env("AWS_ACCESS_KEY_ID"),
+                    "secret_key": env("AWS_SECRET_ACCESS_KEY"),
+                    "bucket_name": env("AWS_STORAGE_BUCKET_NAME"),
+                    "endpoint_url": env("AWS_S3_ENDPOINT_URL"),  # For MinIO
+                    "region_name": env("AWS_S3_REGION_NAME", default="us-east-1"),
+                },
+            },
+        }
+    - Install: pip install django-storages boto3
+    """
+    export_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="document_exports"
+    )
+    document = models.ForeignKey(
+        Document,
+        on_delete=models.CASCADE,
+        related_name="exports"
+    )
+    # File stored in media/document_exports/<user_id>/<filename>
+    file = models.FileField(
+        upload_to='document_exports/%Y/%m/%d/',
+        help_text="PDF file of the document export"
+    )
+    is_active = models.BooleanField(
+        default=False,
+        help_text="Whether this is the currently active OPD for the user"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['user', 'is_active']),
+            models.Index(fields=['document', '-created_at']),
+        ]
+    
+    def __str__(self):
+        active_status = " (Active)" if self.is_active else ""
+        return f"{self.document.title} - {self.user.username} - {self.created_at.strftime('%Y-%m-%d %H:%M')}{active_status}"
+    
+    def get_filename(self):
+        """Return a user-friendly filename for download."""
+        import os
+        return os.path.basename(self.file.name)

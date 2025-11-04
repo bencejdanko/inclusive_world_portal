@@ -3,7 +3,16 @@ from django.urls import path
 from .views import user_detail_view
 from .views import user_redirect_view
 from .views import user_update_view
-from .document_views import document_editor_view, export_document_pdf
+from .document_views import (
+    document_editor_view, 
+    export_document_pdf, 
+    autogenerate_document_from_survey,
+    preview_document_export,
+    preview_document_export_pdf,
+    download_document_export,
+    delete_document_export,
+    toggle_active_export,
+)
 from .survey_views import (
     SurveyStartView,
     SurveySection1View,
@@ -45,6 +54,14 @@ urlpatterns = [
     # Document Editor
     path("documents/editor/", view=document_editor_view, name="document_editor"),
     path("documents/export-pdf/", view=export_document_pdf, name="export_document_pdf"),
+    path("documents/autogenerate/", view=autogenerate_document_from_survey, name="autogenerate_document"),
+    
+    # Document Export Management
+    path("documents/exports/<uuid:export_id>/preview/", view=preview_document_export, name="preview_document_export"),
+    path("documents/exports/<uuid:export_id>/preview/pdf/", view=preview_document_export_pdf, name="preview_document_export_pdf"),
+    path("documents/exports/<uuid:export_id>/download/", view=download_document_export, name="download_document_export"),
+    path("documents/exports/<uuid:export_id>/delete/", view=delete_document_export, name="delete_document_export"),
+    path("documents/exports/<uuid:export_id>/toggle-active/", view=toggle_active_export, name="toggle_active_export"),
     
     # Discovery Survey URLs
     path("survey/start/", SurveyStartView.as_view(), name="survey_start"),

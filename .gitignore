@@ -66,9 +66,6 @@ celerybeat-schedule
 .venv
 venv/
 ENV/
-.env
-.env.*
-!.env.docker.example
 
 # Rope project settings
 .ropeproject

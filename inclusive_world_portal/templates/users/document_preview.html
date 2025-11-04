@@ -1,0 +1,180 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}Preview: {{ export.get_filename }}{% endblock %}
+
+{% block page_title %}Document Preview{% endblock %}
+
+{% block css %}
+{{ block.super }}
+<style>
+    /* Preview container styles */
+    .preview-container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+    
+    .preview-card {
+        background-color: var(--color-card-bg);
+        border-radius: var(--radius-xl);
+        box-shadow: var(--shadow-lg);
+        padding: var(--space-lg);
+        margin-bottom: var(--space-lg);
+    }
+    
+    .preview-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: var(--space-lg);
+        padding-bottom: var(--space-lg);
+        border-bottom: 2px solid var(--color-border);
+    }
+    
+    .preview-title {
+        display: flex;
+        align-items: center;
+        gap: var(--space-md);
+        color: var(--color-brand-blue-peacock);
+    }
+    
+    .preview-title i {
+        font-size: 1.5rem;
+    }
+    
+    .preview-title h2 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+    
+    .preview-actions {
+        display: flex;
+        gap: var(--space-sm);
+    }
+    
+    .action-btn {
+        padding: 0.625rem 1.25rem;
+        border: none;
+        border-radius: var(--radius-lg);
+        cursor: pointer;
+        font-family: var(--font-sans);
+        font-size: 0.9375rem;
+        font-weight: 600;
+        transition: all 0.2s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: var(--space-sm);
+        white-space: nowrap;
+    }
+    
+    .action-btn-primary {
+        background-color: var(--color-brand-blue-peacock);
+        color: white;
+    }
+    
+    .action-btn-primary:hover {
+        background-color: var(--color-dark-blue-peacock);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .action-btn-secondary {
+        background-color: var(--color-brand-splashy-aqua);
+        color: white;
+    }
+    
+    .action-btn-secondary:hover {
+        background-color: #006A78;
+        color: white;
+        text-decoration: none;
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+    }
+    
+    .pdf-viewer-wrapper {
+        width: 100%;
+        background: var(--color-background);
+        border-radius: var(--radius-lg);
+        overflow: hidden;
+        border: 2px solid var(--color-border);
+        min-height: 800px;
+    }
+    
+    .pdf-viewer-wrapper embed,
+    .pdf-viewer-wrapper iframe {
+        width: 100%;
+        height: 800px;
+        border: none;
+        display: block;
+    }
+    
+    .info-banner i {
+        font-size: 1.25rem;
+    }
+    
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+        .preview-header {
+            flex-direction: column;
+            align-items: flex-start;
+            gap: var(--space-md);
+        }
+        
+        .preview-actions {
+            width: 100%;
+            flex-direction: column;
+        }
+        
+        .action-btn {
+            width: 100%;
+            justify-content: center;
+        }
+        
+        .pdf-viewer-wrapper embed,
+        .pdf-viewer-wrapper iframe {
+            height: 600px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="preview-container">
+    <div class="preview-card">
+        <div class="preview-header">
+            <div class="preview-title">
+                <i class="bi bi-file-earmark-pdf-fill"></i>
+                <div>
+                    <h2>{{ export.get_filename }}</h2>
+                    <div style="font-size: 0.875rem; color: var(--color-muted-foreground); margin-top: var(--space-xs);">
+                        Created: {{ export.created_at|date:"F j, Y g:i A" }}
+                        {% if export.is_active %}
+                        <span style="color: var(--color-brand-splashy-aqua); font-weight: 600; margin-left: var(--space-sm);">
+                            <i class="bi bi-check-circle-fill"></i> Active OPD
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+            
+            <div class="preview-actions">
+                <a href="{% url 'users:document_editor' %}" class="action-btn action-btn-primary">
+                    <i class="bi bi-pencil-fill"></i>
+                    <span>Back to Editor</span>
+                </a>
+            </div>
+        </div>
+        
+        <div class="pdf-viewer-wrapper">
+            <embed src="{% url 'users:preview_document_export_pdf' export.export_id %}" 
+                   type="application/pdf" 
+                   width="100%" 
+                   height="800">
+        </div>
+    </div>
+</div>
+{% endblock %}

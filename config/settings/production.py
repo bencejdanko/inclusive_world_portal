@@ -72,14 +72,8 @@ SECURE_CONTENT_TYPE_NOSNIFF = env.bool(
 
 # STATIC & MEDIA
 # ------------------------
-STORAGES = {
-    "default": {
-        "BACKEND": "django.core.files.storage.FileSystemStorage",
-    },
-    "staticfiles": {
-        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
-    },
-}
+# STORAGES configuration is now in base.py and controlled by USE_S3 environment variable
+# In production, set USE_S3=true in .env.docker along with AWS/MinIO credentials
 
 # EMAIL
 # ------------------------------------------------------------------------------

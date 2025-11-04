@@ -313,14 +313,25 @@ class DiscoverySurvey(models.Model):
             'about_you_things_you_like_to_do': f"{self.hobbies}\n{self.activities}\n{self.entertainment}",
             'hobbies': self.hobbies,
             'activities': self.activities,
+            'entertainment': self.entertainment,
             'food': self.favorite_food,
             'favorite_people': self.favorite_people,
             'favorite_outings': self.favorite_outings,
             'routines_and_rituals': self.routines_and_rituals,
             'good_day_bad_day': f"Good Day: {self.good_day_description}\nBad Day: {self.bad_day_description}",
             
+            # Perfect Day
+            'perfect_day_description': self.perfect_day_description,
+            
+            # Hopes and Dreams
+            'hopes_and_dreams': self.hopes_and_dreams,
+            'important_to_you': self.important_to_you,
+            'important_for_you': self.important_for_you,
+            
             # Learning
             'about_you_things_you_want_to_learn': self.things_want_to_learn,
+            'desired_growth_areas': self.desired_growth_areas,
+            'skills_to_develop': self.skills_to_develop,
             
             # School
             'about_you_learned_at_school_liked': self.learned_at_school_liked,
@@ -329,23 +340,134 @@ class DiscoverySurvey(models.Model):
             'about_you_iep_not_working': self.iep_not_working,
             
             # Communication
+            'how_communicate_needs': self.how_communicate_needs,
             'about_you_happy': self.what_makes_you_happy,
-            'how_do_you_communicate_that': f"Happy: {self.how_communicate_happy}\nSad: {self.how_communicate_sad}",
+            'how_communicate_happy': self.how_communicate_happy,
             'about_you_sad': self.what_makes_you_sad,
+            'how_communicate_sad': self.how_communicate_sad,
+            'how_do_you_communicate_that': f"Happy: {self.how_communicate_happy}\nSad: {self.how_communicate_sad}",
             
             # Why IW
             'why_are_you_interested': self.why_interested_in_iw,
             'goals_and_expectations': self.goals_and_expectations,
+            'community_activities_interest': self.community_activities_interest,
             
             # Employment
             'about_you_jobs': self.prior_jobs,
             'jobs_interested_in': self.jobs_interested_in,
-            'available_to_work_on': ', '.join(self.available_to_work_on) if isinstance(self.available_to_work_on, list) else self.available_to_work_on,
+            'available_to_work_on': self._get_availability_summary(),
             'hours_per_week_working': self.hours_per_week_working,
             'dream_job': self.dream_job,
+            'employment_goals': self.employment_goals,
             
             # Learning Style
-            'about_you_how_to_learn': ', '.join(self.learning_style) if isinstance(self.learning_style, list) else self.learning_style,
+            'about_you_how_to_learn': self._get_learning_style_summary(),
             'about_your_working_environment': self.working_environment_preferences,
             'virtual_learning_help': self.virtual_learning_help,
+            'supportive_devices': self.supportive_devices,
+            
+            # Staff Preferences
+            'ideal_staff_characteristics': self.ideal_staff_characteristics,
+            'disliked_staff_characteristics': self.disliked_staff_characteristics,
+            
+            # Support Needs
+            'day_program_recommendations': self.day_program_recommendations,
+            'risk_factors': self.risk_factors,
+            
+            # Education/Training
+            'has_ged_or_diploma': 'Yes' if self.has_ged_or_diploma else ('No' if self.has_ged_or_diploma is False else 'Not specified'),
+            'training_courses_completed': self.training_courses_completed,
+            
+            # Communication Style (from JSON)
+            'communication_uses_words': self._get_comm_style('uses_words'),
+            'communication_initiate': self._get_comm_style('can_initiate_conversations'),
+            'communication_nonverbal': self._get_comm_style('communicates_nonverbal'),
+            'communication_articulate': self._get_comm_style('can_articulate_needs'),
+            'communication_sign': self._get_comm_style('uses_sign_language'),
+            'communication_device': self._get_comm_style('needs_electronic_device'),
+            'communication_pictures': self._get_comm_style('uses_pictures'),
+            'communication_augmented': self._get_comm_style('uses_augmented_system'),
+            'communication_gestures': self._get_comm_style('uses_pointing_gesturing'),
+            'communication_other_language': self._get_comm_style('other_language'),
+            'communication_other': self._get_comm_style('communication_other'),
         }
+    
+    def _get_comm_style(self, key):
+        """Helper to extract communication style values from JSON."""
+        if not self.communication_style or not isinstance(self.communication_style, dict):
+            return ''
+        
+        value = self.communication_style.get(key, '')
+        
+        # Convert boolean to Yes/No
+        if isinstance(value, bool):
+            return 'Yes' if value else 'No'
+        
+        return value if value else ''
+    
+    def _get_learning_style_summary(self):
+        """Helper to extract learning style summary from JSON."""
+        if not self.learning_style or not isinstance(self.learning_style, dict):
+            return ''
+        
+        # Try to get pre-computed summary first
+        summary = self.learning_style.get('summary', '')
+        if summary:
+            return summary
+        
+        # Build summary from individual flags
+        styles = []
+        if self.learning_style.get('visual'):
+            styles.append('visual')
+        if self.learning_style.get('auditory'):
+            styles.append('auditory')
+        if self.learning_style.get('kinesthetic'):
+            styles.append('kinesthetic')
+        if self.learning_style.get('reading'):
+            styles.append('reading/writing')
+        if self.learning_style.get('social'):
+            styles.append('social')
+        if self.learning_style.get('solitary'):
+            styles.append('solitary')
+        
+        other = self.learning_style.get('other', '')
+        result = ', '.join(styles)
+        if other:
+            result += f', {other}' if result else other
+        
+        return result if result else ''
+    
+    def _get_availability_summary(self):
+        """Helper to extract availability summary from JSON."""
+        if not self.available_to_work_on:
+            return ''
+        
+        if isinstance(self.available_to_work_on, dict):
+            # Try to get pre-computed summary first
+            summary = self.available_to_work_on.get('summary', '')
+            if summary:
+                return summary
+            
+            # Build summary from individual flags
+            times = []
+            if self.available_to_work_on.get('weekdays'):
+                times.append('Weekdays')
+            if self.available_to_work_on.get('weekends'):
+                times.append('Weekends')
+            if self.available_to_work_on.get('mornings'):
+                times.append('Mornings')
+            if self.available_to_work_on.get('afternoons'):
+                times.append('Afternoons')
+            if self.available_to_work_on.get('evenings'):
+                times.append('Evenings')
+            
+            other = self.available_to_work_on.get('other', '')
+            result = ', '.join(times)
+            if other:
+                result += f', {other}' if result else other
+            
+            return result if result else ''
+        elif isinstance(self.available_to_work_on, list):
+            return ', '.join(self.available_to_work_on)
+        else:
+            return str(self.available_to_work_on)

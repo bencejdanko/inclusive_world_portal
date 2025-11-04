@@ -177,6 +177,43 @@ MEDIA_ROOT = str(APPS_DIR / "media")
 # https://docs.djangoproject.com/en/dev/ref/settings/#media-url
 MEDIA_URL = "/media/"
 
+# STORAGES
+# ------------------------------------------------------------------------------
+# https://docs.djangoproject.com/en/dev/ref/settings/#storages
+# MinIO/S3 Storage Configuration (Required)
+
+# AWS S3 / MinIO Settings
+AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
+AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
+AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", default="inclusive-world-media")
+AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default=None)  # For MinIO: http://minio:9000
+AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="us-east-1")
+AWS_S3_CUSTOM_DOMAIN = env("AWS_S3_CUSTOM_DOMAIN", default=None)
+AWS_S3_USE_SSL = env.bool("AWS_S3_USE_SSL", default=True)
+# Set URL protocol for django-storages based on USE_SSL setting
+AWS_S3_URL_PROTOCOL = "https:" if AWS_S3_USE_SSL else "http:"
+AWS_S3_SIGNATURE_VERSION = env("AWS_S3_SIGNATURE_VERSION", default="s3v4")
+AWS_S3_FILE_OVERWRITE = False
+AWS_DEFAULT_ACL = None
+AWS_QUERYSTRING_AUTH = True
+AWS_QUERYSTRING_EXPIRE = 3600  # 1 hour
+# MinIO / S3 compatibility tweaks
+# Use path-style addressing (bucket in path) which works reliably with MinIO
+AWS_S3_ADDRESSING_STYLE = env("AWS_S3_ADDRESSING_STYLE", default="path")
+# Some S3-compatible endpoints behave better with force path style enabled
+AWS_S3_FORCE_PATH_STYLE = env.bool("AWS_S3_FORCE_PATH_STYLE", default=True)
+
+# Storage backends - Always use S3/MinIO
+STORAGES = {
+    "default": {
+        "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
+    },
+    "staticfiles": {
+        "BACKEND": "whitenoise.storage.CompressedManifestStaticFilesStorage",
+    },
+}
+
+
 # TEMPLATES
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#templates
@@ -366,6 +403,51 @@ QUILL_CONFIGS = {
                 [{'list': 'ordered'}, {'list': 'bullet'}],
                 [{'indent': '-1'}, {'indent': '+1'}],
                 [{'align': []}],
+                [{'color': [
+                    # Brand Colors - Primary Palette
+                    '#7F4857',  # Berry
+                    '#00494F',  # Blue Peacock
+                    '#404040',  # Black Olive
+                    '#595959',  # Davys Grey
+                    '#F2F2F2',  # Anti-Flash White
+                    # Brand Colors - Secondary Palette (Accent)
+                    '#E97568',  # Ardent Coral
+                    '#008B9C',  # Splashy Aqua
+                    '#F6D18B',  # Afterglow Yellow
+                    '#F2ACA4',  # Mauvelous Pink
+                    '#D5BBC2',  # Pale Silver Pink
+                    # Badge Colors
+                    '#005025',  # Dark Green
+                    '#B8E9B2',  # Light Green
+                    '#8F0200',  # Dark Red
+                    '#FDD2CF',  # Light Red
+                    '#00488F',  # Dark Blue
+                    '#CCE6FF',  # Light Blue
+                    '#8A3800',  # Dark Yellow
+                    '#FFF1C2',  # Light Yellow
+                ]}, {'background': [
+                    # Brand Colors - Primary Palette
+                    '#7F4857',  # Berry
+                    '#00494F',  # Blue Peacock
+                    '#404040',  # Black Olive
+                    '#595959',  # Davys Grey
+                    '#F2F2F2',  # Anti-Flash White
+                    # Brand Colors - Secondary Palette (Accent)
+                    '#E97568',  # Ardent Coral
+                    '#008B9C',  # Splashy Aqua
+                    '#F6D18B',  # Afterglow Yellow
+                    '#F2ACA4',  # Mauvelous Pink
+                    '#D5BBC2',  # Pale Silver Pink
+                    # Badge Colors
+                    '#005025',  # Dark Green
+                    '#B8E9B2',  # Light Green
+                    '#8F0200',  # Dark Red
+                    '#FDD2CF',  # Light Red
+                    '#00488F',  # Dark Blue
+                    '#CCE6FF',  # Light Blue
+                    '#8A3800',  # Dark Yellow
+                    '#FFF1C2',  # Light Yellow
+                ]}],
                 ['link'],
                 ['clean']
             ]

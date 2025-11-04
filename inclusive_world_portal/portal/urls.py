@@ -8,15 +8,19 @@ from . import fees_views
 app_name = "portal"
 
 urlpatterns = [
-    # Program browsing and enrollment
+    # Program browsing and enrollment (members - with payment)
     path("programs/", views.program_catalog_view, name="program_catalog"),
     path("programs/<uuid:program_id>/", views.program_detail_view, name="program_detail"),
     path("programs/selection/", views.program_selection_view, name="program_selection"),
     
-    # Checkout and enrollment
+    # Checkout and enrollment (members)
     path("checkout/", views.checkout_view, name="checkout"),
     path("enrollment/process/", views.process_enrollment, name="process_enrollment"),
     path("enrollment/success/", views.enrollment_success_view, name="enrollment_success"),
+    
+    # Volunteer program enrollment (no payment required)
+    path("volunteer/programs/", views.volunteer_program_catalog_view, name="volunteer_program_catalog"),
+    path("volunteer/programs/selection/", views.volunteer_program_selection_view, name="volunteer_program_selection"),
     
     # My Programs (formerly fees)
     path("my-programs/", fees_views.fees_overview_view, name="my_programs"),

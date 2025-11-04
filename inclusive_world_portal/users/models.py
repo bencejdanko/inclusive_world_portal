@@ -104,7 +104,7 @@ class User(AbstractUser):
     @property
     def can_purchase_programs(self) -> bool:
         """
-        Check if user can purchase programs.
+        Check if user (member) can purchase programs.
         Requires both completed forms AND enrollment to be open.
         """
         # Import here to avoid circular dependency
@@ -112,6 +112,19 @@ class User(AbstractUser):
         
         enrollment_settings = EnrollmentSettings.get_settings()
         return self.forms_are_complete and enrollment_settings.enrollment_open
+    
+    @property
+    def can_register_as_volunteer(self) -> bool:
+        """
+        Check if user (volunteer) can register for programs without payment.
+        Requires both completed forms AND enrollment to be open.
+        Same logic as can_purchase_programs but for volunteers (no payment needed).
+        """
+        # Import here to avoid circular dependency
+        from inclusive_world_portal.portal.models import EnrollmentSettings
+        
+        enrollment_settings = EnrollmentSettings.get_settings()
+        return self.role == self.Role.VOLUNTEER and self.forms_are_complete and enrollment_settings.enrollment_open
 
 
 class DiscoverySurvey(models.Model):

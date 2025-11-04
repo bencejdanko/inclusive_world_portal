@@ -72,11 +72,27 @@ INTERNAL_IPS = ["127.0.0.1", "10.0.2.2"]
 # ------------------------------------------------------------------------------
 # https://django-extensions.readthedocs.io/en/latest/installation_instructions.html#configuration
 INSTALLED_APPS += ["django_extensions"]
+
+# django-hijack
+# ------------------------------------------------------------------------------
+# https://django-hijack.readthedocs.io/en/stable/
+INSTALLED_APPS += ["hijack", "hijack.contrib.admin"]
+
 # Celery
 # ------------------------------------------------------------------------------
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#task-always-eager
 CELERY_TASK_ALWAYS_EAGER = True
 # https://docs.celeryq.dev/en/stable/userguide/configuration.html#task-eager-propagates
 CELERY_TASK_EAGER_PROPAGATES = True
+
+# django-hijack configuration
+# ------------------------------------------------------------------------------
+# https://django-hijack.readthedocs.io/en/stable/configuration.html
+HIJACK_ALLOW_GET_REQUESTS = True
+HIJACK_LOGIN_REDIRECT_URL = "/users/dashboard/"
+HIJACK_LOGOUT_REDIRECT_URL = "/admin/"
+HIJACK_DISPLAY_ADMIN_BUTTON = True
+HIJACK_USE_BOOTSTRAP = True
+
 # Your stuff...
 # ------------------------------------------------------------------------------

@@ -91,35 +91,80 @@ def get_navigation_items(user):
         ]
         return nav_items
     
-    # Volunteer navigation
+    # Volunteer navigation - Same as member but without payment requirements
     elif role == 'volunteer':
-        return [
+        # Determine registration status for better UI feedback
+        from inclusive_world_portal.portal.models import EnrollmentSettings
+        
+        enrollment_settings = EnrollmentSettings.get_settings()
+        forms_complete = user.forms_are_complete
+        enrollment_open = enrollment_settings.enrollment_open
+        
+        # Volunteers can register if forms are complete and enrollment is open (no payment needed)
+        can_register = forms_complete and enrollment_open
+        
+        # Determine registration status and message
+        if can_register:
+            # Forms complete and enrollment open
+            registration_status = 'open'
+            registration_url = reverse('portal:volunteer_program_catalog')
+            registration_tooltip = _('Registration is open')
+        elif not forms_complete:
+            # Forms incomplete
+            registration_status = 'closed_forms'
+            registration_url = reverse('users:survey_start')
+            registration_tooltip = _('Complete your profile and discovery questions to register')
+        else:
+            # Forms complete but enrollment closed
+            registration_status = 'closed_season'
+            registration_url = '#'
+            registration_tooltip = enrollment_settings.closure_reason or _('Registration is currently closed')
+        
+        nav_items = [
             {
                 'label': _('Dashboard'),
-                'url': reverse('home'),
+                'url': reverse('users:volunteer_dashboard'),
                 'icon_class': 'bi bi-house-door',
             },
             {
-                'label': _('My Schedule'),
-                'url': '#',
-                'icon_class': 'bi bi-calendar',
-            },
-            {
-                'label': _('Members'),
-                'url': '#',
-                'icon_class': 'bi bi-people',
-            },
-            {
-                'label': _('Training'),
-                'url': '#',
-                'icon_class': 'bi bi-book',
+                'label': _('One Page Description'),
+                'url': reverse('users:document_editor'),
+                'icon_class': 'bi bi-file-earmark-text',
             },
             {
                 'label': _('Profile'),
-                'url': reverse('users:update'),
-                'icon_class': 'bi bi-person',
+                'url': reverse('users:detail', kwargs={'username': user.username}),
+                'icon_class': 'bi bi-person-circle',
+                'show_completion': True,
+                'is_complete': user.profile_is_complete,
+            },
+            {
+                'label': _('Discovery Questions'),
+                'url': reverse('users:survey_start'),
+                'icon_class': 'bi bi-clipboard-check',
+                'show_completion': True,
+                'is_complete': user.survey_is_complete,
+            },
+            {
+                'label': _('Registration'),
+                'url': registration_url,
+                'icon_class': 'bi bi-grid-3x3-gap',
+                'registration_status': registration_status,  # 'open', 'closed_forms', or 'closed_season'
+                'registration_tooltip': registration_tooltip,
+                'show_status_indicator': True,
+            },
+            {
+                'label': _('My Programs'),
+                'url': reverse('portal:my_programs'),
+                'icon_class': 'bi bi-layers',
+            },
+            {
+                'label': _('My Attendance'),
+                'url': '#',  # TODO: Add URL when view is created
+                'icon_class': 'bi bi-calendar-check',
             },
         ]
+        return nav_items
     
     # Person Centered Manager navigation
     elif role == 'person_centered_manager':

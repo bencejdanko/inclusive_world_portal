@@ -322,3 +322,169 @@ def enrollment_success_view(request):
     """
     context = {}
     return render(request, 'portal/enrollment_success.html', context)
+
+
+# -------------------------
+# Volunteer-specific views (no payment required)
+# -------------------------
+
+@login_required
+def volunteer_program_catalog_view(request):
+    """
+    Display catalog of available programs for volunteer enrollment.
+    Same as regular catalog but for volunteers (no payment required).
+    Only accessible to volunteers with complete profile and survey, and when enrollment is open.
+    """
+    # Check if user is a volunteer
+    if request.user.role != 'volunteer':
+        messages.error(request, "This page is only accessible to volunteers.")
+        return redirect('home')
+    
+    enrollment_settings = EnrollmentSettings.get_settings()
+    
+    # Check if forms are complete
+    if not request.user.forms_are_complete:
+        messages.warning(
+            request,
+            "Please complete your profile and discovery survey before browsing programs."
+        )
+        return redirect('users:survey_start')
+    
+    # Check if enrollment is open
+    if not enrollment_settings.enrollment_open:
+        reason = enrollment_settings.closure_reason or "Registration is currently closed."
+        messages.info(request, reason)
+        return redirect('users:volunteer_dashboard')
+    
+    # Get all active (non-archived) programs
+    programs = Program.objects.filter(archived=False).order_by('name')
+    
+    # Get user's existing enrollments to mark already enrolled programs
+    enrolled_program_ids = request.user.enrollments.values_list('program_id', flat=True)
+    
+    context = {
+        'programs': programs,
+        'enrolled_program_ids': list(enrolled_program_ids),
+        'enrollment_settings': enrollment_settings,
+        'is_volunteer': True,
+    }
+    
+    return render(request, 'portal/volunteer_program_catalog.html', context)
+
+
+@login_required
+@require_http_methods(["GET", "POST"])
+def volunteer_program_selection_view(request):
+    """
+    Handle volunteer program selection and ranking.
+    Same as regular selection but without payment processing.
+    GET: Display selection interface with selected programs from URL
+    POST: Process ranked selections and directly create enrollments
+    """
+    # Check if user is a volunteer
+    if request.user.role != 'volunteer':
+        messages.error(request, "This page is only accessible to volunteers.")
+        return redirect('home')
+    
+    enrollment_settings = EnrollmentSettings.get_settings()
+    
+    # Check forms completion
+    if not request.user.forms_are_complete:
+        messages.warning(
+            request,
+            "Please complete your profile and discovery survey before enrolling in programs."
+        )
+        return redirect('users:survey_start')
+    
+    # Check if enrollment is open
+    if not enrollment_settings.enrollment_open:
+        reason = enrollment_settings.closure_reason or "Registration is currently closed."
+        messages.info(request, reason)
+        return redirect('users:volunteer_dashboard')
+    
+    if request.method == 'POST':
+        # Get selected program IDs and their rankings from POST data
+        try:
+            selections_data = json.loads(request.POST.get('selections', '[]'))
+            
+            if not selections_data:
+                messages.error(request, "Please select at least one program.")
+                return redirect('portal:volunteer_program_catalog')
+            
+            # Validate all programs exist and are available
+            program_ids = [item['program_id'] for item in selections_data]
+            programs = Program.objects.filter(
+                program_id__in=program_ids,
+                archived=False
+            )
+            
+            if len(programs) != len(program_ids):
+                messages.error(request, "Some selected programs are no longer available.")
+                return redirect('portal:volunteer_program_catalog')
+            
+            # Create enrollments directly (no payment needed for volunteers)
+            enrollments_created = []
+            
+            for selection in selections_data:
+                program = get_object_or_404(
+                    Program,
+                    program_id=selection['program_id'],
+                    archived=False
+                )
+                
+                # Create or update enrollment
+                enrollment, created = Enrollment.objects.update_or_create(
+                    user=request.user,
+                    program=program,
+                    defaults={
+                        'status': 'pending',  # Will be reviewed by staff
+                        'preference_order': selection['rank'],
+                    }
+                )
+                enrollments_created.append(enrollment)
+            
+            messages.success(
+                request,
+                f"Successfully enrolled in {len(enrollments_created)} program(s)! "
+                "Your enrollment will be reviewed by our team."
+            )
+            
+            return redirect('users:volunteer_dashboard')
+            
+        except (json.JSONDecodeError, KeyError) as e:
+            messages.error(request, "Invalid selection data. Please try again.")
+            return redirect('portal:volunteer_program_catalog')
+    
+    # GET request - get program IDs from URL parameter
+    programs_param = request.GET.get('programs', '')
+    
+    if not programs_param:
+        messages.warning(request, "No programs selected. Please select programs first.")
+        return redirect('portal:volunteer_program_catalog')
+    
+    # Parse program IDs from comma-separated string
+    program_ids = [pid.strip() for pid in programs_param.split(',') if pid.strip()]
+    
+    if not program_ids:
+        messages.warning(request, "No programs selected. Please select programs first.")
+        return redirect('portal:volunteer_program_catalog')
+    
+    # Get program objects (maintain order from URL)
+    selected_programs = []
+    for program_id in program_ids:
+        try:
+            program = Program.objects.get(program_id=program_id, archived=False)
+            selected_programs.append(program)
+        except Program.DoesNotExist:
+            continue
+    
+    if not selected_programs:
+        messages.error(request, "Selected programs are not available.")
+        return redirect('portal:volunteer_program_catalog')
+    
+    context = {
+        'selected_programs': selected_programs,
+        'is_volunteer': True,
+    }
+    
+    return render(request, 'portal/volunteer_program_selection.html', context)

@@ -455,5 +455,12 @@ QUILL_CONFIGS = {
     }
 }
 
+# STRIPE PAYMENT SETTINGS
+# ------------------------------------------------------------------------------
+# Support both naming conventions for flexibility
+STRIPE_PUBLIC_KEY = env("STRIPE_PUBLIC_KEY", default=env("PUBLIC_STRIPE_PUBLISHABLE_KEY", default=""))
+STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY", default="")
+STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
+
 # Your stuff...
 # ------------------------------------------------------------------------------

@@ -1,0 +1,411 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}Checkout{% endblock %}
+
+{% block page_title %}Complete Your Enrollment{% endblock page_title %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  .checkout-container {
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+
+  .checkout-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-xl);
+  }
+
+  @media (max-width: 768px) {
+    .checkout-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .checkout-section {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    box-shadow: var(--shadow-md);
+  }
+
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-md);
+    border-bottom: 2px solid var(--color-border);
+  }
+
+  .section-icon {
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+  }
+
+  .section-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0;
+  }
+
+  .program-list-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .program-list-item:last-child {
+    border-bottom: none;
+  }
+
+  .program-rank {
+    background: var(--color-brand-berry);
+    color: white;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+
+  .program-info {
+    flex: 1;
+  }
+
+  .program-name {
+    font-weight: 600;
+    color: var(--color-foreground);
+    margin-bottom: 0.25rem;
+  }
+
+  .program-fee {
+    color: var(--color-muted-foreground);
+    font-size: 0.875rem;
+  }
+
+  .program-amount {
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    font-size: 1.125rem;
+  }
+
+  .total-section {
+    background: var(--color-muted);
+    padding: var(--space-lg);
+    border-radius: var(--radius-lg);
+    margin-top: var(--space-lg);
+  }
+
+  .total-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-brand-berry);
+  }
+
+  /* Stripe Elements Styling */
+  #payment-element {
+    margin: var(--space-lg) 0;
+  }
+
+  .stripe-field {
+    background: white;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-md);
+    padding: var(--space-md);
+    margin-bottom: var(--space-md);
+  }
+
+  .stripe-field:focus-within {
+    border-color: var(--color-brand-blue-peacock);
+    box-shadow: 0 0 0 3px rgba(0, 73, 79, 0.1);
+  }
+
+  #payment-message {
+    color: rgb(105, 115, 134);
+    font-size: 0.875rem;
+    line-height: 1.5;
+    margin-top: var(--space-md);
+    text-align: center;
+  }
+
+  .payment-error {
+    color: var(--color-destructive);
+    background: var(--color-badge-light-red);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    margin-top: var(--space-md);
+  }
+
+  #submit-button {
+    width: 100%;
+    background: var(--color-brand-berry);
+    color: white;
+    padding: 1rem;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 1.125rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: var(--space-lg);
+  }
+
+  #submit-button:hover:not(:disabled) {
+    background: var(--color-dark-berry);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  #submit-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  .spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    border-top-color: white;
+    animation: spin 1s ease-in-out infinite;
+  }
+
+  @keyframes spin {
+    to { transform: rotate(360deg); }
+  }
+
+  .payment-info-box {
+    background: var(--color-badge-light-blue);
+    border-left: 4px solid var(--color-badge-dark-blue);
+    padding: var(--space-md);
+    border-radius: var(--radius-md);
+    margin-bottom: var(--space-lg);
+  }
+
+  .payment-info-box i {
+    color: var(--color-badge-dark-blue);
+  }
+
+  .secure-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: var(--space-sm);
+    color: var(--color-muted-foreground);
+    font-size: 0.875rem;
+    margin-top: var(--space-md);
+  }
+
+  .secure-badge i {
+    color: var(--color-badge-dark-green);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="checkout-container">
+  <div class="checkout-grid">
+    <!-- Order Summary -->
+    <div class="checkout-section">
+      <div class="section-header">
+        <div class="section-icon">
+          <i class="bi bi-receipt"></i>
+        </div>
+        <h2 class="section-title">Your Selections</h2>
+      </div>
+
+      <div class="program-list">
+        {% for program in programs %}
+          <div class="program-list-item">
+            <div class="program-rank">{{ program.rank }}</div>
+            <div class="program-info">
+              <div class="program-name">{{ program.name }}</div>
+              <div class="program-fee">Preference #{{ program.rank }}</div>
+            </div>
+            <div class="program-amount">${{ program.fee }}</div>
+          </div>
+        {% endfor %}
+      </div>
+
+      <div class="total-section">
+        <div class="total-row">
+          <span>Total Amount</span>
+          <span>${{ total_amount }}</span>
+        </div>
+      </div>
+
+      <div class="payment-info-box mt-4">
+        <p class="mb-0">
+          <i class="bi bi-info-circle-fill me-2"></i>
+          <strong>Note:</strong> Your enrollment will be reviewed by our team. Programs are assigned based on preference order and availability.
+        </p>
+      </div>
+    </div>
+
+    <!-- Payment Form -->
+    <div class="checkout-section">
+      <div class="section-header">
+        <div class="section-icon">
+          <i class="bi bi-credit-card"></i>
+        </div>
+        <h2 class="section-title">Payment Details</h2>
+      </div>
+
+      {% if stripe_public_key and stripe_client_secret %}
+        <form id="payment-form">
+          <div id="payment-element">
+            <!-- Stripe Payment Element will be inserted here -->
+          </div>
+          
+          <button type="submit" id="submit-button">
+            <span id="button-text">Complete Enrollment</span>
+            <span id="spinner" class="spinner" style="display: none;"></span>
+          </button>
+          
+          <div id="payment-message" class="payment-error" style="display: none;"></div>
+          
+          <div class="secure-badge">
+            <i class="bi bi-shield-check"></i>
+            <span>Secure payment powered by Stripe</span>
+          </div>
+        </form>
+      {% else %}
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          <strong>Payment system not configured.</strong> Please contact support to complete your enrollment.
+        </div>
+        
+        <a href="{% url 'portal:program_catalog' %}" class="btn btn-secondary w-100">
+          <i class="bi bi-arrow-left me-2"></i>Back to Programs
+        </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+{% if stripe_public_key and stripe_client_secret %}
+<script src="https://js.stripe.com/v3/"></script>
+<script>
+  // Initialize Stripe
+  const stripe = Stripe('{{ stripe_public_key }}');
+  
+  const options = {
+    clientSecret: '{{ stripe_client_secret }}',
+    appearance: {
+      theme: 'stripe',
+      variables: {
+        colorPrimary: '#00494F',
+        colorBackground: '#ffffff',
+        colorText: '#404040',
+        colorDanger: '#dc2626',
+        fontFamily: 'system-ui, sans-serif',
+        borderRadius: '8px',
+      }
+    }
+  };
+
+  // Create and mount Payment Element
+  const elements = stripe.elements(options);
+  const paymentElement = elements.create('payment');
+  paymentElement.mount('#payment-element');
+
+  // Handle form submission
+  const form = document.getElementById('payment-form');
+  const submitButton = document.getElementById('submit-button');
+  const spinner = document.getElementById('spinner');
+  const buttonText = document.getElementById('button-text');
+  const messageContainer = document.getElementById('payment-message');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    
+    setLoading(true);
+
+    const { error } = await stripe.confirmPayment({
+      elements,
+      confirmParams: {
+        return_url: window.location.origin + '{% url "portal:enrollment_success" %}',
+      },
+      redirect: 'if_required'
+    });
+
+    if (error) {
+      // Payment failed
+      showMessage(error.message);
+      setLoading(false);
+    } else {
+      // Payment succeeded - create enrollments
+      const { paymentIntent } = await stripe.retrievePaymentIntent('{{ stripe_client_secret }}');
+      
+      if (paymentIntent.status === 'succeeded') {
+        // Send to backend to create enrollments
+        const formData = new FormData();
+        formData.append('payment_intent_id', paymentIntent.id);
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        
+        try {
+          const response = await fetch('{% url "portal:process_enrollment" %}', {
+            method: 'POST',
+            body: formData
+          });
+          
+          const data = await response.json();
+          
+          if (data.success) {
+            window.location.href = data.redirect_url;
+          } else {
+            showMessage(data.error || 'An error occurred processing your enrollment.');
+            setLoading(false);
+          }
+        } catch (err) {
+          showMessage('An error occurred processing your enrollment.');
+          setLoading(false);
+        }
+      }
+    }
+  });
+
+  function showMessage(text) {
+    messageContainer.textContent = text;
+    messageContainer.style.display = 'block';
+    setTimeout(() => {
+      messageContainer.style.display = 'none';
+    }, 5000);
+  }
+
+  function setLoading(isLoading) {
+    if (isLoading) {
+      submitButton.disabled = true;
+      spinner.style.display = 'inline-block';
+      buttonText.textContent = 'Processing...';
+    } else {
+      submitButton.disabled = false;
+      spinner.style.display = 'none';
+      buttonText.textContent = 'Complete Enrollment';
+    }
+  }
+</script>
+{% endif %}
+{% endblock %}

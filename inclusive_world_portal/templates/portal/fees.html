@@ -1,0 +1,638 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}My Fees{% endblock %}
+
+{% block page_title %}Fees & Enrolled Programs{% endblock page_title %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  /* Mobile-first responsive design */
+  .fees-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: var(--space-md);
+  }
+
+  /* Summary Cards */
+  .summary-cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-xl);
+  }
+
+  .summary-card {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-md);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-sm);
+  }
+
+  .summary-card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+    margin-bottom: var(--space-sm);
+  }
+
+  .summary-card-icon.fees {
+    background: linear-gradient(135deg, var(--color-brand-blue-peacock), var(--color-dark-blue-peacock));
+    color: white;
+  }
+
+  .summary-card-icon.paid {
+    background: linear-gradient(135deg, var(--color-badge-dark-green), #228B22);
+    color: white;
+  }
+
+  .summary-card-icon.programs {
+    background: linear-gradient(135deg, var(--color-brand-berry), var(--color-dark-berry));
+    color: white;
+  }
+
+  .summary-card-label {
+    font-size: 0.875rem;
+    color: var(--color-muted-foreground);
+    font-weight: 500;
+  }
+
+  .summary-card-value {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+  }
+
+  /* Section Headers */
+  .section-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-lg);
+    margin-top: var(--space-xl);
+  }
+
+  .section-header h2 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    margin: 0;
+  }
+
+  .section-badge {
+    background: var(--color-brand-berry);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+  }
+
+  /* Program Cards - Mobile Optimized */
+  .program-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
+  }
+
+  .program-item {
+    background: white;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+  }
+
+  .program-item:hover {
+    box-shadow: var(--shadow-xl);
+  }
+
+  .program-item-header {
+    padding: var(--space-lg);
+    background: linear-gradient(135deg, var(--color-brand-blue-peacock), var(--color-dark-blue-peacock));
+    color: white;
+    position: relative;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: var(--space-md);
+  }
+
+  .program-item-header-content {
+    flex: 1;
+  }
+
+  .program-info-link {
+    color: white;
+    font-size: 1.5rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    flex-shrink: 0;
+    opacity: 0.9;
+    padding: 0.25rem;
+  }
+
+  .program-info-link:hover {
+    opacity: 1;
+    transform: scale(1.1);
+    color: white;
+  }
+
+  .program-status-badge {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .status-approved {
+    background: var(--color-badge-dark-green);
+  }
+
+  .status-pending {
+    background: #FFA500;
+  }
+
+  .status-waitlisted {
+    background: #6C757D;
+  }
+
+  .status-rejected,
+  .status-withdrawn {
+    background: #DC3545;
+  }
+
+  .program-item-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin: 0 0 var(--space-sm) 0;
+    padding-right: 100px; /* Space for badge */
+  }
+
+  .program-item-date {
+    font-size: 0.875rem;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+  }
+
+  .program-item-body {
+    padding: var(--space-lg);
+  }
+
+  .program-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-md);
+  }
+
+  .program-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+  }
+
+  .program-info-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--color-muted-foreground);
+    font-weight: 600;
+    letter-spacing: 0.5px;
+  }
+
+  .program-info-value {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+  }
+
+  .program-description {
+    color: var(--color-muted-foreground);
+    font-size: 0.95rem;
+    line-height: 1.6;
+    margin-top: var(--space-md);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border);
+  }
+
+  /* Payment History */
+  .payment-list {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+  }
+
+  .payment-item {
+    background: white;
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-sm);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: var(--space-md);
+    flex-wrap: wrap;
+  }
+
+  .payment-item-info {
+    flex: 1;
+    min-width: 200px;
+  }
+
+  .payment-item-title {
+    font-weight: 600;
+    color: var(--color-brand-blue-peacock);
+    margin-bottom: var(--space-xs);
+  }
+
+  .payment-item-meta {
+    font-size: 0.875rem;
+    color: var(--color-muted-foreground);
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    flex-wrap: wrap;
+  }
+
+  .payment-amount {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-badge-dark-green);
+  }
+
+  .payment-status-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .payment-status-succeeded {
+    background: var(--color-badge-dark-green);
+    color: white;
+  }
+
+  .payment-status-pending {
+    background: #FFA500;
+    color: white;
+  }
+
+  .payment-status-failed {
+    background: #DC3545;
+    color: white;
+  }
+
+  /* Empty State */
+  .empty-state {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    text-align: center;
+    box-shadow: var(--shadow-md);
+  }
+
+  .empty-state-icon {
+    font-size: 4rem;
+    color: var(--color-muted);
+    margin-bottom: var(--space-lg);
+  }
+
+  .empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    margin-bottom: var(--space-sm);
+  }
+
+  .empty-state-text {
+    color: var(--color-muted-foreground);
+    margin-bottom: var(--space-lg);
+  }
+
+  .btn-primary-action {
+    background: var(--color-brand-berry);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-lg);
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    text-decoration: none;
+  }
+
+  .btn-primary-action:hover {
+    background: var(--color-dark-berry);
+    transform: translateY(-2px);
+    color: white;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .fees-container {
+      padding: var(--space-sm);
+    }
+
+    .program-info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .program-item-title {
+      padding-right: 0;
+      margin-bottom: var(--space-sm);
+    }
+
+    .program-item-header {
+      flex-direction: column;
+      gap: var(--space-sm);
+    }
+
+    .program-info-link {
+      align-self: flex-end;
+      position: absolute;
+      top: var(--space-md);
+      right: var(--space-md);
+    }
+
+    .payment-item {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+
+    .payment-amount {
+      font-size: 1.25rem;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="fees-container">
+  {% if has_enrollments %}
+    <!-- Approved Programs -->
+    {% if approved_enrollments %}
+      <div class="section-header">
+        <h2><i class="bi bi-check-circle me-2"></i>Approved Programs</h2>
+        <span class="section-badge">{{ approved_enrollments.count }}</span>
+      </div>
+
+      <div class="program-list">
+        {% for enrollment in approved_enrollments %}
+          <div class="program-item">
+            <div class="program-item-header">
+              <div class="program-item-header-content">
+                <span class="program-status-badge status-approved">
+                  <i class="bi bi-check-circle-fill me-1"></i>Approved
+                </span>
+                <h3 class="program-item-title">{{ enrollment.program.name }}</h3>
+                <div class="program-item-date">
+                  <i class="bi bi-calendar-check"></i>
+                  Enrolled: {{ enrollment.enrolled_at|date:"M d, Y" }}
+                </div>
+              </div>
+              <a href="{% url 'portal:program_detail' enrollment.program.program_id %}" class="program-info-link" title="View program details">
+                <i class="bi bi-info-circle-fill"></i>
+              </a>
+            </div>
+            <div class="program-item-body">
+              <div class="program-info-grid">
+                <div class="program-info-item">
+                  <div class="program-info-label">Fee</div>
+                  <div class="program-info-value">${{ enrollment.program.fee|floatformat:2 }}</div>
+                </div>
+                {% if enrollment.program.start_date %}
+                  <div class="program-info-item">
+                    <div class="program-info-label">Start Date</div>
+                    <div class="program-info-value">{{ enrollment.program.start_date|date:"M d, Y" }}</div>
+                  </div>
+                {% endif %}
+                {% if enrollment.program.end_date %}
+                  <div class="program-info-item">
+                    <div class="program-info-label">End Date</div>
+                    <div class="program-info-value">{{ enrollment.program.end_date|date:"M d, Y" }}</div>
+                  </div>
+                {% endif %}
+                {% if enrollment.preference_order %}
+                  <div class="program-info-item">
+                    <div class="program-info-label">Preference</div>
+                    <div class="program-info-value">#{{ enrollment.preference_order }}</div>
+                  </div>
+                {% endif %}
+              </div>
+              {% if enrollment.program.description %}
+                <div class="program-description">
+                  {{ enrollment.program.description }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Pending Programs -->
+    {% if pending_enrollments %}
+      <div class="section-header">
+        <h2><i class="bi bi-clock-history me-2"></i>Pending Review</h2>
+        <span class="section-badge">{{ pending_enrollments.count }}</span>
+      </div>
+
+      <div class="program-list">
+        {% for enrollment in pending_enrollments %}
+          <div class="program-item">
+            <div class="program-item-header" style="background: linear-gradient(135deg, #FFA500, #FF8C00);">
+              <div class="program-item-header-content">
+                <span class="program-status-badge status-pending">
+                  <i class="bi bi-clock-history me-1"></i>Pending
+                </span>
+                <h3 class="program-item-title">{{ enrollment.program.name }}</h3>
+                <div class="program-item-date">
+                  <i class="bi bi-calendar-plus"></i>
+                  Submitted: {{ enrollment.enrolled_at|date:"M d, Y" }}
+                </div>
+              </div>
+              <a href="{% url 'portal:program_detail' enrollment.program.program_id %}" class="program-info-link" title="View program details">
+                <i class="bi bi-info-circle-fill"></i>
+              </a>
+            </div>
+            <div class="program-item-body">
+              <div class="program-info-grid">
+                <div class="program-info-item">
+                  <div class="program-info-label">Fee</div>
+                  <div class="program-info-value">${{ enrollment.program.fee|floatformat:2 }}</div>
+                </div>
+                {% if enrollment.preference_order %}
+                  <div class="program-info-item">
+                    <div class="program-info-label">Preference</div>
+                    <div class="program-info-value">#{{ enrollment.preference_order }}</div>
+                  </div>
+                {% endif %}
+              </div>
+              {% if enrollment.program.description %}
+                <div class="program-description">
+                  {{ enrollment.program.description }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Waitlisted Programs -->
+    {% if waitlisted_enrollments %}
+      <div class="section-header">
+        <h2><i class="bi bi-hourglass-split me-2"></i>Waitlisted</h2>
+        <span class="section-badge">{{ waitlisted_enrollments.count }}</span>
+      </div>
+
+      <div class="program-list">
+        {% for enrollment in waitlisted_enrollments %}
+          <div class="program-item">
+            <div class="program-item-header" style="background: linear-gradient(135deg, #6C757D, #495057);">
+              <div class="program-item-header-content">
+                <span class="program-status-badge status-waitlisted">
+                  <i class="bi bi-hourglass-split me-1"></i>Waitlisted
+                </span>
+                <h3 class="program-item-title">{{ enrollment.program.name }}</h3>
+                <div class="program-item-date">
+                  <i class="bi bi-calendar"></i>
+                  Enrolled: {{ enrollment.enrolled_at|date:"M d, Y" }}
+                </div>
+              </div>
+              <a href="{% url 'portal:program_detail' enrollment.program.program_id %}" class="program-info-link" title="View program details">
+                <i class="bi bi-info-circle-fill"></i>
+              </a>
+            </div>
+            <div class="program-item-body">
+              <div class="program-info-grid">
+                <div class="program-info-item">
+                  <div class="program-info-label">Fee</div>
+                  <div class="program-info-value">${{ enrollment.program.fee|floatformat:2 }}</div>
+                </div>
+                {% if enrollment.preference_order %}
+                  <div class="program-info-item">
+                    <div class="program-info-label">Preference</div>
+                    <div class="program-info-value">#{{ enrollment.preference_order }}</div>
+                  </div>
+                {% endif %}
+              </div>
+              {% if enrollment.program.description %}
+                <div class="program-description">
+                  {{ enrollment.program.description }}
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+    <!-- Other Status Programs (Rejected/Withdrawn) -->
+    {% if other_enrollments %}
+      <div class="section-header">
+        <h2><i class="bi bi-archive me-2"></i>Other</h2>
+        <span class="section-badge">{{ other_enrollments.count }}</span>
+      </div>
+
+      <div class="program-list">
+        {% for enrollment in other_enrollments %}
+          <div class="program-item">
+            <div class="program-item-header" style="background: linear-gradient(135deg, #DC3545, #BD2130);">
+              <div class="program-item-header-content">
+                <span class="program-status-badge status-{{ enrollment.status }}">
+                  <i class="bi bi-x-circle me-1"></i>{{ enrollment.get_status_display }}
+                </span>
+                <h3 class="program-item-title">{{ enrollment.program.name }}</h3>
+                <div class="program-item-date">
+                  <i class="bi bi-calendar"></i>
+                  {{ enrollment.enrolled_at|date:"M d, Y" }}
+                </div>
+              </div>
+              <a href="{% url 'portal:program_detail' enrollment.program.program_id %}" class="program-info-link" title="View program details">
+                <i class="bi bi-info-circle-fill"></i>
+              </a>
+            </div>
+            <div class="program-item-body">
+              <div class="program-info-grid">
+                <div class="program-info-item">
+                  <div class="program-info-label">Fee</div>
+                  <div class="program-info-value">${{ enrollment.program.fee|floatformat:2 }}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <i class="bi bi-inbox"></i>
+      </div>
+      <h3 class="empty-state-title">No Programs Enrolled Yet</h3>
+      <p class="empty-state-text">
+        You haven't enrolled in any programs yet. Browse our available programs to get started!
+      </p>
+      <a href="{% url 'portal:program_catalog' %}" class="btn-primary-action">
+        <i class="bi bi-grid-3x3-gap"></i>
+        Browse Programs
+      </a>
+    </div>
+  {% endif %}
+
+  <!-- Payment History Section -->
+  {% if has_payments %}
+    <div class="section-header">
+      <h2><i class="bi bi-credit-card me-2"></i>Payment History</h2>
+      <span class="section-badge">{{ payments.count }}</span>
+    </div>
+
+    <div class="payment-list">
+      {% for payment in payments %}
+        <div class="payment-item">
+          <div class="payment-item-info">
+            <div class="payment-item-title">
+              {% if payment.program %}
+                {{ payment.program.name }}
+              {% else %}
+                Program Payment
+              {% endif %}
+            </div>
+            <div class="payment-item-meta">
+              <span><i class="bi bi-calendar3"></i> {{ payment.created_at|date:"M d, Y" }}</span>
+              <span><i class="bi bi-credit-card"></i> {{ payment.payment_method|title }}</span>
+              <span class="payment-status-badge payment-status-{{ payment.status }}">
+                {{ payment.status|title }}
+              </span>
+            </div>
+          </div>
+          <div class="payment-amount">
+            ${{ payment.amount|floatformat:2 }}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

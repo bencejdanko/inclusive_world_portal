@@ -147,7 +147,7 @@
       
       <div class="d-grid gap-3 mt-4">
         {% if can_purchase %}
-          <a href="#" class="btn-complete-primary text-center">
+          <a href="{% url 'portal:program_catalog' %}" class="btn-complete-primary text-center">
             <i class="bi bi-grid-3x3-gap me-2"></i>Browse Programs
           </a>
         {% endif %}

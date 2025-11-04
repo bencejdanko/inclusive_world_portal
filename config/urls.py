@@ -15,6 +15,9 @@ urlpatterns = [
     path("users/", include("inclusive_world_portal.users.urls", namespace="users")),
     path("accounts/", include("allauth.urls")),
     
+    # Portal - Programs and Enrollment
+    path("portal/", include("inclusive_world_portal.portal.urls", namespace="portal")),
+    
     # Your stuff: custom urls includes go here
     path("pay/checkout/", pay.create_checkout, name="checkout"),
     path("stripe/webhook/", pay.stripe_webhook, name="stripe-webhook"),

@@ -1,0 +1,353 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}Rank Your Programs{% endblock %}
+
+{% block page_title %}Rank your program selections{% endblock page_title %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  .ranking-container {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  .ranking-instructions {
+    background: linear-gradient(135deg, var(--color-brand-blue-peacock), var(--color-dark-blue-peacock));
+    color: white;
+    padding: var(--space-xl);
+    border-radius: var(--radius-xl);
+    margin-bottom: var(--space-xl);
+    text-align: center;
+  }
+
+  .ranking-instructions h4 {
+    margin-bottom: var(--space-md);
+  }
+
+  .ranking-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+
+  .ranking-item {
+    background: white;
+    border: 2px solid var(--color-border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: var(--space-sm);
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .ranking-item:hover {
+    border-color: var(--color-brand-blue-peacock);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .ranking-number {
+    background: var(--color-brand-berry);
+    color: white;
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.125rem;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .ranking-content {
+    flex: 1;
+  }
+
+  .ranking-program-name {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--color-brand-blue-peacock);
+    margin-bottom: 0.125rem;
+  }
+
+  .ranking-program-fee {
+    color: var(--color-muted-foreground);
+    font-size: 0.875rem;
+  }
+
+  .ranking-controls {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .rank-btn {
+    background: var(--color-muted);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-md);
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: var(--color-foreground);
+  }
+
+  .rank-btn:hover:not(:disabled) {
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    border-color: var(--color-brand-blue-peacock);
+  }
+
+  .rank-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .ranking-remove {
+    background: transparent;
+    color: var(--color-muted-foreground);
+    border: none;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .ranking-remove:hover {
+    background: var(--color-destructive);
+    color: white;
+    transform: scale(1.05);
+  }
+
+  .ranking-summary {
+    background: white;
+    border: 2px solid var(--color-brand-blue-peacock);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xl);
+    margin-top: var(--space-xl);
+  }
+
+  .summary-row {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--color-border);
+  }
+  
+  .btn-checkout {
+    width: 100%;
+    background: var(--color-brand-berry);
+    color: white;
+    padding: 1rem;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 1.125rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    margin-top: var(--space-lg);
+  }
+
+  .btn-checkout:hover {
+    background: var(--color-dark-berry);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: var(--space-3xl);
+  }
+
+  .empty-state i {
+    font-size: 4rem;
+    color: var(--color-muted);
+    margin-bottom: var(--space-lg);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ranking-container">
+  <div class="ranking-instructions">
+    <h4><i class="bi bi-sort-numeric-down me-2"></i>Rank Your Preferences</h4>
+    <p class="mb-0">Use the arrow buttons to arrange programs in order of preference, with #1 being your top choice.</p>
+  </div>
+
+  {% if selected_programs %}
+    <ul class="ranking-list" id="rankingList">
+      {% for program in selected_programs %}
+        <li class="ranking-item" data-program-id="{{ program.program_id }}" data-fee="{{ program.fee }}">
+          <div class="ranking-number">{{ forloop.counter }}</div>
+          <div class="ranking-content">
+            <div class="ranking-program-name">{{ program.name }}</div>
+            <div class="ranking-program-fee">${{ program.fee }}</div>
+          </div>
+          <div class="ranking-controls">
+            <button class="rank-btn move-up" type="button" title="Move up" {% if forloop.first %}disabled{% endif %}>
+              <i class="bi bi-chevron-up"></i>
+            </button>
+            <button class="rank-btn move-down" type="button" title="Move down" {% if forloop.last %}disabled{% endif %}>
+              <i class="bi bi-chevron-down"></i>
+            </button>
+          </div>
+          <button class="ranking-remove" type="button" data-program-id="{{ program.program_id }}">
+            <i class="bi bi-x-lg"></i>
+          </button>
+        </li>
+      {% endfor %}
+    </ul>
+
+    <div class="ranking-summary">
+      <h5><i class="bi bi-receipt me-2"></i>Summary</h5>
+      <div id="summaryList">
+        {% for program in selected_programs %}
+          <div class="summary-row">
+            <span>{{ forloop.counter }}. {{ program.name }}</span>
+            <span>${{ program.fee }}</span>
+          </div>
+        {% endfor %}
+      </div>
+      <div class="summary-row">
+        <span>Total</span>
+        <span id="totalAmount">$<span id="totalAmountValue"></span></span>
+      </div>
+      
+      <form method="post" id="rankingForm">
+        {% csrf_token %}
+        <input type="hidden" name="selections" id="selectionsData">
+        <button type="submit" class="btn-checkout">
+          Continue to Payment <i class="bi bi-arrow-right ms-2"></i>
+        </button>
+      </form>
+    </div>
+  {% else %}
+    <div class="empty-state">
+      <i class="bi bi-inbox"></i>
+      <h4>No Programs Selected</h4>
+      <p class="text-muted mb-4">You haven't selected any programs yet.</p>
+      <a href="{% url 'portal:program_catalog' %}" class="btn btn-primary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Catalog
+      </a>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+  const rankingList = document.getElementById('rankingList');
+
+  if (rankingList) {
+    // Move up button handler
+    rankingList.addEventListener('click', function(e) {
+      if (e.target.closest('.move-up')) {
+        const item = e.target.closest('.ranking-item');
+        const prevItem = item.previousElementSibling;
+        if (prevItem) {
+          rankingList.insertBefore(item, prevItem);
+          updateRankings();
+        }
+      }
+    });
+
+    // Move down button handler
+    rankingList.addEventListener('click', function(e) {
+      if (e.target.closest('.move-down')) {
+        const item = e.target.closest('.ranking-item');
+        const nextItem = item.nextElementSibling;
+        if (nextItem) {
+          rankingList.insertBefore(nextItem, item);
+          updateRankings();
+        }
+      }
+    });
+
+    // Remove program
+    document.querySelectorAll('.ranking-remove').forEach(btn => {
+      btn.addEventListener('click', function() {
+        const programId = this.dataset.programId;
+        this.closest('.ranking-item').remove();
+        updateRankings();
+        
+        // Redirect to catalog if no programs left
+        if (document.querySelectorAll('.ranking-item').length === 0) {
+          window.location.href = '{% url "portal:program_catalog" %}';
+        }
+      });
+    });
+
+    // Update rankings display and button states
+    function updateRankings() {
+      const items = document.querySelectorAll('.ranking-item');
+      let total = 0;
+      let summaryHTML = '';
+      
+      items.forEach((item, index) => {
+        // Update ranking number
+        item.querySelector('.ranking-number').textContent = index + 1;
+        
+        // Update button states
+        const moveUpBtn = item.querySelector('.move-up');
+        const moveDownBtn = item.querySelector('.move-down');
+        
+        moveUpBtn.disabled = (index === 0);
+        moveDownBtn.disabled = (index === items.length - 1);
+        
+        // Calculate total
+        const fee = parseFloat(item.dataset.fee);
+        total += fee;
+        
+        // Update summary
+        const name = item.querySelector('.ranking-program-name').textContent;
+        summaryHTML += `
+          <div class="summary-row">
+            <span>${index + 1}. ${name}</span>
+            <span>$${fee.toFixed(2)}</span>
+          </div>
+        `;
+      });
+      
+      // Update summary display
+      document.getElementById('summaryList').innerHTML = summaryHTML;
+      document.getElementById('totalAmountValue').textContent = total.toFixed(2);
+    }
+    
+    // Calculate initial total on page load
+    document.addEventListener('DOMContentLoaded', function() {
+      if (rankingList) {
+        const items = document.querySelectorAll('.ranking-item');
+        let total = 0;
+        items.forEach(item => {
+          total += parseFloat(item.dataset.fee);
+        });
+        document.getElementById('totalAmountValue').textContent = total.toFixed(2);
+      }
+    });
+
+    // Form submission - prepare data
+    document.getElementById('rankingForm').addEventListener('submit', function(e) {
+      const items = document.querySelectorAll('.ranking-item');
+      const selections = [];
+      
+      items.forEach((item, index) => {
+        selections.push({
+          program_id: item.dataset.programId,
+          rank: index + 1
+        });
+      });
+      
+      document.getElementById('selectionsData').value = JSON.stringify(selections);
+    });
+  }
+</script>
+{% endblock %}

@@ -46,8 +46,15 @@ def get_navigation_items(user):
                 'is_complete': user.survey_is_complete,
             },
             {
+                'label': _('Registration'),
+                'url': reverse('portal:program_catalog') if user.can_purchase_programs else reverse('users:survey_start'),
+                'icon_class': 'bi bi-grid-3x3-gap',
+                'show_completion': True,
+                'is_complete': user.can_purchase_programs,
+            },
+            {
                 'label': _('Fees'),
-                'url': '#',  # TODO: Add URL when view is created
+                'url': reverse('portal:fees'),
                 'icon_class': 'bi bi-tag',
             },
             {

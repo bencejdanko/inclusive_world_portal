@@ -1,0 +1,376 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}Available Programs{% endblock %}
+
+{% block page_title %}Enroll in our available programs!{% endblock page_title %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  .programs-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: var(--space-xl);
+    margin-top: var(--space-xl);
+  }
+
+  .program-card {
+    background: white;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+  }
+
+  .program-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .program-card.selected {
+    border: 3px solid var(--color-brand-blue-peacock);
+  }
+
+  .program-card.enrolled {
+    opacity: 0.7;
+    border: 3px solid var(--color-brand-berry);
+  }
+
+  .program-image {
+    width: 100%;
+    height: 180px;
+    object-fit: cover;
+    background: linear-gradient(135deg, var(--color-brand-blue-peacock), var(--color-brand-berry));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.5rem;
+    font-weight: bold;
+  }
+
+  .program-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+  }
+
+  .program-badge {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    background: var(--color-brand-berry);
+    color: white;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.875rem;
+    font-weight: 600;
+    z-index: 10;
+  }
+
+  .program-badge.enrolled-badge {
+    background: var(--color-badge-dark-green);
+  }
+
+  .program-content {
+    padding: var(--space-lg);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .program-header {
+    display: flex;
+    align-items: start;
+    gap: var(--space-sm);
+    margin-bottom: var(--space-md);
+  }
+
+  .program-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    margin: 0;
+    flex: 1;
+  }
+
+  .info-icon {
+    background: var(--color-muted);
+    border-radius: 50%;
+    width: 28px;
+    height: 28px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .info-icon:hover {
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    transform: scale(1.1);
+  }
+
+  .program-description {
+    color: var(--color-muted-foreground);
+    font-size: 0.95rem;
+    margin-bottom: var(--space-md);
+    flex: 1;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+  }
+
+  .program-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border);
+  }
+
+  .program-fee {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-brand-berry);
+  }
+
+  .program-capacity {
+    font-size: 0.875rem;
+    color: var(--color-muted-foreground);
+  }
+
+  .program-actions {
+    margin-top: var(--space-md);
+  }
+
+  .btn-select-program {
+    width: 100%;
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    border: none;
+    padding: 0.75rem;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-select-program:hover {
+    background: var(--color-dark-blue-peacock);
+    transform: translateY(-2px);
+  }
+
+  .btn-select-program.selected {
+    background: var(--color-badge-dark-green);
+  }
+
+  .btn-select-program:disabled {
+    background: var(--color-muted);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+
+
+  .continue-button-container {
+    position: fixed;
+    bottom: var(--space-xl);
+    right: var(--space-xl);
+    z-index: 1000;
+  }
+
+  .btn-continue {
+    background: var(--color-brand-berry);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-xl);
+    display: none;
+    font-size: 1.125rem;
+  }
+
+  .btn-continue.show {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .btn-continue:hover {
+    background: var(--color-dark-berry);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(127, 72, 87, 0.4);
+  }
+
+  .selection-badge {
+    background: white;
+    color: var(--color-brand-berry);
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.875rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="alert alert-info">
+        <i class="bi bi-info-circle me-2"></i>
+        <strong>How it works:</strong> Select the programs you're interested in, then continue to rank them. Click the program title or <i class="bi bi-info-circle-fill"></i> icon to view full details.
+      </div>
+    </div>
+  </div>
+
+  <div class="programs-grid">
+    {% for program in programs %}
+      <div class="program-card {% if program.program_id in enrolled_program_ids %}enrolled{% endif %}" 
+           id="program-{{ program.program_id }}"
+           data-program-id="{{ program.program_id }}"
+           data-program-name="{{ program.name }}"
+           data-program-fee="{{ program.fee }}">
+        
+        {% if program.program_id in enrolled_program_ids %}
+          <div class="program-badge enrolled-badge">Already Enrolled</div>
+        {% endif %}
+        
+        <div class="program-image">
+          {% if program.image_uri %}
+            <img src="{{ program.image_uri }}" alt="{{ program.name }}">
+          {% else %}
+            {{ program.name|slice:":2"|upper }}
+          {% endif %}
+        </div>
+        
+        <div class="program-content">
+          <div class="program-header">
+            <a href="{% url 'portal:program_detail' program.program_id %}" style="text-decoration: none; color: inherit; flex: 1;">
+              <h3 class="program-title" style="transition: color 0.2s;" onmouseover="this.style.color='var(--color-dark-blue-peacock)'" onmouseout="this.style.color='var(--color-brand-blue-peacock)'">{{ program.name }}</h3>
+            </a>
+            <a href="{% url 'portal:program_detail' program.program_id %}" class="info-icon" title="More information">
+              <i class="bi bi-info-circle-fill"></i>
+            </a>
+          </div>
+          
+          <p class="program-description">
+            {{ program.description|default:"No description available." }}
+          </p>
+          
+          <div class="program-footer">
+            <div>
+              <div class="program-fee">${{ program.fee }}</div>
+              <div class="program-capacity">
+                {{ program.available_spots }} spots available
+              </div>
+            </div>
+          </div>
+          
+          <div class="program-actions">
+            {% if program.program_id in enrolled_program_ids %}
+              <button class="btn-select-program" disabled>
+                <i class="bi bi-check-circle-fill me-2"></i>Enrolled
+              </button>
+            {% else %}
+              <button class="btn-select-program select-program-btn" 
+                      data-program-id="{{ program.program_id }}">
+                <i class="bi bi-plus-circle me-2"></i>Select Program
+              </button>
+            {% endif %}
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          No programs are currently available for enrollment.
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Floating Continue Button (appears when programs are selected) -->
+<div class="continue-button-container">
+  <button class="btn-continue" id="continueBtn">
+    <span class="selection-badge" id="selectionCount">0</span>
+    <span>Continue to Ranking</span>
+    <i class="bi bi-arrow-right"></i>
+  </button>
+</div>
+
+<script>
+  // Track selected programs
+  let selectedPrograms = new Set();
+
+  // Handle program selection
+  document.querySelectorAll('.select-program-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      const programId = this.dataset.programId;
+      const card = this.closest('.program-card');
+      
+      if (selectedPrograms.has(programId)) {
+        // Deselect
+        selectedPrograms.delete(programId);
+        card.classList.remove('selected');
+        this.innerHTML = '<i class="bi bi-plus-circle me-2"></i>Select Program';
+        this.classList.remove('selected');
+      } else {
+        // Select
+        selectedPrograms.add(programId);
+        card.classList.add('selected');
+        this.innerHTML = '<i class="bi bi-check-circle-fill me-2"></i>Selected';
+        this.classList.add('selected');
+      }
+      
+      updateSelectionBar();
+    });
+  });
+
+  // Update selection display
+  function updateSelectionBar() {
+    const count = selectedPrograms.size;
+    const btn = document.getElementById('continueBtn');
+    const countEl = document.getElementById('selectionCount');
+    
+    if (count > 0) {
+      btn.classList.add('show');
+      countEl.textContent = count;
+    } else {
+      btn.classList.remove('show');
+    }
+  }
+
+  // Continue to ranking
+  document.getElementById('continueBtn').addEventListener('click', function() {
+    if (selectedPrograms.size === 0) {
+      alert('Please select at least one program.');
+      return;
+    }
+    
+    // Store selected program IDs and redirect to selection page
+    const programIds = Array.from(selectedPrograms);
+    const url = new URL('{% url "portal:program_selection" %}', window.location.origin);
+    url.searchParams.set('programs', programIds.join(','));
+    window.location.href = url.toString();
+  });
+</script>
+{% endblock %}

@@ -1,16 +1,37 @@
 {% extends "base.html" %}
-{% load i18n %}
-{% block bodyclass %}bg-light{% endblock bodyclass %}
+{% load i18n static %}
+
+{% block bodyclass %}auth-page{% endblock bodyclass %}
 
 {% block css %}{{ block.super }}{% endblock css %}
+
 {% block title %}
   {% block head_title %}
     {% trans "Sign In" %}
   {% endblock head_title %}
 {% endblock title %}
+
 {% block body %}
-  <div class="d-flex justify-content-center h-100 py-4">
-    <div class="col-md-4 py-4 my-4 px-4">
+<a href="#main-content" class="skip-to-content-link">Skip to main content</a>
+
+<div class="auth-layout">
+  <!-- Left Side: Form -->
+  <div class="auth-form-side">
+    <div class="auth-form-container" id="main-content">
+      <!-- Logo -->
+      <img src="{% static 'images/iw-banner.png' %}" alt="Inclusive World Logo" class="auth-logo">
+      
+      <!-- Title -->
+      <h1 class="auth-title">{% block auth_title %}{% trans "Log In" %}{% endblock auth_title %}</h1>
+      
+      <!-- Subtitle/Help Text -->
+      <p class="auth-subtitle">
+        {% block auth_subtitle %}
+          {% trans "Fields marked with an asterisk" %} <span style="color: var(--color-error);">*</span> {% trans "are required" %}
+        {% endblock auth_subtitle %}
+      </p>
+      
+      <!-- Messages -->
       {% if messages %}
         {% for message in messages %}
           <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %}">
@@ -18,14 +39,32 @@
             <button type="button"
                     class="btn-close"
                     data-bs-dismiss="alert"
-                    aria-label="Close"></button>
+                    aria-label="Close">&times;</button>
           </div>
         {% endfor %}
       {% endif %}
+      
+      <!-- Content Block (Form will be inserted here) -->
       {% block content %}
       {% endblock content %}
+      
       {% block extra_body %}
       {% endblock extra_body %}
     </div>
   </div>
+  
+  <!-- Right Side: Branding -->
+  <div class="auth-branding-side">
+    <div class="auth-branding-content">
+      <h2 class="auth-branding-title">{% block branding_title %}{% trans "New User?" %}{% endblock branding_title %}</h2>
+      <p class="auth-branding-subtitle">{% block branding_subtitle %}{% trans "Create an account to get started with Inclusive World Portal" %}{% endblock branding_subtitle %}</p>
+      
+      <div class="auth-cta">
+        <a href="{% block branding_cta_url %}{% url 'account_signup' %}{% endblock branding_cta_url %}" class="btn-auth-cta">
+          {% block branding_cta %}{% trans "Sign Up" %}{% endblock branding_cta %}
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
 {% endblock body %}

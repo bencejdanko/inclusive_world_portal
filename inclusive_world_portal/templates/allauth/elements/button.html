@@ -2,19 +2,22 @@
 
 {% comment %} djlint:off {% endcomment %}
 <{% if attrs.href %}a href="{{ attrs.href }}"{% else %}button{% endif %}
-                      {% if attrs.form %}form="{{ attrs.form }}"{% endif %}
-                      {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
-                      {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
-                      {% if attrs.type %}type="{{ attrs.type }}"{% endif %}
-                      class="btn
-{% if 'success' in attrs.tags %}btn-success
-{% elif 'warning' in attrs.tags %}btn-warning
-{% elif 'secondary' in attrs.tags %}btn-secondary
-{% elif 'danger' in attrs.tags %}btn-danger
+  {% if attrs.form %}form="{{ attrs.form }}"{% endif %}
+  {% if attrs.id %}id="{{ attrs.id }}"{% endif %}
+  {% if attrs.name %}name="{{ attrs.name }}"{% endif %}
+  {% if attrs.type %}type="{{ attrs.type }}"{% endif %}
+  class="btn
+{% if 'success' in attrs.tags %}btn-primary
+{% elif 'warning' in attrs.tags %}btn-secondary
+{% elif 'secondary' in attrs.tags %}btn-outline
+{% elif 'danger' in attrs.tags %}btn-secondary
 {% elif 'primary' in attrs.tags %}btn-primary
+{% elif 'submit' in attrs.tags %}btn-primary btn-lg btn-block
 {% else %}btn-primary
-{% endif %}"
+{% endif %}
+{% if 'block' in attrs.tags %}btn-block{% endif %}
+{% if 'lg' in attrs.tags %}btn-lg{% endif %}
+{% if 'sm' in attrs.tags %}btn-sm{% endif %}"
 >
-  {% slot %}
-  {% endslot %}
-  </{% if attrs.href %}a{% else %}button{% endif %}>
+  {% slot %}{% endslot %}
+</{% if attrs.href %}a{% else %}button{% endif %}>

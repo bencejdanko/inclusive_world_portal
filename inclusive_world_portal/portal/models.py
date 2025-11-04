@@ -305,3 +305,43 @@ class Payment(models.Model):
     payment_method = models.CharField(max_length=64)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+# -------------------------
+# Documents
+# -------------------------
+
+class DocumentState(models.TextChoices):
+    DRAFT = "draft", "Draft"
+    REVIEW = "review", "Review"
+    FINAL = "final", "Final"
+
+class Document(models.Model):
+    """
+    User documents created with the Quill editor.
+    Each user can have multiple documents (e.g., One Page Description, notes, etc.)
+    """
+    document_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="documents"
+    )
+    title = models.CharField(max_length=255, default="Untitled Document")
+    content = models.TextField(blank=True, help_text="HTML content from Quill editor")
+    state = models.CharField(
+        max_length=16,
+        choices=DocumentState.choices,
+        default=DocumentState.DRAFT,
+        help_text="Current state of the document"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-updated_at']
+        indexes = [
+            models.Index(fields=['user', '-updated_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.title} - {self.user.username}"

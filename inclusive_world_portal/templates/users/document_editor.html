@@ -1,0 +1,136 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}One Page Description{% endblock %}
+
+{% block page_title %}One Page Description{% endblock %}
+
+{% block css %}
+{{ block.super }}
+<!-- Quill CSS -->
+<link href="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.snow.css" rel="stylesheet">
+<!-- django-quill-editor Media -->
+{{ form.media.css }}
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<!-- Quill JS (must be loaded before django-quill-editor) -->
+<script src="https://cdn.jsdelivr.net/npm/quill@2.0.3/dist/quill.js"></script>
+<!-- django-quill-editor Media -->
+{{ form.media.js }}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+    .document-editor-container {
+        max-width: 900px;
+        margin: 0 auto;
+    }
+    
+    .document-controls {
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 20px;
+        padding: 12px 15px;
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+    
+    .document-controls select {
+        min-width: 120px;
+        padding: 6px 12px;
+        border: 1px solid #ced4da;
+        border-radius: 4px;
+        background-color: white;
+        font-size: 0.9rem;
+    }
+    
+    .editor-wrapper {
+        margin-bottom: 20px;
+    }
+    
+    .export-button {
+        padding: 8px 16px;
+        background-color: #28a745;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 0.9rem;
+        transition: background-color 0.2s;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        white-space: nowrap;
+    }
+    
+    .export-button:hover {
+        background-color: #218838;
+        color: white;
+        text-decoration: none;
+    }
+    
+    .save-button-wrapper {
+        display: flex;
+        justify-content: flex-start;
+        margin-top: 15px;
+    }
+    
+    .save-button {
+        padding: 10px 24px;
+        background-color: #007bff;
+        color: white;
+        border: none;
+        border-radius: 4px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.2s;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+    }
+    
+    .save-button:hover {
+        background-color: #0056b3;
+    }
+    
+    .save-button:disabled {
+        background-color: #6c757d;
+        cursor: not-allowed;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="document-editor-container">
+    <form method="post">
+        {% csrf_token %}
+        {{ form.title }}
+        
+        <!-- Controls bar at the top -->
+        <div class="document-controls">
+            {{ form.state }}
+            <a href="{% url 'users:export_document_pdf' %}" class="export-button" target="_blank">
+                <i class="bi bi-file-earmark-pdf"></i> Export PDF
+            </a>
+        </div>
+        
+        <!-- Editor content -->
+        <div class="editor-wrapper">
+            {{ form.content }}
+        </div>
+        
+        <!-- Save button at bottom -->
+        <div class="save-button-wrapper">
+            <button type="submit" class="save-button">
+                <i class="bi bi-save"></i> Save Document
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

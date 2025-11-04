@@ -1,0 +1,42 @@
+{% extends "allauth/layouts/entrance.html" %}
+{% load i18n allauth %}
+
+{% block head_title %}{% trans "Sign In" %}{% endblock head_title %}
+{% block auth_title %}{% trans "Log In" %}{% endblock auth_title %}
+
+{% block content %}
+<form method="post" action="{% url 'account_login' %}" class="auth-form">
+  {% csrf_token %}
+  
+  {% for field in form.visible_fields %}
+    <div class="form-group">
+      <label for="{{ field.id_for_label }}" class="form-label form-label-required">
+        {{ field.label }} <span style="color: var(--color-error);">*</span>
+      </label>
+      {{ field }}
+      {% if field.help_text %}
+        <span class="form-help-text">{{ field.help_text }}</span>
+      {% endif %}
+      {% if field.errors %}
+        <span class="form-error">{{ field.errors.0 }}</span>
+      {% endif %}
+    </div>
+  {% endfor %}
+  
+  {% if redirect_field_value %}
+    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+  {% endif %}
+  
+  <div style="margin-bottom: var(--space-md); text-align: right;">
+    <a href="{% url 'account_reset_password' %}" class="auth-link">{% trans "Forgot Password?" %}</a>
+  </div>
+  
+  <button type="submit" class="btn btn-primary btn-lg btn-block">
+    {% trans "Log In" %}
+  </button>
+</form>
+{% endblock content %}
+
+{% block branding_title %}{% trans "New User?" %}{% endblock branding_title %}
+{% block branding_subtitle %}{% trans "Create an account to get started with Inclusive World Portal" %}{% endblock branding_subtitle %}
+{% block branding_cta %}{% trans "Sign Up" %}{% endblock branding_cta %}

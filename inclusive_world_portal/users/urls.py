@@ -3,7 +3,7 @@ from django.urls import path
 from .views import user_detail_view
 from .views import user_redirect_view
 from .views import user_update_view
-from .views import opd_editor_redirect_view
+from .document_views import document_editor_view, export_document_pdf
 from .survey_views import (
     SurveyStartView,
     SurveySection1View,
@@ -42,8 +42,9 @@ urlpatterns = [
     path("dashboard/manager/", manager_dashboard_view, name="manager_dashboard"),
     path("dashboard/admin/", admin_dashboard_view, name="admin_dashboard"),
     
-    # One Page Description Editor
-    path("opd/", view=opd_editor_redirect_view, name="opd_editor"),
+    # Document Editor
+    path("documents/editor/", view=document_editor_view, name="document_editor"),
+    path("documents/export-pdf/", view=export_document_pdf, name="export_document_pdf"),
     
     # Discovery Survey URLs
     path("survey/start/", SurveyStartView.as_view(), name="survey_start"),

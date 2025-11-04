@@ -1,0 +1,45 @@
+{% extends "allauth/layouts/entrance.html" %}
+{% load i18n allauth %}
+
+{% block head_title %}{% trans "Sign Up" %}{% endblock head_title %}
+{% block auth_title %}{% trans "Sign Up" %}{% endblock auth_title %}
+
+{% block content %}
+<form method="post" action="{% url 'account_signup' %}" class="auth-form">
+  {% csrf_token %}
+  
+  {% for field in form.visible_fields %}
+    <div class="form-group">
+      {% if field.field.required %}
+        <label for="{{ field.id_for_label }}" class="form-label form-label-required">
+          {{ field.label }} <span style="color: var(--color-error);">*</span>
+        </label>
+      {% else %}
+        <label for="{{ field.id_for_label }}" class="form-label">
+          {{ field.label }}
+        </label>
+      {% endif %}
+      {{ field }}
+      {% if field.help_text %}
+        <span class="form-help-text">{{ field.help_text }}</span>
+      {% endif %}
+      {% if field.errors %}
+        <span class="form-error">{{ field.errors.0 }}</span>
+      {% endif %}
+    </div>
+  {% endfor %}
+  
+  {% if redirect_field_value %}
+    <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
+  {% endif %}
+  
+  <button type="submit" class="btn btn-primary btn-lg btn-block">
+    {% trans "Sign Up" %}
+  </button>
+</form>
+{% endblock content %}
+
+{% block branding_title %}{% trans "Already have an account?" %}{% endblock branding_title %}
+{% block branding_subtitle %}{% trans "Sign in to access your Inclusive World Portal account" %}{% endblock branding_subtitle %}
+{% block branding_cta_url %}{% url 'account_login' %}{% endblock branding_cta_url %}
+{% block branding_cta %}{% trans "Log In" %}{% endblock branding_cta %}

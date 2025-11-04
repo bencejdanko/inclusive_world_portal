@@ -86,6 +86,7 @@ THIRD_PARTY_APPS = [
     "allauth.socialaccount",
     "django_celery_beat",
     "django_htmx",
+    "django_quill",
 ]
 
 LOCAL_APPS = [
@@ -352,23 +353,25 @@ SOCIALACCOUNT_ADAPTER = "inclusive_world_portal.users.adapters.SocialAccountAdap
 # https://docs.allauth.org/en/latest/socialaccount/configuration.html
 SOCIALACCOUNT_FORMS = {"signup": "inclusive_world_portal.users.forms.UserSocialSignupForm"}
 
-# One Page Description (OPD) Editor Integration
+# django-quill-editor
 # ------------------------------------------------------------------------------
-# URL of the OPD backend server
-INCLUSIVE_WORLD_OPD_SERVER = env(
-    "INCLUSIVE_WORLD_OPD_SERVER",
-    default="http://localhost:4000"
-)
-# Shared secret for JWT token signing (must match the OPD server's JWT_SECRET)
-INCLUSIVE_WORLD_OPD_SECRET = env(
-    "INCLUSIVE_WORLD_OPD_SECRET",
-    default=""
-)
-# Optional explicit frontend client URL for the OPD editor (defaults to http://localhost:5173)
-INCLUSIVE_WORLD_OPD_CLIENT_URL = env(
-    "INCLUSIVE_WORLD_OPD_CLIENT_URL",
-    default="http://localhost:5173",
-)
+QUILL_CONFIGS = {
+    'default': {
+        'theme': 'snow',
+        'modules': {
+            'syntax': False,
+            'toolbar': [
+                [{'header': [1, 2, 3, 4, 5, 6, False]}],
+                ['bold', 'italic', 'underline', 'strike'],
+                [{'list': 'ordered'}, {'list': 'bullet'}],
+                [{'indent': '-1'}, {'indent': '+1'}],
+                [{'align': []}],
+                ['link'],
+                ['clean']
+            ]
+        }
+    }
+}
 
 # Your stuff...
 # ------------------------------------------------------------------------------

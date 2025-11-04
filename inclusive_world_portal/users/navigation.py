@@ -28,7 +28,7 @@ def get_navigation_items(user):
             },
             {
                 'label': _('One Page Description'),
-                'url': reverse('users:opd_editor'),
+                'url': reverse('users:document_editor'),
                 'icon_class': 'bi bi-file-earmark-text',
             },
             {
@@ -175,6 +175,11 @@ def get_navigation_items(user):
                 'label': _('All Users'),
                 'url': '#',
                 'icon_class': 'bi bi-people',
+            },
+            {
+                'label': _('One Page Description'),
+                'url': reverse('users:document_editor'),
+                'icon_class': 'bi bi-file-earmark-text',
             },
             {
                 'label': _('Programs'),

@@ -97,9 +97,21 @@ class User(AbstractUser):
             return False
     
     @property
-    def can_purchase_programs(self) -> bool:
-        """Check if user meets prerequisites to purchase programs."""
+    def forms_are_complete(self) -> bool:
+        """Check if user has completed profile and survey forms."""
         return self.profile_is_complete and self.survey_is_complete
+    
+    @property
+    def can_purchase_programs(self) -> bool:
+        """
+        Check if user can purchase programs.
+        Requires both completed forms AND enrollment to be open.
+        """
+        # Import here to avoid circular dependency
+        from inclusive_world_portal.portal.models import EnrollmentSettings
+        
+        enrollment_settings = EnrollmentSettings.get_settings()
+        return self.forms_are_complete and enrollment_settings.enrollment_open
 
 
 class DiscoverySurvey(models.Model):

@@ -1,0 +1,303 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}My Programs{% endblock %}
+
+{% block page_title %}My Programs{% endblock page_title %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  /* Compact single-row program display */
+  .programs-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--space-md);
+  }
+
+  /* Compact program table */
+  .program-table {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: var(--space-xl);
+  }
+
+  .program-table-header {
+    display: grid;
+    grid-template-columns: 3fr 1.5fr 100px 50px;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .program-row {
+    display: grid;
+    grid-template-columns: 3fr 1.5fr 100px 50px;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+    transition: background-color 0.2s ease;
+  }
+
+  .program-row:hover {
+    background-color: #f8f9fa;
+  }
+
+  .program-row:last-child {
+    border-bottom: none;
+  }
+
+  .program-name {
+    font-weight: 600;
+    color: var(--color-brand-blue-peacock);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+
+  .program-name-text {
+    font-size: 1rem;
+  }
+
+  .program-enrolled-date {
+    font-size: 0.75rem;
+    color: var(--color-muted-foreground);
+    font-weight: 400;
+  }
+
+  .program-fee {
+    font-weight: 600;
+    color: var(--color-badge-dark-green);
+    font-size: 1rem;
+  }
+
+  .program-dates {
+    font-size: 0.875rem;
+    color: var(--color-muted-foreground);
+  }
+
+  .program-preference {
+    font-weight: 600;
+    color: var(--color-brand-blue-peacock);
+    font-size: 0.95rem;
+  }
+
+  .program-status-badge {
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .status-approved {
+    background: var(--color-badge-dark-green);
+    color: white;
+  }
+
+  .status-pending {
+    background: #FFA500;
+    color: white;
+  }
+
+  .status-waitlisted {
+    background: #6C757D;
+    color: white;
+  }
+
+  .status-rejected,
+  .status-withdrawn {
+    background: #DC3545;
+    color: white;
+  }
+
+  .program-info-link {
+    color: var(--color-brand-blue-peacock);
+    font-size: 1.25rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .program-info-link:hover {
+    color: var(--color-dark-blue-peacock);
+    transform: scale(1.15);
+  }
+
+  /* Empty State */
+  .empty-state {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    text-align: center;
+    box-shadow: var(--shadow-md);
+  }
+
+  .empty-state-icon {
+    font-size: 4rem;
+    color: var(--color-muted);
+    margin-bottom: var(--space-lg);
+  }
+
+  .empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    margin-bottom: var(--space-sm);
+  }
+
+  .empty-state-text {
+    color: var(--color-muted-foreground);
+    margin-bottom: var(--space-lg);
+  }
+
+  .btn-primary-action {
+    background: var(--color-brand-berry);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-lg);
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    text-decoration: none;
+  }
+
+  .btn-primary-action:hover {
+    background: var(--color-dark-berry);
+    transform: translateY(-2px);
+    color: white;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1024px) {
+    .program-table-header,
+    .program-row {
+      grid-template-columns: 2fr 100px 50px;
+    }
+
+    .program-dates {
+      display: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .programs-container {
+      padding: var(--space-sm);
+    }
+
+    .program-table-header {
+      display: none;
+    }
+
+    .program-row {
+      grid-template-columns: 1fr;
+      gap: var(--space-sm);
+      padding: var(--space-md);
+    }
+
+    .program-name {
+      grid-column: 1;
+      padding-bottom: var(--space-sm);
+      border-bottom: 1px solid var(--color-border);
+    }
+
+    .program-info-link {
+      position: absolute;
+      top: var(--space-md);
+      right: var(--space-md);
+    }
+
+    .program-row {
+      position: relative;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="programs-container">
+  {% if has_enrollments %}
+    <!-- All Programs - Single Table -->
+    <div class="program-table">
+      <div class="program-table-header">
+        <div>Program Name</div>
+        <div>Program Dates</div>
+        <div>Status</div>
+        <div></div>
+      </div>
+      {% for enrollment in enrollments %}
+        <div class="program-row">
+          <div class="program-name">
+            <span class="program-name-text">{{ enrollment.program.name }}</span>
+            <span class="program-enrolled-date">
+              <i class="bi bi-calendar{% if enrollment.status == 'approved' %}-check{% elif enrollment.status == 'pending' %}-plus{% endif %}"></i> 
+              {% if enrollment.status == 'pending' %}Submitted{% else %}Enrolled{% endif %}: {{ enrollment.enrolled_at|date:"M d, Y" }}
+            </span>
+          </div>
+          <div class="program-dates">
+            {% if enrollment.program.start_date and enrollment.program.end_date %}
+              {{ enrollment.program.start_date|date:"M d" }} - {{ enrollment.program.end_date|date:"M d, Y" }}
+            {% elif enrollment.program.start_date %}
+              From {{ enrollment.program.start_date|date:"M d, Y" }}
+            {% else %}
+              —
+            {% endif %}
+          </div>
+          <div>
+            <span class="program-status-badge status-{{ enrollment.status }}">
+              {% if enrollment.status == 'approved' %}
+                <i class="bi bi-check-circle-fill"></i>Approved
+              {% elif enrollment.status == 'pending' %}
+                <i class="bi bi-clock-history"></i>Pending
+              {% elif enrollment.status == 'waitlisted' %}
+                <i class="bi bi-hourglass-split"></i>Waitlist
+              {% else %}
+                <i class="bi bi-x-circle"></i>{{ enrollment.get_status_display }}
+              {% endif %}
+            </span>
+          </div>
+          <div>
+            <a href="{% url 'portal:program_detail' enrollment.program.program_id %}" class="program-info-link" title="View details">
+              <i class="bi bi-info-circle-fill"></i>
+            </a>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <i class="bi bi-inbox"></i>
+      </div>
+      <h3 class="empty-state-title">No Programs Yet</h3>
+      <p class="empty-state-text">
+        You haven't enrolled in any programs yet. Browse our available programs to get started!
+      </p>
+      <a href="{% url 'portal:program_catalog' %}" class="btn-primary-action">
+        <i class="bi bi-grid-3x3-gap"></i>
+        Browse Programs
+      </a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

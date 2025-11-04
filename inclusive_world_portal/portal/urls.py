@@ -18,6 +18,7 @@ urlpatterns = [
     path("enrollment/process/", views.process_enrollment, name="process_enrollment"),
     path("enrollment/success/", views.enrollment_success_view, name="enrollment_success"),
     
-    # Fees and purchases
-    path("fees/", fees_views.fees_overview_view, name="fees"),
+    # My Programs (formerly fees)
+    path("my-programs/", fees_views.fees_overview_view, name="my_programs"),
+    path("fees/", fees_views.fees_overview_view, name="fees"),  # Legacy redirect
 ]

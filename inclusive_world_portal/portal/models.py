@@ -133,7 +133,7 @@ class Program(models.Model):
     name = models.CharField(max_length=255)
     description = models.TextField(blank=True)
     fee = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
-    capacity = models.PositiveIntegerField()
+    capacity = models.PositiveIntegerField(null=True, blank=True)
     archived = models.BooleanField(default=False)
     image_uri = models.TextField(blank=True)
     start_date = models.DateField(null=True, blank=True)
@@ -150,6 +150,8 @@ class Program(models.Model):
 
     @property
     def available_spots(self) -> int:
+        if self.capacity is None:
+            return None
         return max(self.capacity - self.enrolled, 0)
 
 class Enrollment(models.Model):
@@ -408,3 +410,56 @@ class DocumentExport(models.Model):
         """Return a user-friendly filename for download."""
         import os
         return os.path.basename(self.file.name)
+
+
+# -------------------------
+# Enrollment Settings
+# -------------------------
+
+class EnrollmentSettings(models.Model):
+    """
+    Singleton model to control enrollment/registration settings.
+    Allows admins to toggle enrollment open/closed and provide a reason.
+    """
+    id = models.IntegerField(primary_key=True, default=1, editable=False)
+    enrollment_open = models.BooleanField(
+        default=True,
+        help_text="Toggle to enable or disable program enrollment/registration"
+    )
+    closure_reason = models.TextField(
+        blank=True,
+        help_text="Optional message to display when enrollment is closed (e.g., 'Registration closed for the season')"
+    )
+    updated_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="enrollment_setting_updates",
+        help_text="User who last updated this setting"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Enrollment Settings"
+        verbose_name_plural = "Enrollment Settings"
+    
+    def save(self, *args, **kwargs):
+        # Enforce singleton pattern
+        self.id = 1
+        super().save(*args, **kwargs)
+    
+    def delete(self, *args, **kwargs):
+        # Prevent deletion of the singleton
+        pass
+    
+    @classmethod
+    def get_settings(cls):
+        """Get or create the singleton settings instance."""
+        obj, created = cls.objects.get_or_create(id=1)
+        return obj
+    
+    def __str__(self):
+        status = "OPEN" if self.enrollment_open else "CLOSED"
+        return f"Enrollment Settings - {status}"

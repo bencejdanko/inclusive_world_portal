@@ -81,18 +81,37 @@
           <div class="nav-section">
             {% for item in nav_items %}
               <div class="nav-item">
-                <a href="{{ item.url }}" 
-                   class="nav-link {% if request.path == item.url %}active{% endif %}">
-                  <i class="{{ item.icon_class }}"></i>
-                  <span>{{ item.label }}</span>
-                  {% if item.show_completion %}
-                    {% if item.is_complete %}
-                      <i class="bi bi-check-circle-fill text-success ms-auto" title="Complete"></i>
-                    {% else %}
-                      <i class="bi bi-exclamation-circle-fill text-warning ms-auto" title="Incomplete"></i>
+                {% if item.registration_status == 'closed_season' %}
+                  {# Disabled link for closed season - not clickable but title tooltip works #}
+                  <span class="nav-link opacity-50" 
+                        title="{{ item.registration_tooltip }}">
+                    <i class="{{ item.icon_class }}"></i>
+                    <span>{{ item.label }}</span>
+                    <i class="bi bi-lock-fill text-secondary ms-auto"></i>
+                  </span>
+                {% else %}
+                  <a href="{{ item.url }}" 
+                     class="nav-link {% if request.path == item.url %}active{% endif %} {% if item.registration_status == 'closed_forms' %}opacity-75{% endif %}"
+                     {% if item.registration_tooltip %}title="{{ item.registration_tooltip }}"{% endif %}>
+                    <i class="{{ item.icon_class }}"></i>
+                    <span>{{ item.label }}</span>
+                    {% if item.show_completion %}
+                      {% if item.is_complete %}
+                        <i class="bi bi-check-circle-fill text-success ms-auto" title="Complete"></i>
+                      {% else %}
+                        <i class="bi bi-exclamation-circle-fill text-warning ms-auto" title="Incomplete"></i>
+                      {% endif %}
+                    {% elif item.show_status_indicator %}
+                      {% if item.registration_status == 'open' %}
+                        <i class="bi bi-door-open-fill text-success ms-auto"></i>
+                      {% elif item.registration_status == 'closed_forms' %}
+                        <i class="bi bi-exclamation-triangle-fill text-warning ms-auto"></i>
+                      {% elif item.registration_status == 'closed_season' %}
+                        <i class="bi bi-lock-fill text-secondary ms-auto"></i>
+                      {% endif %}
                     {% endif %}
-                  {% endif %}
-                </a>
+                  </a>
+                {% endif %}
               </div>
             {% endfor %}
           </div>

@@ -43,11 +43,18 @@ class MemberDashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         
+        # Import here to avoid circular dependency
+        from inclusive_world_portal.portal.models import EnrollmentSettings
+        enrollment_settings = EnrollmentSettings.get_settings()
+        
         # Add member-specific data
         context.update({
             'profile_complete': user.profile_is_complete,
             'survey_complete': user.survey_is_complete,
+            'forms_complete': user.forms_are_complete,
             'can_purchase': user.can_purchase_programs,
+            'enrollment_open': enrollment_settings.enrollment_open,
+            'enrollment_closure_reason': enrollment_settings.closure_reason,
             # TODO: Add program enrollments
             # TODO: Add upcoming sessions
             # TODO: Add recent activities

@@ -591,6 +591,29 @@ textarea:focus {
   font-size: 1rem;
 }
 
+.nav-link.disabled {
+  opacity: 0.5;
+  cursor: help !important; /* Use help cursor to indicate tooltip is available */
+  color: var(--color-muted-foreground);
+  /* Don't use pointer-events: none so tooltip still works */
+}
+
+.nav-link.disabled:hover {
+  background: transparent;
+  border-left-color: transparent;
+  color: var(--color-muted-foreground);
+  /* Prevent hover effect but allow tooltip */
+  cursor: help !important;
+}
+
+.nav-link.disabled i {
+  color: var(--color-muted-foreground);
+}
+
+.nav-link.disabled * {
+  cursor: help !important; /* Ensure all child elements also show help cursor */
+}
+
 .sidebar-footer {
   padding: var(--space-md) 0;
   border-top: 1px solid var(--color-border);

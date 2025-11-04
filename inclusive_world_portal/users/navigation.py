@@ -20,6 +20,31 @@ def get_navigation_items(user):
     
     # Member navigation
     if role == 'member':
+        # Determine registration status for better UI feedback
+        from inclusive_world_portal.portal.models import EnrollmentSettings
+        
+        enrollment_settings = EnrollmentSettings.get_settings()
+        forms_complete = user.forms_are_complete
+        enrollment_open = enrollment_settings.enrollment_open
+        can_register = user.can_purchase_programs
+        
+        # Determine registration status and message
+        if can_register:
+            # Forms complete and enrollment open
+            registration_status = 'open'
+            registration_url = reverse('portal:program_catalog')
+            registration_tooltip = _('Registration is open')
+        elif not forms_complete:
+            # Forms incomplete
+            registration_status = 'closed_forms'
+            registration_url = reverse('users:survey_start')
+            registration_tooltip = _('Complete your profile and discovery questions to register')
+        else:
+            # Forms complete but enrollment closed
+            registration_status = 'closed_season'
+            registration_url = '#'
+            registration_tooltip = enrollment_settings.closure_reason or _('Registration is currently closed')
+        
         nav_items = [
             {
                 'label': _('Dashboard'),
@@ -47,25 +72,21 @@ def get_navigation_items(user):
             },
             {
                 'label': _('Registration'),
-                'url': reverse('portal:program_catalog') if user.can_purchase_programs else reverse('users:survey_start'),
+                'url': registration_url,
                 'icon_class': 'bi bi-grid-3x3-gap',
-                'show_completion': True,
-                'is_complete': user.can_purchase_programs,
-            },
-            {
-                'label': _('Fees'),
-                'url': reverse('portal:fees'),
-                'icon_class': 'bi bi-tag',
+                'registration_status': registration_status,  # 'open', 'closed_forms', or 'closed_season'
+                'registration_tooltip': registration_tooltip,
+                'show_status_indicator': True,
             },
             {
                 'label': _('My Programs'),
-                'url': '#',  # TODO: Add URL when view is created
+                'url': reverse('portal:my_programs'),
                 'icon_class': 'bi bi-layers',
             },
             {
                 'label': _('My Attendance'),
                 'url': '#',  # TODO: Add URL when view is created
-                'icon_class': 'bi bi-layers',
+                'icon_class': 'bi bi-calendar-check',
             },
         ]
         return nav_items

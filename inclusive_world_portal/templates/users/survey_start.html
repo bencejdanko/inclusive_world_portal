@@ -172,10 +172,21 @@
                 <strong style="color: var(--color-badge-dark-green);"><i class="bi bi-check-circle-fill me-2"></i>Ready to Enroll!</strong>
                 <span style="color: var(--color-badge-dark-green);"> You can now purchase and enroll in programs.</span>
               </div>
-            {% else %}
+            {% elif not forms_complete %}
               <div class="alert alert-warning mt-3 mb-0" style="background: var(--color-badge-light-yellow); border: 2px solid var(--color-badge-dark-yellow);">
                 <strong style="color: var(--color-badge-dark-yellow);"><i class="bi bi-exclamation-triangle-fill me-2"></i>Note:</strong>
                 <span style="color: var(--color-badge-dark-yellow);"> Complete both your profile and this survey to enroll in programs.</span>
+              </div>
+            {% elif not enrollment_open %}
+              <div class="alert alert-info mt-3 mb-0" style="background: #d4edff; border: 2px solid #0d6efd;">
+                <strong style="color: #0d6efd;"><i class="bi bi-info-circle-fill me-2"></i>Registration Closed</strong>
+                <span style="color: #0d6efd;">
+                  {% if enrollment_closure_reason %}
+                    {{ enrollment_closure_reason }}
+                  {% else %}
+                    Registration is currently closed. Please check back later.
+                  {% endif %}
+                </span>
               </div>
             {% endif %}
           </div>

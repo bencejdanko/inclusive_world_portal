@@ -40,8 +40,15 @@ class SurveyStartView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         survey, created = DiscoverySurvey.objects.get_or_create(user=self.request.user)
+        from inclusive_world_portal.portal.models import EnrollmentSettings
+        
+        enrollment_settings = EnrollmentSettings.get_settings()
+        
         context['survey'] = survey
         context['profile_complete'] = self.request.user.profile_is_complete
+        context['forms_complete'] = self.request.user.forms_are_complete
+        context['enrollment_open'] = enrollment_settings.enrollment_open
+        context['enrollment_closure_reason'] = enrollment_settings.closure_reason
         return context
 
 

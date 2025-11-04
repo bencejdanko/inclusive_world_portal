@@ -51,4 +51,4 @@ def fees_overview_view(request):
         'has_payments': payments.exists(),
     }
     
-    return render(request, 'portal/fees.html', context)
+    return render(request, 'portal/my_programs.html', context)

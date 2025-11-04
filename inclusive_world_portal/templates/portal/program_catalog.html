@@ -9,9 +9,9 @@
 {{ block.super }}
 <style>
   .programs-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-    gap: var(--space-xl);
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
     margin-top: var(--space-xl);
   }
 
@@ -22,9 +22,20 @@
     box-shadow: var(--shadow-md);
     transition: all 0.3s ease;
     position: relative;
-    display: flex;
-    flex-direction: column;
-    height: 100%;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-template-rows: 140px;
+    height: 140px;
+    flex: 1 1 calc(50% - var(--space-lg) / 2);
+    min-width: 400px;
+    max-width: calc(50% - var(--space-lg) / 2);
+  }
+
+  @media (max-width: 900px) {
+    .program-card {
+      flex: 1 1 100%;
+      max-width: 100%;
+    }
   }
 
   .program-card:hover {
@@ -43,32 +54,35 @@
 
   .program-image {
     width: 100%;
-    height: 180px;
+    height: 100%;
+    max-height: 140px;
+    overflow: hidden;
     object-fit: cover;
     background: linear-gradient(135deg, var(--color-brand-blue-peacock), var(--color-brand-berry));
     display: flex;
     align-items: center;
     justify-content: center;
     color: white;
-    font-size: 1.5rem;
+    font-size: 1.75rem;
     font-weight: bold;
   }
 
   .program-image img {
     width: 100%;
     height: 100%;
+    max-height: 140px;
     object-fit: cover;
   }
 
   .program-badge {
     position: absolute;
-    top: var(--space-md);
-    right: var(--space-md);
+    top: var(--space-sm);
+    left: var(--space-sm);
     background: var(--color-brand-berry);
     color: white;
-    padding: 0.35rem 0.75rem;
+    padding: 0.25rem 0.65rem;
     border-radius: var(--radius-full);
-    font-size: 0.875rem;
+    font-size: 0.75rem;
     font-weight: 600;
     z-index: 10;
   }
@@ -78,38 +92,43 @@
   }
 
   .program-content {
-    padding: var(--space-lg);
-    flex: 1;
+    position: relative;
+    padding: var(--space-md);
     display: flex;
     flex-direction: column;
   }
 
   .program-header {
     display: flex;
-    align-items: start;
-    gap: var(--space-sm);
-    margin-bottom: var(--space-md);
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding-right: 40px;
   }
 
   .program-title {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: var(--color-brand-blue-peacock);
     margin: 0;
     flex: 1;
+    line-height: 1.3;
   }
 
   .info-icon {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
     background: var(--color-muted);
     border-radius: 50%;
-    width: 28px;
-    height: 28px;
+    width: 36px;
+    height: 36px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     transition: all 0.2s ease;
-    flex-shrink: 0;
+    font-size: 1rem;
+    z-index: 5;
   }
 
   .info-icon:hover {
@@ -118,50 +137,21 @@
     transform: scale(1.1);
   }
 
-  .program-description {
-    color: var(--color-muted-foreground);
-    font-size: 0.95rem;
-    margin-bottom: var(--space-md);
-    flex: 1;
-    overflow: hidden;
-    display: -webkit-box;
-    -webkit-line-clamp: 3;
-    -webkit-box-orient: vertical;
-  }
-
-  .program-footer {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding-top: var(--space-md);
-    border-top: 1px solid var(--color-border);
-  }
-
-  .program-fee {
-    font-size: 1.25rem;
-    font-weight: 700;
-    color: var(--color-brand-berry);
-  }
-
-  .program-capacity {
-    font-size: 0.875rem;
-    color: var(--color-muted-foreground);
-  }
-
-  .program-actions {
-    margin-top: var(--space-md);
-  }
-
   .btn-select-program {
-    width: 100%;
+    position: absolute;
+    bottom: var(--space-md);
+    left: var(--space-md);
     background: var(--color-brand-blue-peacock);
     color: white;
     border: none;
-    padding: 0.75rem;
+    padding: 0.5rem 1rem;
     border-radius: var(--radius-lg);
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s ease;
+    width: auto;
+    font-size: 0.9rem;
+    z-index: 5;
   }
 
   .btn-select-program:hover {
@@ -178,8 +168,6 @@
     cursor: not-allowed;
     transform: none;
   }
-
-
 
   .continue-button-container {
     position: fixed;
@@ -265,36 +253,22 @@
             <a href="{% url 'portal:program_detail' program.program_id %}" style="text-decoration: none; color: inherit; flex: 1;">
               <h3 class="program-title" style="transition: color 0.2s;" onmouseover="this.style.color='var(--color-dark-blue-peacock)'" onmouseout="this.style.color='var(--color-brand-blue-peacock)'">{{ program.name }}</h3>
             </a>
-            <a href="{% url 'portal:program_detail' program.program_id %}" class="info-icon" title="More information">
-              <i class="bi bi-info-circle-fill"></i>
-            </a>
           </div>
           
-          <p class="program-description">
-            {{ program.description|default:"No description available." }}
-          </p>
+          <a href="{% url 'portal:program_detail' program.program_id %}" class="info-icon" title="More information">
+            <i class="bi bi-info-circle-fill"></i>
+          </a>
           
-          <div class="program-footer">
-            <div>
-              <div class="program-fee">${{ program.fee }}</div>
-              <div class="program-capacity">
-                {{ program.available_spots }} spots available
-              </div>
-            </div>
-          </div>
-          
-          <div class="program-actions">
-            {% if program.program_id in enrolled_program_ids %}
-              <button class="btn-select-program" disabled>
-                <i class="bi bi-check-circle-fill me-2"></i>Enrolled
-              </button>
-            {% else %}
-              <button class="btn-select-program select-program-btn" 
-                      data-program-id="{{ program.program_id }}">
-                <i class="bi bi-plus-circle me-2"></i>Select Program
-              </button>
-            {% endif %}
-          </div>
+          {% if program.program_id in enrolled_program_ids %}
+            <button class="btn-select-program" disabled>
+              <i class="bi bi-check-circle-fill me-2"></i>Enrolled
+            </button>
+          {% else %}
+            <button class="btn-select-program select-program-btn" 
+                    data-program-id="{{ program.program_id }}">
+              <i class="bi bi-plus-circle me-2"></i>Select Program
+            </button>
+          {% endif %}
         </div>
       </div>
     {% empty %}

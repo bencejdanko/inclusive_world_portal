@@ -10,7 +10,7 @@ from django.conf import settings
 import json
 import stripe
 
-from .models import Program, Enrollment, Payment
+from .models import Program, Enrollment, Payment, EnrollmentSettings
 
 stripe.api_key = settings.STRIPE_SECRET_KEY if hasattr(settings, 'STRIPE_SECRET_KEY') else None
 
@@ -19,15 +19,23 @@ stripe.api_key = settings.STRIPE_SECRET_KEY if hasattr(settings, 'STRIPE_SECRET_
 def program_catalog_view(request):
     """
     Display catalog of available programs for enrollment.
-    Only accessible to users with complete profile and survey.
+    Only accessible to users with complete profile and survey, and when enrollment is open.
     """
-    # Check if user can purchase programs
-    if not request.user.can_purchase_programs:
+    enrollment_settings = EnrollmentSettings.get_settings()
+    
+    # Check if forms are complete
+    if not request.user.forms_are_complete:
         messages.warning(
             request,
             "Please complete your profile and discovery survey before browsing programs."
         )
         return redirect('users:survey_start')
+    
+    # Check if enrollment is open
+    if not enrollment_settings.enrollment_open:
+        reason = enrollment_settings.closure_reason or "Registration is currently closed."
+        messages.info(request, reason)
+        return redirect('users:member_dashboard')
     
     # Get all active (non-archived) programs
     programs = Program.objects.filter(archived=False).order_by('name')
@@ -38,6 +46,7 @@ def program_catalog_view(request):
     context = {
         'programs': programs,
         'enrolled_program_ids': list(enrolled_program_ids),
+        'enrollment_settings': enrollment_settings,
     }
     
     return render(request, 'portal/program_catalog.html', context)
@@ -86,12 +95,21 @@ def program_selection_view(request):
     GET: Display selection interface with selected programs from URL
     POST: Process ranked selections and proceed to checkout
     """
-    if not request.user.can_purchase_programs:
+    enrollment_settings = EnrollmentSettings.get_settings()
+    
+    # Check forms completion
+    if not request.user.forms_are_complete:
         messages.warning(
             request,
             "Please complete your profile and discovery survey before enrolling in programs."
         )
         return redirect('users:survey_start')
+    
+    # Check if enrollment is open
+    if not enrollment_settings.enrollment_open:
+        reason = enrollment_settings.closure_reason or "Registration is currently closed."
+        messages.info(request, reason)
+        return redirect('users:member_dashboard')
     
     if request.method == 'POST':
         # Get selected program IDs and their rankings from POST data
@@ -162,9 +180,18 @@ def checkout_view(request):
     """
     Display checkout page with program selections and Stripe payment.
     """
-    if not request.user.can_purchase_programs:
+    enrollment_settings = EnrollmentSettings.get_settings()
+    
+    # Check forms completion
+    if not request.user.forms_are_complete:
         messages.warning(request, "Please complete your profile and discovery survey first.")
         return redirect('users:survey_start')
+    
+    # Check if enrollment is open
+    if not enrollment_settings.enrollment_open:
+        reason = enrollment_settings.closure_reason or "Registration is currently closed."
+        messages.info(request, reason)
+        return redirect('users:member_dashboard')
     
     # Get selections from session
     selections_data = request.session.get('program_selections', [])

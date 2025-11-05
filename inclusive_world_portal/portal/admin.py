@@ -1,6 +1,6 @@
 from django.contrib import admin
 from .models import (
-    UserProfile, UserRole, Program, Enrollment, AttendanceRecord,
+    UserRole, Program, Enrollment, AttendanceRecord,
     ProgramVolunteerLead, BuddyAssignment, Notification, UserNotification,
     Survey, SurveyResponse, SurveyRoleAssociation, Payment, EnrollmentSettings
 )
@@ -26,12 +26,6 @@ class ProgramAdmin(admin.ModelAdmin):
     list_display = ("name", "capacity", "enrolled", "archived")
     list_filter = ("archived", "enrollment_status")
     search_fields = ("name",)
-
-# link UserProfile to User in admin
-@admin.register(UserProfile)
-class UserProfileAdmin(admin.ModelAdmin):
-    list_display = ("user", "first_name", "last_name", "status")
-    search_fields = ("first_name", "last_name", "email")
 
 
 @admin.register(EnrollmentSettings)

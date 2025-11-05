@@ -6,7 +6,7 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.http import HttpResponse, JsonResponse
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import render, redirect, get_object_or_404
 from django.template.loader import render_to_string
 from django.urls import reverse
 from django.views.decorators.clickjacking import xframe_options_sameorigin
@@ -23,17 +23,41 @@ class DocumentEditorView(LoginRequiredMixin, FormView):
     """
     Document editor view with Quill rich text editor.
     Allows users to create and edit their documents (e.g., One Page Description).
+    Person-centered managers can also edit other users' documents by passing ?user=username.
     """
     template_name = "users/document_editor.html"
     form_class = DocumentForm
+    
+    def get_target_user(self):
+        """Get the user whose document is being edited."""
+        from inclusive_world_portal.users.models import User
+        
+        # Check if PCM is editing another user's document
+        target_username = self.request.GET.get('user')
+        if target_username:
+            # Only PCMs can edit other users' documents
+            if self.request.user.role != 'person_centered_manager':
+                messages.error(self.request, _('You do not have permission to edit other users\' documents.'))
+                return self.request.user
+            
+            # Get the target user
+            try:
+                return User.objects.get(username=target_username)
+            except User.DoesNotExist:
+                messages.error(self.request, _('User not found.'))
+                return self.request.user
+        
+        return self.request.user
     
     def get_initial(self):
         """Pre-populate form with existing document content."""
         initial = super().get_initial()
         
+        target_user = self.get_target_user()
+        
         # Get or create the user's primary document (for One Page Description)
         document, created = Document.objects.get_or_create(
-            user=self.request.user,
+            user=target_user,
             title="One Page Description",
             defaults={'content': '', 'state': 'draft'}
         )
@@ -48,16 +72,18 @@ class DocumentEditorView(LoginRequiredMixin, FormView):
         
         context = super().get_context_data(**kwargs)
         
+        target_user = self.get_target_user()
+        
         # Get the document for context
         document, created = Document.objects.get_or_create(
-            user=self.request.user,
+            user=target_user,
             title="One Page Description",
             defaults={'content': '', 'state': 'draft'}
         )
         
         # Get all exports for this document, ordered by creation date (newest first)
         exports = DocumentExport.objects.filter(
-            user=self.request.user,
+            user=target_user,
             document=document
         ).order_by('-created_at')
         
@@ -68,17 +94,21 @@ class DocumentEditorView(LoginRequiredMixin, FormView):
         context['document_title'] = document.title
         context['document_exports'] = exports
         context['active_export'] = active_export
+        context['target_user'] = target_user
+        context['editing_own_document'] = target_user.id == self.request.user.id
         return context
     
     def form_valid(self, form):
         """Save the document when form is submitted."""
+        target_user = self.get_target_user()
+        
         title = form.cleaned_data.get('title', 'One Page Description')
         content = form.cleaned_data.get('content', '')
         state = form.cleaned_data.get('state', 'draft')
         
         # Get or create the document
         document, created = Document.objects.get_or_create(
-            user=self.request.user,
+            user=target_user,
             title=title,
             defaults={'content': content, 'state': state}
         )
@@ -88,7 +118,15 @@ class DocumentEditorView(LoginRequiredMixin, FormView):
             document.state = state
             document.save()
         
-        messages.success(self.request, _('Document saved successfully!'))
+        if target_user.id == self.request.user.id:
+            messages.success(self.request, _('Document saved successfully!'))
+        else:
+            messages.success(self.request, _(f'Document saved successfully for {target_user.name or target_user.username}!'))
+        
+        # Redirect back with the user parameter if editing another user's document
+        if target_user.id != self.request.user.id:
+            return redirect(f"{reverse('users:document_editor')}?user={target_user.username}")
+        
         return redirect('users:document_editor')
     
     def get_success_url(self):
@@ -103,20 +141,38 @@ def export_document_pdf(request):
     """
     Export the user's One Page Description document as a PDF.
     Saves the PDF to MinIO/S3 storage and creates a DocumentExport record.
+    Person-centered managers can export for other users by passing ?user=username.
     """
     import json
     import logging
     from django.core.files.base import ContentFile
     from inclusive_world_portal.portal.models import DocumentExport
     from datetime import datetime
+    from inclusive_world_portal.users.models import User
     
     logger = logging.getLogger(__name__)
     
     try:
+        # Determine which user's document to export
+        target_username = request.GET.get('user')
+        if target_username:
+            # Only PCMs can export other users' documents
+            if request.user.role != 'person_centered_manager':
+                messages.error(request, _('You do not have permission to export other users\' documents.'))
+                return redirect('users:document_editor')
+            
+            try:
+                target_user = User.objects.get(username=target_username)
+            except User.DoesNotExist:
+                messages.error(request, _('User not found.'))
+                return redirect('users:document_editor')
+        else:
+            target_user = request.user
+        
         # Get the user's document
         document = get_object_or_404(
             Document,
-            user=request.user,
+            user=target_user,
             title="One Page Description"
         )
         
@@ -131,7 +187,13 @@ def export_document_pdf(request):
         
         # Check if document has content
         if not html_content_only or html_content_only.strip() == '':
-            messages.warning(request, _('Your document is empty. Please add some content before exporting.'))
+            if target_user.id == request.user.id:
+                messages.warning(request, _('Your document is empty. Please add some content before exporting.'))
+            else:
+                messages.warning(request, _(f'The document for {target_user.name or target_user.username} is empty. Please add some content before exporting.'))
+            
+            if target_user.id != request.user.id:
+                return redirect(f"{reverse('users:document_editor')}?user={target_user.username}")
             return redirect('users:document_editor')
         
         # Get the logo path and font paths for embedding in PDF
@@ -151,13 +213,13 @@ def export_document_pdf(request):
         
         # Get user's profile picture for PDF header
         profile_picture_data_uri = ''
-        if request.user.profile_picture:
+        if target_user.profile_picture:
             try:
                 # Open profile picture file and convert to base64
-                with request.user.profile_picture.open('rb') as profile_file:
+                with target_user.profile_picture.open('rb') as profile_file:
                     profile_base64 = base64.b64encode(profile_file.read()).decode('utf-8')
                     # Detect image type (png, jpg, etc.)
-                    file_ext = request.user.profile_picture.name.split('.')[-1].lower()
+                    file_ext = target_user.profile_picture.name.split('.')[-1].lower()
                     mime_type = 'image/jpeg' if file_ext in ['jpg', 'jpeg'] else f'image/{file_ext}'
                     profile_picture_data_uri = f'data:{mime_type};base64,{profile_base64}'
             except Exception as e:
@@ -252,11 +314,11 @@ def export_document_pdf(request):
         
         # Save PDF to storage (MinIO/S3 or filesystem)
         timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-        filename = f'one_page_description_{request.user.username}_{timestamp}.pdf'
+        filename = f'one_page_description_{target_user.username}_{timestamp}.pdf'
         
         # Create new export record (NOT automatically active)
         export = DocumentExport.objects.create(
-            user=request.user,
+            user=target_user,
             document=document,
             is_active=False
         )
@@ -264,11 +326,23 @@ def export_document_pdf(request):
         # Save the PDF file
         export.file.save(filename, ContentFile(pdf_bytes), save=True)
         
-        logger.info(f"Successfully created PDF export {export.export_id} for user {request.user.username}")
-        messages.success(
-            request,
-            _('Document exported successfully! Select the radio button to set it as your active OPD.')
-        )
+        logger.info(f"Successfully created PDF export {export.export_id} for user {target_user.username} by {request.user.username}")
+        
+        if target_user.id == request.user.id:
+            messages.success(
+                request,
+                _('Document exported successfully! Select the radio button to set it as your active OPD.')
+            )
+        else:
+            messages.success(
+                request,
+                _(f'Document exported successfully for {target_user.name or target_user.username}! Select the radio button to set it as the active OPD.')
+            )
+        
+        # Redirect back with the user parameter if editing another user's document
+        if target_user.id != request.user.id:
+            return redirect(f"{reverse('users:document_editor')}?user={target_user.username}")
+        
         return redirect('users:document_editor')
         
     except Exception as e:
@@ -277,6 +351,12 @@ def export_document_pdf(request):
             request,
             _('An unexpected error occurred. Please try again later.')
         )
+        
+        # Redirect back with the user parameter if editing another user's document
+        target_username = request.GET.get('user')
+        if target_username and request.user.role == 'person_centered_manager':
+            return redirect(f"{reverse('users:document_editor')}?user={target_username}")
+        
         return redirect('users:document_editor')
 
 
@@ -345,8 +425,8 @@ def generate_one_page_profile_html(context):
 @login_required
 def preview_document_export(request, export_id):
     """
-    Preview a specific document export PDF within the portal layout.
-    Renders a template with embedded PDF viewer.
+    Preview a document export in HTML view (shows PDF in iframe).
+    Person-centered managers can preview exports for users they're managing.
     """
     from inclusive_world_portal.portal.models import DocumentExport
     from django.shortcuts import render
@@ -355,14 +435,16 @@ def preview_document_export(request, export_id):
     logger = logging.getLogger(__name__)
     
     try:
-        # Get the export, ensuring it belongs to the current user
-        export = get_object_or_404(
-            DocumentExport,
-            export_id=export_id,
-            user=request.user
-        )
+        # Get the export first (without filtering by user)
+        export = get_object_or_404(DocumentExport, export_id=export_id)
         
-        logger.info(f"User {request.user.username} previewed export {export_id}")
+        # Check permissions: user can preview their own exports, or PCMs can preview any export
+        if export.user.id != request.user.id and request.user.role != 'person_centered_manager':
+            logger.warning(f"User {request.user.username} attempted to preview export {export_id} belonging to {export.user.username}")
+            messages.error(request, _('Permission denied.'))
+            return redirect('users:document_editor')
+        
+        logger.info(f"User {request.user.username} previewed export {export_id} for {export.user.username}")
         
         return render(request, 'users/document_preview.html', {
             'export': export,
@@ -381,6 +463,7 @@ def preview_document_export_pdf(request, export_id):
     Serve the actual PDF file for embedding in the preview page.
     Uses Content-Disposition: inline to display in browser's PDF viewer.
     Allows embedding within same origin using X-Frame-Options: SAMEORIGIN.
+    Person-centered managers can preview exports for users they're managing.
     """
     from inclusive_world_portal.portal.models import DocumentExport
     import logging
@@ -388,12 +471,13 @@ def preview_document_export_pdf(request, export_id):
     logger = logging.getLogger(__name__)
     
     try:
-        # Get the export, ensuring it belongs to the current user
-        export = get_object_or_404(
-            DocumentExport,
-            export_id=export_id,
-            user=request.user
-        )
+        # Get the export first (without filtering by user)
+        export = get_object_or_404(DocumentExport, export_id=export_id)
+        
+        # Check permissions: user can preview their own exports, or PCMs can preview any export
+        if export.user.id != request.user.id and request.user.role != 'person_centered_manager':
+            logger.warning(f"User {request.user.username} attempted to preview PDF {export_id} belonging to {export.user.username}")
+            return HttpResponse('Permission denied', status=403)
         
         # Serve the file inline for browser preview
         response = HttpResponse(export.file.read(), content_type='application/pdf')
@@ -411,6 +495,7 @@ def preview_document_export_pdf(request, export_id):
 def download_document_export(request, export_id):
     """
     Download a specific document export PDF.
+    Person-centered managers can download exports for users they're managing.
     """
     from inclusive_world_portal.portal.models import DocumentExport
     import logging
@@ -418,12 +503,14 @@ def download_document_export(request, export_id):
     logger = logging.getLogger(__name__)
     
     try:
-        # Get the export, ensuring it belongs to the current user
-        export = get_object_or_404(
-            DocumentExport,
-            export_id=export_id,
-            user=request.user
-        )
+        # Get the export first (without filtering by user)
+        export = get_object_or_404(DocumentExport, export_id=export_id)
+        
+        # Check permissions: user can download their own exports, or PCMs can download any export
+        if export.user.id != request.user.id and request.user.role != 'person_centered_manager':
+            logger.warning(f"User {request.user.username} attempted to download export {export_id} belonging to {export.user.username}")
+            messages.error(request, _('Permission denied.'))
+            return redirect('users:document_editor')
         
         # Serve the file
         response = HttpResponse(export.file.read(), content_type='application/pdf')
@@ -442,6 +529,7 @@ def download_document_export(request, export_id):
 def delete_document_export(request, export_id):
     """
     Delete a document export record and file.
+    Person-centered managers can delete exports for users they're managing.
     """
     from inclusive_world_portal.portal.models import DocumentExport
     import logging
@@ -452,12 +540,13 @@ def delete_document_export(request, export_id):
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
     try:
-        # Get the export, ensuring it belongs to the current user
-        export = get_object_or_404(
-            DocumentExport,
-            export_id=export_id,
-            user=request.user
-        )
+        # Get the export first (without filtering by user)
+        export = get_object_or_404(DocumentExport, export_id=export_id)
+        
+        # Check permissions: user can delete their own exports, or PCMs can delete any export
+        if export.user.id != request.user.id and request.user.role != 'person_centered_manager':
+            logger.warning(f"User {request.user.username} attempted to delete export {export_id} belonging to {export.user.username}")
+            return JsonResponse({'error': 'Permission denied'}, status=403)
         
         # Delete the file from storage
         if export.file:
@@ -466,7 +555,7 @@ def delete_document_export(request, export_id):
         # Delete the record
         export.delete()
         
-        logger.info(f"User {request.user.username} deleted export {export_id}")
+        logger.info(f"User {request.user.username} deleted export {export_id} for {export.user.username}")
         messages.success(request, _('Export deleted successfully.'))
         return JsonResponse({'success': True})
         
@@ -481,6 +570,7 @@ def toggle_active_export(request, export_id):
     Toggle which export is marked as active (current OPD).
     If the export is already active, deactivate it.
     If it's not active, activate it and deactivate all others.
+    Person-centered managers can toggle exports for users they're managing.
     """
     from inclusive_world_portal.portal.models import DocumentExport
     import logging
@@ -491,25 +581,26 @@ def toggle_active_export(request, export_id):
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
     try:
-        # Get the export, ensuring it belongs to the current user
-        export = get_object_or_404(
-            DocumentExport,
-            export_id=export_id,
-            user=request.user
-        )
+        # Get the export first (without filtering by user)
+        export = get_object_or_404(DocumentExport, export_id=export_id)
+        
+        # Check permissions: user can toggle their own exports, or PCMs can toggle any export
+        if export.user.id != request.user.id and request.user.role != 'person_centered_manager':
+            logger.warning(f"User {request.user.username} attempted to toggle export {export_id} belonging to {export.user.username}")
+            return JsonResponse({'error': 'Permission denied'}, status=403)
         
         # Check if this export is already active
         if export.is_active:
             # Deactivate it
             export.is_active = False
             export.save()
-            logger.info(f"User {request.user.username} deactivated export {export_id}")
+            logger.info(f"User {request.user.username} deactivated export {export_id} for {export.user.username}")
             messages.success(request, _('Active OPD cleared. No OPD is currently active.'))
             return JsonResponse({'success': True, 'action': 'deactivated'})
         else:
             # Deactivate all other exports for this user and document
             DocumentExport.objects.filter(
-                user=request.user,
+                user=export.user,
                 document=export.document
             ).exclude(export_id=export_id).update(is_active=False)
             
@@ -517,10 +608,58 @@ def toggle_active_export(request, export_id):
             export.is_active = True
             export.save()
             
-            logger.info(f"User {request.user.username} set export {export_id} as active")
+            logger.info(f"User {request.user.username} set export {export_id} as active for {export.user.username}")
             messages.success(request, _('Active OPD updated successfully.'))
             return JsonResponse({'success': True, 'action': 'activated'})
         
     except Exception as e:
         logger.error(f"Error toggling active export {export_id}: {e}", exc_info=True)
         return JsonResponse({'error': 'Could not update active status'}, status=500)
+
+
+@login_required
+def view_active_opd(request, username=None):
+    """
+    View the active OPD for a user.
+    If username is provided and current user is a person_centered_manager, show that user's OPD.
+    Otherwise, show the current user's OPD.
+    Displays embedded PDF or a message if no active OPD exists.
+    """
+    from inclusive_world_portal.portal.models import DocumentExport
+    from inclusive_world_portal.users.models import User
+    
+    # Determine which user's OPD to display
+    if username:
+        # Check if current user has permission to view other users' OPDs
+        if request.user.role not in ['person_centered_manager', 'manager', 'admin']:
+            messages.error(request, _('You do not have permission to view other users\' OPDs.'))
+            return redirect('users:view_active_opd')
+        
+        # Get the target user
+        target_user = get_object_or_404(User, username=username)
+    else:
+        # View own OPD
+        target_user = request.user
+    
+    # Get the active OPD export
+    try:
+        document = Document.objects.get(
+            user=target_user,
+            title="One Page Description"
+        )
+        active_export = DocumentExport.objects.filter(
+            user=target_user,
+            document=document,
+            is_active=True
+        ).first()
+    except Document.DoesNotExist:
+        document = None
+        active_export = None
+    
+    context = {
+        'target_user': target_user,
+        'active_export': active_export,
+        'viewing_own_opd': target_user.id == request.user.id,
+    }
+    
+    return render(request, 'users/view_active_opd.html', context)

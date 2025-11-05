@@ -31,6 +31,12 @@ class User(AbstractUser):
         MANAGER = "manager", _("Manager")
         ADMIN = "admin", _("Admin")
 
+    class Status(models.TextChoices):
+        ACTIVE = "active", _("Active")
+        INACTIVE = "inactive", _("Inactive")
+        SUSPENDED = "suspended", _("Suspended")
+        PENDING_VERIFICATION = "pending_verification", _("Pending Verification")
+
     # Basic Info
     name = CharField(_("Name of User"), blank=True, max_length=255)
     first_name = None  # type: ignore[assignment]
@@ -45,12 +51,22 @@ class User(AbstractUser):
         help_text=_("User's role in the organization")
     )
     
+    # Status
+    status = CharField(
+        _("Status"),
+        max_length=50,
+        choices=Status.choices,
+        default=Status.PENDING_VERIFICATION,
+        help_text=_("User's account status")
+    )
+    
     # Profile Information
     phone_no = CharField(_("Phone Number"), max_length=64, blank=True)
     bio = TextField(_("Bio"), blank=True)
     age = IntegerField(_("Age"), null=True, blank=True)
     grade = CharField(_("Grade"), max_length=64, blank=True)
     profile_picture = ImageField(_("Profile Picture"), upload_to="profile_pictures/", blank=True, null=True)
+    support_needs = TextField(_("Support Needs"), blank=True, help_text=_("Special accommodations or support requirements"))
     
     # Parent/Guardian Information
     parent_guardian_name = CharField(_("Parent/Guardian Name"), max_length=255, blank=True)
@@ -116,15 +132,16 @@ class User(AbstractUser):
     @property
     def can_register_as_volunteer(self) -> bool:
         """
-        Check if user (volunteer) can register for programs without payment.
+        Check if user (volunteer, manager, or person_centered_manager) can register for programs without payment.
         Requires both completed forms AND enrollment to be open.
         Same logic as can_purchase_programs but for volunteers (no payment needed).
+        Managers and person-centered managers are treated as higher-level volunteers.
         """
         # Import here to avoid circular dependency
         from inclusive_world_portal.portal.models import EnrollmentSettings
         
         enrollment_settings = EnrollmentSettings.get_settings()
-        return self.role == self.Role.VOLUNTEER and self.forms_are_complete and enrollment_settings.enrollment_open
+        return self.role in [self.Role.VOLUNTEER, self.Role.MANAGER, self.Role.PERSON_CENTERED_MANAGER] and self.forms_are_complete and enrollment_settings.enrollment_open
 
 
 class DiscoverySurvey(models.Model):

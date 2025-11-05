@@ -1,0 +1,883 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}Manage Attendance - {{ program.name }}{% endblock %}
+
+{% block page_title %}Manage Attendance{% endblock page_title %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  .attendance-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--space-lg);
+  }
+
+  .back-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-brand-blue-peacock);
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: var(--space-md);
+    transition: all 0.2s ease;
+    position: absolute;
+    top: var(--space-lg);
+    right: var(--space-lg);
+    background: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+  }
+
+  .back-button:hover {
+    color: var(--color-dark-blue-peacock);
+    transform: translateX(-4px);
+    box-shadow: var(--shadow-md);
+  }
+
+  .date-section {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-md);
+    margin-bottom: var(--space-xl);
+  }
+
+  .date-section h2 {
+    font-size: 1.25rem;
+    color: var(--color-brand-blue-peacock);
+    margin-bottom: var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .date-input-wrapper {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .date-input {
+    padding: 0.75rem 1rem;
+    border: 2px solid #e0e0e0;
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+    max-width: 250px;
+  }
+
+  .date-input:focus {
+    outline: none;
+    border-color: var(--color-brand-blue-peacock);
+    box-shadow: 0 0 0 3px rgba(2, 158, 157, 0.1);
+  }
+
+  .attendance-section {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-md);
+    margin-bottom: var(--space-xl);
+  }
+
+  .attendance-section h2 {
+    font-size: 1.25rem;
+    color: var(--color-brand-blue-peacock);
+    margin-bottom: var(--space-sm);
+  }
+
+  .attendance-section p {
+    color: #666;
+    margin-bottom: var(--space-lg);
+  }
+
+  .attendance-table-wrapper {
+    overflow-x: auto;
+    margin-top: var(--space-lg);
+  }
+
+  .attendance-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+  }
+
+  .attendance-table thead {
+    background: #f8f9fa;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  .attendance-table th {
+    padding: 0.75rem 0.5rem;
+    text-align: center;
+    font-weight: 700;
+    color: #666;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 2px solid #e0e0e0;
+    white-space: nowrap;
+    background: #f8f9fa;
+  }
+
+  .attendance-table th:first-child {
+    text-align: left;
+    padding-left: 1rem;
+  }
+
+  .attendance-table tbody tr {
+    border-bottom: 1px solid #f0f0f0;
+    transition: background-color 0.2s ease;
+  }
+
+  .attendance-table tbody tr:hover {
+    background-color: #f8f9fa;
+  }
+
+  .attendance-table td {
+    padding: 0.75rem 0.5rem;
+    vertical-align: middle;
+    text-align: center;
+  }
+
+  .attendance-table td:first-child {
+    text-align: left;
+    padding-left: 1rem;
+  }
+
+  .name-role-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-width: 150px;
+  }
+
+  .participant-name {
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    white-space: nowrap;
+  }
+
+  .role-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    font-size: 0.625rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    flex-shrink: 0;
+  }
+
+  .role-badge.volunteer {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .role-badge.member {
+    background: #d1ecf1;
+    color: #0c5460;
+  }
+
+  /* Compact status radio buttons */
+  .status-radio {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+  }
+
+  .status-radio input[type="radio"] {
+    display: none;
+  }
+
+  .status-radio i {
+    font-size: 1rem;
+    color: #999;
+    transition: all 0.2s ease;
+  }
+
+  .status-radio:hover {
+    border-color: var(--color-brand-blue-peacock);
+    transform: scale(1.1);
+  }
+
+  .status-radio.selected {
+    border-width: 3px;
+  }
+
+  .status-radio.selected.present {
+    background: #28a745;
+    border-color: #28a745;
+  }
+
+  .status-radio.selected.present i {
+    color: white;
+  }
+
+  .status-radio.selected.tardy {
+    background: #ffc107;
+    border-color: #ffc107;
+  }
+
+  .status-radio.selected.tardy i {
+    color: #333;
+  }
+
+  .status-radio.selected.informed {
+    background: #17a2b8;
+    border-color: #17a2b8;
+  }
+
+  .status-radio.selected.informed i {
+    color: white;
+  }
+
+  .status-radio.selected.uninformed {
+    background: #dc3545;
+    border-color: #dc3545;
+  }
+
+  .status-radio.selected.uninformed i {
+    color: white;
+  }
+
+  /* Compact action buttons */
+  .action-icon-btn {
+    padding: 0.5rem;
+    width: 36px;
+    height: 36px;
+    border: 2px solid #e0e0e0;
+    background: white;
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    color: #666;
+  }
+
+  .action-icon-btn:hover {
+    border-color: var(--color-brand-blue-peacock);
+    color: var(--color-brand-blue-peacock);
+    transform: translateY(-2px);
+  }
+
+  .action-icon-btn.has-value {
+    background: #fff3cd;
+    border-color: #ffc107;
+    color: #856404;
+  }
+
+  .action-icon-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .action-icon-btn:disabled:hover {
+    transform: none;
+    border-color: #e0e0e0;
+    color: #666;
+  }
+
+  /* Modal/Popup styles */
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.active {
+    display: flex;
+  }
+
+  .modal-content {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    max-width: 400px;
+    width: 90%;
+    box-shadow: var(--shadow-xl);
+    animation: modalSlideIn 0.2s ease;
+  }
+
+  @keyframes modalSlideIn {
+    from {
+      transform: translateY(-20px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+  }
+
+  .modal-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    margin: 0;
+  }
+
+  .modal-close {
+    background: none;
+    border: none;
+    font-size: 1.5rem;
+    color: #999;
+    cursor: pointer;
+    padding: 0;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+  }
+
+  .modal-close:hover {
+    background: #f0f0f0;
+    color: #333;
+  }
+
+  .modal-body {
+    margin-bottom: var(--space-lg);
+  }
+
+  .modal-input {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid #e0e0e0;
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    font-family: inherit;
+    transition: all 0.2s ease;
+  }
+
+  .modal-input:focus {
+    outline: none;
+    border-color: var(--color-brand-blue-peacock);
+  }
+
+  .modal-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 0.75rem;
+    border: 2px solid #e0e0e0;
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    font-family: inherit;
+    resize: vertical;
+    transition: all 0.2s ease;
+  }
+
+  .modal-textarea:focus {
+    outline: none;
+    border-color: var(--color-brand-blue-peacock);
+  }
+
+  .modal-actions {
+    display: flex;
+    gap: var(--space-md);
+    justify-content: flex-end;
+  }
+
+  .modal-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+  }
+
+  .modal-btn-cancel {
+    background: #e0e0e0;
+    color: #333;
+  }
+
+  .modal-btn-cancel:hover {
+    background: #d0d0d0;
+  }
+
+  .modal-btn-save {
+    background: var(--color-brand-berry);
+    color: white;
+  }
+
+  .modal-btn-save:hover {
+    background: var(--color-dark-berry);
+  }
+
+  .action-buttons {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-md);
+    margin-top: var(--space-xl);
+  }
+
+  .btn-cancel,
+  .btn-save {
+    padding: 0.875rem 2rem;
+    border-radius: var(--radius-lg);
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border: none;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-cancel {
+    background: #e0e0e0;
+    color: #333;
+  }
+
+  .btn-cancel:hover {
+    background: #d0d0d0;
+    transform: translateY(-2px);
+  }
+
+  .btn-save {
+    background: var(--color-brand-berry);
+    color: white;
+  }
+
+  .btn-save:hover {
+    background: var(--color-dark-berry);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: var(--space-xl);
+    color: #666;
+  }
+
+  .empty-state i {
+    font-size: 3rem;
+    color: #ccc;
+    margin-bottom: var(--space-md);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="attendance-container">
+  <a href="{% url 'portal:manager_program_attendance' program.program_id %}" class="back-button">
+    <i class="bi bi-arrow-left"></i>
+    <span>Back to Attendance List</span>
+  </a>
+
+  <form method="post" id="attendanceForm">
+    {% csrf_token %}
+    
+    <!-- Date Selection -->
+    <div class="date-section">
+      <h2>
+        <i class="bi bi-calendar-event"></i>
+        Attendance Date
+      </h2>
+      <div class="date-input-wrapper">
+        <input 
+          type="date" 
+          name="attendance_date" 
+          class="date-input" 
+          value="{{ attendance_date|date:'Y-m-d' }}"
+          onchange="window.location.href='?date=' + this.value"
+        >
+      </div>
+    </div>
+
+    <!-- Attendance Records -->
+    <div class="attendance-section">
+      <h2>Attendance Records</h2>
+      <p>Mark attendance for all participants in this program.</p>
+
+      {% if participants %}
+        <div class="attendance-table-wrapper">
+          <table class="attendance-table">
+            <thead>
+              <tr>
+                <th>NAME</th>
+                <th title="Present">
+                  <i class="bi bi-check-circle-fill"></i>
+                </th>
+                <th title="Tardy">
+                  <i class="bi bi-clock"></i>
+                </th>
+                <th title="Informed Absence">
+                  <i class="bi bi-info-circle-fill"></i>
+                </th>
+                <th title="Uninformed Absence">
+                  <i class="bi bi-x-circle-fill"></i>
+                </th>
+                <th title="Hours (Volunteers)">
+                  <i class="bi bi-hourglass-split"></i>
+                </th>
+                <th title="Notes">
+                  <i class="bi bi-chat-left-text"></i>
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for participant in participants %}
+                <tr data-user-id="{{ participant.user.id }}">
+                  <td>
+                    <div class="name-role-cell">
+                      <span class="role-badge {% if participant.is_volunteer %}volunteer{% else %}member{% endif %}" 
+                            title="{{ participant.role }}">
+                        {{ participant.role|slice:":1" }}
+                      </span>
+                      <span class="participant-name">{{ participant.user.name }}</span>
+                    </div>
+                  </td>
+                  
+                  <!-- Present -->
+                  <td>
+                    <label class="status-radio {% if participant.attendance_status == 'present' %}selected present{% endif %}">
+                      <input 
+                        type="radio" 
+                        name="attendance_status_{{ participant.user.id }}" 
+                        value="present"
+                        {% if participant.attendance_status == 'present' %}checked{% endif %}
+                      >
+                      <i class="bi bi-check-circle-fill"></i>
+                    </label>
+                  </td>
+                  
+                  <!-- Tardy -->
+                  <td>
+                    <label class="status-radio {% if participant.attendance_status == 'tardy' %}selected tardy{% endif %}">
+                      <input 
+                        type="radio" 
+                        name="attendance_status_{{ participant.user.id }}" 
+                        value="tardy"
+                        {% if participant.attendance_status == 'tardy' %}checked{% endif %}
+                      >
+                      <i class="bi bi-clock"></i>
+                    </label>
+                  </td>
+                  
+                  <!-- Informed -->
+                  <td>
+                    <label class="status-radio {% if participant.attendance_status == 'informed' %}selected informed{% endif %}">
+                      <input 
+                        type="radio" 
+                        name="attendance_status_{{ participant.user.id }}" 
+                        value="informed"
+                        {% if participant.attendance_status == 'informed' %}checked{% endif %}
+                      >
+                      <i class="bi bi-info-circle-fill"></i>
+                    </label>
+                  </td>
+                  
+                  <!-- Uninformed -->
+                  <td>
+                    <label class="status-radio {% if participant.attendance_status == 'uninformed' %}selected uninformed{% endif %}">
+                      <input 
+                        type="radio" 
+                        name="attendance_status_{{ participant.user.id }}" 
+                        value="uninformed"
+                        {% if participant.attendance_status == 'uninformed' %}checked{% endif %}
+                      >
+                      <i class="bi bi-x-circle-fill"></i>
+                    </label>
+                  </td>
+                  
+                  <!-- Hours -->
+                  <td>
+                    <button 
+                      type="button" 
+                      class="action-icon-btn {% if participant.hours or participant.is_volunteer %}has-value{% endif %}" 
+                      onclick="openHoursModal('{{ participant.user.id }}', '{{ participant.user.name }}')"
+                      {% if not participant.is_volunteer %}disabled{% endif %}
+                      title="{% if participant.is_volunteer %}Set hours (default: 1.5){% else %}Not applicable for members{% endif %}"
+                    >
+                      <i class="bi bi-hourglass-split"></i>
+                    </button>
+                    <input 
+                      type="hidden" 
+                      name="hours_{{ participant.user.id }}" 
+                      id="hours_input_{{ participant.user.id }}"
+                      value="{{ participant.hours|default:'' }}"
+                    >
+                  </td>
+                  
+                  <!-- Notes -->
+                  <td>
+                    <button 
+                      type="button" 
+                      class="action-icon-btn {% if participant.notes %}has-value{% endif %}" 
+                      onclick="openNotesModal('{{ participant.user.id }}', '{{ participant.user.name }}')"
+                      title="Add notes"
+                    >
+                      <i class="bi bi-chat-left-text"></i>
+                    </button>
+                    <textarea 
+                      name="notes_{{ participant.user.id }}" 
+                      id="notes_textarea_{{ participant.user.id }}"
+                      style="display: none;"
+                    >{{ participant.notes }}</textarea>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      {% else %}
+        <div class="empty-state">
+          <i class="bi bi-people"></i>
+          <p>No approved participants in this program yet.</p>
+          <p>Add and approve participants in the <a href="{% url 'portal:manager_program_people' program.program_id %}">People</a> section first.</p>
+        </div>
+      {% endif %}
+    </div>
+
+    <!-- Action Buttons -->
+    {% if participants %}
+      <div class="action-buttons">
+        <a href="{% url 'portal:manager_program_attendance' program.program_id %}" class="btn-cancel">Cancel</a>
+        <button type="submit" class="btn-save">
+          <i class="bi bi-check-circle"></i>
+          Save Attendance
+        </button>
+      </div>
+    {% endif %}
+  </form>
+</div>
+
+<!-- Hours Modal -->
+<div class="modal-overlay" id="hoursModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Set Hours</h3>
+      <button type="button" class="modal-close" onclick="closeHoursModal()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="color: #666; margin-bottom: 1rem;">
+        <strong id="hoursModalName"></strong>
+      </p>
+      <input 
+        type="number" 
+        step="0.5" 
+        class="modal-input" 
+        id="hoursModalInput" 
+        placeholder="1.5"
+        min="0"
+        max="24"
+      >
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn modal-btn-cancel" onclick="closeHoursModal()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-save" onclick="saveHours()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Notes Modal -->
+<div class="modal-overlay" id="notesModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title">Add Notes</h3>
+      <button type="button" class="modal-close" onclick="closeNotesModal()">
+        <i class="bi bi-x"></i>
+      </button>
+    </div>
+    <div class="modal-body">
+      <p style="color: #666; margin-bottom: 1rem;">
+        <strong id="notesModalName"></strong>
+      </p>
+      <textarea 
+        class="modal-textarea" 
+        id="notesModalInput" 
+        placeholder="Enter notes..."
+      ></textarea>
+    </div>
+    <div class="modal-actions">
+      <button type="button" class="modal-btn modal-btn-cancel" onclick="closeNotesModal()">Cancel</button>
+      <button type="button" class="modal-btn modal-btn-save" onclick="saveNotes()">Save</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  let currentUserId = null;
+
+  // Handle status radio button selection
+  document.querySelectorAll('.status-radio').forEach(radio => {
+    radio.addEventListener('click', function() {
+      const input = this.querySelector('input[type="radio"]');
+      const row = this.closest('tr');
+      const allRadios = row.querySelectorAll('.status-radio');
+      
+      // Remove selected class from all radios in this row
+      allRadios.forEach(r => {
+        r.classList.remove('selected', 'present', 'tardy', 'informed', 'uninformed');
+      });
+      
+      // Add selected class to clicked radio
+      if (input.checked) {
+        this.classList.add('selected', input.value);
+      }
+    });
+  });
+
+  // Hours Modal Functions
+  function openHoursModal(userId, userName) {
+    currentUserId = userId;
+    const modal = document.getElementById('hoursModal');
+    const input = document.getElementById('hoursModalInput');
+    const nameSpan = document.getElementById('hoursModalName');
+    const hiddenInput = document.getElementById('hours_input_' + userId);
+    
+    nameSpan.textContent = userName;
+    input.value = hiddenInput.value || '1.5';
+    modal.classList.add('active');
+    
+    // Focus input after animation
+    setTimeout(() => input.focus(), 100);
+  }
+
+  function closeHoursModal() {
+    const modal = document.getElementById('hoursModal');
+    modal.classList.remove('active');
+    currentUserId = null;
+  }
+
+  function saveHours() {
+    if (!currentUserId) return;
+    
+    const input = document.getElementById('hoursModalInput');
+    const hiddenInput = document.getElementById('hours_input_' + currentUserId);
+    const button = document.querySelector(`button[onclick*="openHoursModal('${currentUserId}"`);
+    
+    hiddenInput.value = input.value;
+    
+    // Update button style
+    if (input.value) {
+      button.classList.add('has-value');
+    } else {
+      button.classList.remove('has-value');
+    }
+    
+    closeHoursModal();
+  }
+
+  // Notes Modal Functions
+  function openNotesModal(userId, userName) {
+    currentUserId = userId;
+    const modal = document.getElementById('notesModal');
+    const textarea = document.getElementById('notesModalInput');
+    const nameSpan = document.getElementById('notesModalName');
+    const hiddenTextarea = document.getElementById('notes_textarea_' + userId);
+    
+    nameSpan.textContent = userName;
+    textarea.value = hiddenTextarea.value || '';
+    modal.classList.add('active');
+    
+    // Focus textarea after animation
+    setTimeout(() => textarea.focus(), 100);
+  }
+
+  function closeNotesModal() {
+    const modal = document.getElementById('notesModal');
+    modal.classList.remove('active');
+    currentUserId = null;
+  }
+
+  function saveNotes() {
+    if (!currentUserId) return;
+    
+    const textarea = document.getElementById('notesModalInput');
+    const hiddenTextarea = document.getElementById('notes_textarea_' + currentUserId);
+    const button = document.querySelector(`button[onclick*="openNotesModal('${currentUserId}"`);
+    
+    hiddenTextarea.value = textarea.value;
+    
+    // Update button style
+    if (textarea.value.trim()) {
+      button.classList.add('has-value');
+    } else {
+      button.classList.remove('has-value');
+    }
+    
+    closeNotesModal();
+  }
+
+  // Close modals on overlay click
+  document.getElementById('hoursModal').addEventListener('click', function(e) {
+    if (e.target === this) closeHoursModal();
+  });
+
+  document.getElementById('notesModal').addEventListener('click', function(e) {
+    if (e.target === this) closeNotesModal();
+  });
+
+  // Close modals on Escape key
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') {
+      closeHoursModal();
+      closeNotesModal();
+    }
+  });
+
+  // Validate form before submission
+  document.getElementById('attendanceForm').addEventListener('submit', function(e) {
+    const rows = document.querySelectorAll('.attendance-table tbody tr');
+    let hasSelection = false;
+    
+    rows.forEach(row => {
+      const radios = row.querySelectorAll('input[type="radio"]');
+      const anyChecked = Array.from(radios).some(r => r.checked);
+      if (anyChecked) {
+        hasSelection = true;
+      }
+    });
+    
+    if (!hasSelection) {
+      e.preventDefault();
+      alert('Please mark attendance status for at least one participant.');
+      return false;
+    }
+  });
+</script>
+{% endblock %}

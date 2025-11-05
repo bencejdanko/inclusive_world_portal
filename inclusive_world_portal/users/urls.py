@@ -12,6 +12,7 @@ from .document_views import (
     download_document_export,
     delete_document_export,
     toggle_active_export,
+    view_active_opd,
 )
 from .survey_views import (
     SurveyStartView,
@@ -62,6 +63,10 @@ urlpatterns = [
     path("documents/exports/<uuid:export_id>/download/", view=download_document_export, name="download_document_export"),
     path("documents/exports/<uuid:export_id>/delete/", view=delete_document_export, name="delete_document_export"),
     path("documents/exports/<uuid:export_id>/toggle-active/", view=toggle_active_export, name="toggle_active_export"),
+    
+    # View Active OPD
+    path("documents/opd/", view=view_active_opd, name="view_active_opd"),
+    path("documents/opd/<str:username>/", view=view_active_opd, name="view_active_opd_for_user"),
     
     # Discovery Survey URLs
     path("survey/start/", SurveyStartView.as_view(), name="survey_start"),

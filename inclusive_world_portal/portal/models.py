@@ -55,58 +55,8 @@ class SurveyRoleType(models.TextChoices):
     ADMIN = "admin", "Admin"
 
 # -------------------------
-# Profiles & Roles
+# Roles
 # -------------------------
-
-class UserProfile(models.Model):
-    """
-    Mirrors public.user_profiles (but Django-style). We keep the relation to the
-    auth user and let other models reference the auth user directly for simplicity.
-    """
-    user = models.OneToOneField(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        primary_key=True,
-        related_name="profile",
-    )
-    first_name = models.CharField(max_length=255)
-    last_name = models.CharField(max_length=255)
-    email = models.EmailField(unique=True, null=True, blank=True)
-    phone_no = models.CharField(max_length=64, blank=True)
-    status = models.CharField(max_length=32, choices=UserStatus.choices, default=UserStatus.PENDING)
-    bio = models.TextField(blank=True)
-    age = models.IntegerField(null=True, blank=True)
-    grade = models.CharField(max_length=64, blank=True)
-    education = models.JSONField(null=True, blank=True)           # was text[]
-    hear_about = models.JSONField(null=True, blank=True)          # was text[]
-    phone_confirmed_at = models.DateTimeField(null=True, blank=True)
-    parent_guardian = models.CharField(max_length=255, blank=True)
-
-    emergency_contact_first_name = models.CharField(max_length=255, blank=True)
-    emergency_contact_last_name = models.CharField(max_length=255, blank=True)
-    emergency_contact_relationship = models.CharField(max_length=255, blank=True)
-    emergency_contact_phone = models.CharField(max_length=64, blank=True)
-    emergency_contact_secondary_phone = models.CharField(max_length=64, blank=True)
-    emergency_contact_email = models.EmailField(blank=True)
-    emergency_contact_name = models.CharField(max_length=255, blank=True)  # deprecated
-    emergency_contact_emergency_phone = models.CharField(max_length=64, blank=True)  # deprecated
-
-    profile_pic_uri = models.CharField(max_length=255, blank=True)
-    discovery_questions_answers = models.JSONField(null=True, blank=True)
-    opd = models.JSONField(null=True, blank=True)
-    opd_state = models.CharField(max_length=16, choices=OPDState.choices, null=True, blank=True)
-    opd_comments = models.JSONField(null=True, blank=True)
-    support_needs = models.TextField(blank=True)
-
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        verbose_name = "User profile"
-        verbose_name_plural = "User profiles"
-
-    def __str__(self):
-        return f"{self.first_name} {self.last_name} <{self.email}>"
 
 class UserRole(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)

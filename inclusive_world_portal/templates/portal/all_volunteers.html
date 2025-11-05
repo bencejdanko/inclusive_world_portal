@@ -1,0 +1,525 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}All Volunteers{% endblock %}
+
+{% block page_title %}All Volunteers{% endblock page_title %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-brand-blue-peacock);
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    transition: color 0.2s ease;
+  }
+
+  .back-link:hover {
+    color: var(--color-dark-blue-peacock);
+  }
+
+  .page-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+
+  .header-actions {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+
+  .btn-secondary {
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-secondary:hover {
+    background: var(--color-dark-blue-peacock);
+    color: white;
+    text-decoration: none;
+  }
+
+  /* Catalog Grid Layout */
+  .people-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+    margin-top: var(--space-lg);
+  }
+
+  .person-card {
+    background: white;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    position: relative;
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    grid-template-rows: 140px;
+    height: 140px;
+    flex: 1 1 calc(50% - var(--space-lg) / 2);
+    min-width: 400px;
+    max-width: calc(50% - var(--space-lg) / 2);
+  }
+
+  @media (max-width: 900px) {
+    .person-card {
+      flex: 1 1 100%;
+      max-width: 100%;
+    }
+  }
+
+  .person-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .person-image {
+    width: 100%;
+    height: 100%;
+    max-height: 140px;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--color-brand-blue-peacock), var(--color-brand-berry));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.5rem;
+    font-weight: bold;
+  }
+
+  .person-content {
+    position: relative;
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .person-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .person-name {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    margin: 0 0 0.25rem 0;
+    line-height: 1.2;
+  }
+
+  a.person-name:hover {
+    color: var(--color-dark-blue-peacock);
+    text-decoration: underline !important;
+  }
+
+  a.person-name i {
+    font-size: 0.75rem;
+    margin-left: 0.25rem;
+    opacity: 0.7;
+  }
+
+  .person-contact {
+    font-size: 0.8rem;
+    color: var(--color-text-muted);
+    margin: 0.1rem 0;
+    word-break: break-word;
+    line-height: 1.3;
+  }
+
+  .person-section {
+    margin-bottom: 0.5rem;
+    flex: 1;
+  }
+
+  .person-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .section-label {
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.5px;
+  }
+
+  .role-select-compact {
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    border: 2px solid var(--color-muted);
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: white;
+    transition: all 0.2s ease;
+  }
+
+  .role-select-compact:focus {
+    outline: none;
+    border-color: var(--color-brand-blue-peacock);
+  }
+
+  .role-select-compact:disabled {
+    background: #f5f5f5;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .role-badge {
+    display: inline-block;
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .role-badge.member {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+
+  .role-badge.volunteer {
+    background: #f3e5f5;
+    color: #6a1b9a;
+  }
+
+  .role-badge.manager {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .role-badge.person_centered_manager {
+    background: #e7d4f7;
+    color: #6a1b9a;
+  }
+
+  .status-select-compact {
+    width: 100%;
+    padding: 0.4rem 0.5rem;
+    border: 2px solid var(--color-muted);
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: white;
+    transition: all 0.2s ease;
+  }
+
+  .status-select-compact:focus {
+    outline: none;
+    border-color: var(--color-brand-blue-peacock);
+  }
+
+  .status-select-compact:disabled {
+    background: #f5f5f5;
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  .status-select-compact.active {
+    background: #d4edda;
+    color: #155724;
+    border-color: #28a745;
+  }
+
+  .status-select-compact.inactive {
+    background: #e2e3e5;
+    color: #383d41;
+    border-color: #6c757d;
+  }
+
+  .status-select-compact.suspended {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #dc3545;
+  }
+
+  .status-select-compact.pending_verification {
+    background: #fff3cd;
+    color: #856404;
+    border-color: #ffc107;
+  }
+
+  .status-badge {
+    display: inline-block;
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .status-badge.active {
+    background: #d4edda;
+    color: #155724;
+  }
+
+  .status-badge.inactive {
+    background: #e2e3e5;
+    color: #383d41;
+  }
+
+  .status-badge.suspended {
+    background: #f8d7da;
+    color: #721c24;
+  }
+
+  .status-badge.pending_verification {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .info-row {
+    display: flex;
+    gap: 0.75rem;
+    align-items: flex-start;
+  }
+
+  .info-row > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .btn-edit-opd {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.4rem 0.6rem;
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+  }
+
+  .btn-edit-opd:hover {
+    background: var(--color-dark-blue-peacock);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+  }
+
+  .btn-edit-opd i {
+    font-size: 0.85rem;
+  }
+
+  .btn-opd-active {
+    background: #28a745;
+  }
+
+  .btn-opd-active:hover {
+    background: #218838;
+  }
+
+  .btn-opd-missing {
+    background: #ffc107;
+    color: #000;
+  }
+
+  .btn-opd-missing:hover {
+    background: #e0a800;
+    color: #000;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--color-text-muted);
+    grid-column: 1 / -1;
+  }
+
+  .empty-state i {
+    font-size: 3rem;
+    color: var(--color-muted);
+    margin-bottom: 1rem;
+  }
+
+  .count-badge {
+    background: var(--color-brand-berry);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
+  }
+
+  .view-note {
+    background: #e3f2fd;
+    border-left: 4px solid var(--color-brand-blue-peacock);
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-lg);
+    margin-bottom: 1.5rem;
+    font-size: 0.9rem;
+  }
+
+  .view-note i {
+    margin-right: 0.5rem;
+    color: var(--color-brand-blue-peacock);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <a href="{% if user.role == 'manager' %}{% url 'users:manager_dashboard' %}{% else %}{% url 'users:pcm_dashboard' %}{% endif %}" class="back-link">
+    <i class="bi bi-arrow-left"></i>
+    Back to Dashboard
+  </a>
+
+  <div class="page-header">
+    <h1>
+      All Volunteers
+      <span class="count-badge">{{ volunteers|length }}</span>
+    </h1>
+    <div class="header-actions">
+      <a href="{% url 'portal:all_members' %}" class="btn-secondary">
+        <i class="bi bi-people"></i>
+        View Members
+      </a>
+    </div>
+  </div>
+
+
+  <div class="people-grid">
+    {% if volunteers %}
+      {% for volunteer in volunteers %}
+        <div class="person-card">
+          <div class="person-image">
+            {% if volunteer.name %}
+              {{ volunteer.name|slice:":2"|upper }}
+            {% else %}
+              {{ volunteer.username|slice:":2"|upper }}
+            {% endif %}
+          </div>
+          
+          <div class="person-content">
+            <div class="person-header">
+              <a href="{% url 'users:detail' volunteer.username %}" class="person-name" style="color: var(--color-brand-blue-peacock); text-decoration: none;">
+                {% if volunteer.name %}
+                  {{ volunteer.name }}
+                {% else %}
+                  @{{ volunteer.username }}
+                {% endif %}<i class="bi bi-box-arrow-up-right"></i>
+              </a>
+              <div class="person-contact">
+                {% if volunteer.email %}{{ volunteer.email }}{% endif %}
+                {% if volunteer.phone_no %} • {{ volunteer.phone_no }}{% endif %}
+              </div>
+            </div>
+
+            <div class="info-row">
+              <div class="person-section">
+                <div class="section-label">Role</div>
+                {% if can_edit %}
+                  <form method="post" onchange="this.submit()">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_role">
+                    <input type="hidden" name="user_id" value="{{ volunteer.id }}">
+                    <select name="role" class="role-select-compact">
+                      {% for value, label in role_choices %}
+                        <option value="{{ value }}" {% if volunteer.role == value %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                  </form>
+                {% else %}
+                  <span class="role-badge {{ volunteer.role }}">{{ volunteer.get_role_display }}</span>
+                {% endif %}
+              </div>
+
+              <div class="person-section">
+                <div class="section-label">Status</div>
+                {% if can_edit %}
+                  <form method="post" onchange="this.submit()">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_status">
+                    <input type="hidden" name="user_id" value="{{ volunteer.id }}">
+                    <select name="status" class="status-select-compact {{ volunteer.status }}">
+                      {% for value, label in status_choices %}
+                        <option value="{{ value }}" {% if volunteer.status == value %}selected{% endif %}>{{ label }}</option>
+                      {% endfor %}
+                    </select>
+                  </form>
+                {% else %}
+                  <span class="status-badge {{ volunteer.status }}">{{ volunteer.get_status_display }}</span>
+                {% endif %}
+              </div>
+
+              {% if user.role == 'person_centered_manager' %}
+              <div class="person-section">
+                <div class="section-label">OPD</div>
+                {% if volunteer.id in users_with_active_opd %}
+                  <a href="{% url 'users:view_active_opd_for_user' volunteer.username %}" class="btn-edit-opd btn-opd-active" title="View/Edit OPD (Active)">
+                    <i class="bi bi-file-earmark-text-fill"></i> View
+                  </a>
+                {% else %}
+                  <a href="{% url 'users:view_active_opd_for_user' volunteer.username %}" class="btn-edit-opd btn-opd-missing" title="View/Edit OPD (No active OPD)">
+                    <i class="bi bi-exclamation-triangle-fill"></i> View
+                  </a>
+                {% endif %}
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    {% else %}
+      <div class="empty-state">
+        <i class="bi bi-people"></i>
+        <p>No volunteers found</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  // Update status select styling based on value
+  function updateStatusSelectClass(select) {
+    // Remove all status classes
+    select.classList.remove('active', 'inactive', 'suspended', 'pending_verification');
+    // Add class based on current value
+    const value = select.value;
+    if (value) {
+      select.classList.add(value);
+    }
+  }
+
+  // Initialize all status selects
+  document.querySelectorAll('.status-select-compact').forEach(select => {
+    updateStatusSelectClass(select);
+    
+    // Update class when value changes
+    select.addEventListener('change', function() {
+      updateStatusSelectClass(this);
+    });
+  });
+</script>
+{% endblock %}

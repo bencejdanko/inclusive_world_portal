@@ -1,0 +1,286 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}Manage Programs{% endblock %}
+
+{% block page_title %}Manage Programs{% endblock page_title %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  .programs-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+    margin-top: var(--space-xl);
+  }
+
+  .program-card {
+    background: white;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-template-rows: 140px;
+    height: 140px;
+    flex: 1 1 calc(50% - var(--space-lg) / 2);
+    min-width: 400px;
+    max-width: calc(50% - var(--space-lg) / 2);
+  }
+
+  @media (max-width: 900px) {
+    .program-card {
+      flex: 1 1 100%;
+      max-width: 100%;
+    }
+  }
+
+  .program-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .program-card.archived {
+    opacity: 0.6;
+    border: 2px solid var(--color-muted);
+  }
+
+  .program-image {
+    width: 100%;
+    height: 100%;
+    max-height: 140px;
+    overflow: hidden;
+    object-fit: cover;
+    background: linear-gradient(135deg, var(--color-brand-blue-peacock), var(--color-brand-berry));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 1.75rem;
+    font-weight: bold;
+  }
+
+  .program-image img {
+    width: 100%;
+    height: 100%;
+    max-height: 140px;
+    object-fit: cover;
+  }
+
+  .program-badge {
+    position: absolute;
+    top: var(--space-sm);
+    left: var(--space-sm);
+    background: var(--color-brand-berry);
+    color: white;
+    padding: 0.25rem 0.65rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 600;
+    z-index: 10;
+  }
+
+  .program-badge.archived-badge {
+    background: var(--color-muted);
+  }
+
+  .program-content {
+    position: relative;
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+  }
+
+  .program-header {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-md);
+    padding-right: 40px;
+  }
+
+  .program-title {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    margin: 0;
+    flex: 1;
+    line-height: 1.3;
+  }
+
+  .info-icon {
+    position: absolute;
+    top: var(--space-md);
+    right: var(--space-md);
+    background: var(--color-muted);
+    border-radius: 50%;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1rem;
+    z-index: 5;
+  }
+
+  .info-icon:hover {
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    transform: scale(1.1);
+  }
+
+  .program-actions {
+    position: absolute;
+    bottom: var(--space-md);
+    left: var(--space-md);
+    display: flex;
+    gap: 0.5rem;
+    z-index: 5;
+  }
+
+  .btn-edit-program,
+  .btn-people-program,
+  .btn-attendance-program {
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    width: auto;
+    font-size: 0.9rem;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-people-program {
+    background: var(--color-brand-berry);
+  }
+
+  .btn-attendance-program {
+    background: #6c757d;
+  }
+
+  .btn-edit-program:hover {
+    background: var(--color-dark-blue-peacock);
+    transform: translateY(-2px);
+    color: white;
+  }
+
+  .btn-people-program:hover {
+    background: var(--color-dark-berry);
+    transform: translateY(-2px);
+    color: white;
+  }
+
+  .btn-attendance-program:hover {
+    background: #5a6268;
+    transform: translateY(-2px);
+    color: white;
+  }
+
+  .add-button-container {
+    position: fixed;
+    bottom: var(--space-xl);
+    right: var(--space-xl);
+    z-index: 1000;
+  }
+
+  .btn-add {
+    background: var(--color-brand-berry);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-xl);
+    font-size: 1.125rem;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    text-decoration: none;
+  }
+
+  .btn-add:hover {
+    background: var(--color-dark-berry);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(127, 72, 87, 0.4);
+    color: white;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+
+  <div class="programs-grid">
+    {% for program in programs %}
+      <div class="program-card {% if program.archived %}archived{% endif %}" 
+           id="program-{{ program.program_id }}"
+           data-program-id="{{ program.program_id }}">
+        
+        {% if program.archived %}
+          <div class="program-badge archived-badge">Archived</div>
+        {% endif %}
+        
+        <div class="program-image">
+          {% if program.image_uri %}
+            <img src="{{ program.image_uri }}" alt="{{ program.name }}">
+          {% else %}
+            {{ program.name|slice:":2"|upper }}
+          {% endif %}
+        </div>
+        
+        <div class="program-content">
+          <div class="program-header">
+            <a href="{% url 'portal:program_detail' program.program_id %}" style="text-decoration: none; color: inherit; flex: 1;">
+              <h3 class="program-title" style="transition: color 0.2s;" onmouseover="this.style.color='var(--color-dark-blue-peacock)'" onmouseout="this.style.color='var(--color-brand-blue-peacock)'">{{ program.name }}</h3>
+            </a>
+          </div>
+          
+          <a href="{% url 'portal:program_detail' program.program_id %}" class="info-icon" title="More information">
+            <i class="bi bi-info-circle-fill"></i>
+          </a>
+          
+          <div class="program-actions">
+            <a href="{% url 'portal:manager_program_edit' program.program_id %}" class="btn-edit-program">
+              <i class="bi bi-pencil-fill"></i>Edit
+            </a>
+            <a href="{% url 'portal:manager_program_people' program.program_id %}" class="btn-people-program">
+              <i class="bi bi-people-fill"></i>People
+            </a>
+            <a href="{% url 'portal:manager_program_attendance' program.program_id %}" class="btn-attendance-program">
+              <i class="bi bi-calendar-check"></i>Attendance
+            </a>
+          </div>
+        </div>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="alert alert-warning">
+          <i class="bi bi-exclamation-triangle me-2"></i>
+          No programs exist yet. Click the Add Program button to create your first program.
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+</div>
+
+<!-- Floating Add Button -->
+<div class="add-button-container">
+  <a href="{% url 'portal:manager_program_create' %}" class="btn-add">
+    <i class="bi bi-plus-circle"></i>
+    <span>Add Program</span>
+  </a>
+</div>
+{% endblock %}

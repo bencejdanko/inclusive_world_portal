@@ -1,0 +1,786 @@
+{% extends "base_portal.html" %}
+{% load static %}
+{% load portal_tags %}
+
+{% block title %}{{ program.name }} - Program Members{% endblock %}
+
+{% block page_title %}{{ program.name }} - Program Members{% endblock page_title %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: var(--color-brand-blue-peacock);
+    text-decoration: none;
+    font-weight: 600;
+    margin-bottom: 1.5rem;
+    transition: color 0.2s ease;
+  }
+
+  .back-link:hover {
+    color: var(--color-dark-blue-peacock);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    border-bottom: 2px solid var(--color-muted);
+  }
+
+  .tab {
+    padding: 0.75rem 1.5rem;
+    background: none;
+    border: none;
+    border-bottom: 3px solid transparent;
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    transition: all 0.2s ease;
+  }
+
+  .tab:hover {
+    color: var(--color-brand-blue-peacock);
+  }
+
+  .tab.active {
+    color: var(--color-brand-blue-peacock);
+    border-bottom-color: var(--color-brand-blue-peacock);
+  }
+
+  .count-badge {
+    background: var(--color-brand-berry);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .tab-content {
+    display: none;
+  }
+
+  .tab-content.active {
+    display: block;
+  }
+
+  /* Catalog Grid Layout */
+  .people-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-lg);
+    margin-top: var(--space-lg);
+  }
+
+  .person-card {
+    background: white;
+    border-radius: var(--radius-xl);
+    overflow: hidden;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+    position: relative;
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    grid-template-rows: 140px;
+    height: 140px;
+    flex: 1 1 calc(50% - var(--space-lg) / 2);
+    min-width: 400px;
+    max-width: calc(50% - var(--space-lg) / 2);
+  }
+
+  @media (max-width: 900px) {
+    .person-card {
+      flex: 1 1 100%;
+      max-width: 100%;
+    }
+  }
+
+  .person-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-xl);
+  }
+
+  .person-image {
+    width: 100%;
+    height: 100%;
+    max-height: 140px;
+    overflow: hidden;
+    background: linear-gradient(135deg, var(--color-brand-blue-peacock), var(--color-brand-berry));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 2.5rem;
+    font-weight: bold;
+  }
+
+  .person-content {
+    position: relative;
+    padding: var(--space-md);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  .person-header {
+    margin-bottom: 0.5rem;
+  }
+
+  .person-name-block {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .person-name {
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    margin: 0 0 0.15rem 0;
+    line-height: 1.2;
+  }
+
+  a.person-name:hover {
+    color: var(--color-dark-blue-peacock);
+    text-decoration: underline !important;
+  }
+
+  a.person-name i {
+    font-size: 0.75rem;
+    margin-left: 0.25rem;
+    opacity: 0.7;
+  }
+
+  .role-badge {
+    display: inline-block;
+    padding: 0.2rem 0.5rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.65rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 0.5rem;
+  }
+
+  .role-badge.member {
+    background: #e3f2fd;
+    color: #1565c0;
+  }
+
+  .role-badge.volunteer {
+    background: #f3e5f5;
+    color: #6a1b9a;
+  }
+
+  .role-badge.manager {
+    background: #fff3cd;
+    color: #856404;
+  }
+
+  .role-badge.person_centered_manager {
+    background: #e7d4f7;
+    color: #6a1b9a;
+  }
+
+  .person-contact {
+    font-size: 0.75rem;
+    color: var(--color-text-muted);
+    margin: 0.1rem 0;
+    word-break: break-word;
+    line-height: 1.3;
+  }
+
+  .person-section {
+    margin-bottom: 0.4rem;
+  }
+
+  .person-section:last-child {
+    margin-bottom: 0;
+  }
+
+  .section-label {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--color-text-muted);
+    text-transform: uppercase;
+    margin-bottom: 0.25rem;
+    letter-spacing: 0.5px;
+  }
+
+  .buddy-select-compact {
+    width: 100%;
+    padding: 0.3rem 0.4rem;
+    border: 2px solid var(--color-muted);
+    border-radius: var(--radius-lg);
+    font-size: 0.7rem;
+    font-family: inherit;
+    background: white;
+    cursor: pointer;
+  }
+
+  .buddy-select-compact:focus {
+    outline: none;
+    border-color: var(--color-brand-blue-peacock);
+  }
+
+  .status-select-compact {
+    width: 100%;
+    padding: 0.3rem 0.4rem;
+    border: 2px solid var(--color-muted);
+    border-radius: var(--radius-lg);
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: white;
+    transition: all 0.2s ease;
+  }
+
+  .status-select-compact:focus {
+    outline: none;
+    border-color: var(--color-brand-blue-peacock);
+  }
+
+  .status-select-compact.pending {
+    background: #fff3cd;
+    color: #856404;
+    border-color: #ffc107;
+  }
+
+  .status-select-compact.approved {
+    background: #d4edda;
+    color: #155724;
+    border-color: #28a745;
+  }
+
+  .status-select-compact.waitlisted {
+    background: #d1ecf1;
+    color: #0c5460;
+    border-color: #17a2b8;
+  }
+
+  .status-select-compact.rejected {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #dc3545;
+  }
+
+  .status-select-compact.withdrawn {
+    background: #e2e3e5;
+    color: #383d41;
+    border-color: #6c757d;
+  }
+
+  .btn-lead-compact {
+    width: 100%;
+    padding: 0.3rem 0.5rem;
+    background: var(--color-brand-berry);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-size: 0.7rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+  }
+
+  .btn-lead-compact:hover {
+    background: var(--color-dark-berry);
+  }
+
+  .btn-lead-compact.active {
+    background: var(--color-badge-dark-green);
+  }
+
+  .info-row {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+  }
+
+  .info-row > div {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .add-button-container {
+    position: fixed;
+    bottom: var(--space-xl);
+    right: var(--space-xl);
+    z-index: 1000;
+  }
+
+  .btn-add {
+    background: var(--color-brand-berry);
+    color: white;
+    padding: 1rem 2rem;
+    border-radius: var(--radius-full);
+    font-weight: 700;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: var(--shadow-xl);
+    font-size: 1.125rem;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    text-decoration: none;
+  }
+
+  .btn-add:hover {
+    background: var(--color-dark-berry);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(127, 72, 87, 0.4);
+    color: white;
+  }
+
+  .empty-state {
+    text-align: center;
+    padding: 3rem 1rem;
+    color: var(--color-text-muted);
+    grid-column: 1 / -1;
+  }
+
+  .empty-state i {
+    font-size: 3rem;
+    color: var(--color-muted);
+    margin-bottom: 1rem;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <a href="{% url 'portal:manager_programs' %}" class="back-link">
+    <i class="bi bi-arrow-left"></i>
+    Back to Programs
+  </a>
+
+  <!-- Tabs for Members and Volunteers -->
+  <div class="tabs">
+    <button class="tab active" data-tab="members">
+      Members
+      <span class="count-badge">{{ approved_members|length }}</span>
+    </button>
+    <button class="tab" data-tab="volunteers">
+      Volunteers
+      <span class="count-badge">{{ approved_volunteers|length }}</span>
+    </button>
+    <button class="tab" data-tab="applications">
+      Applications
+      <span class="count-badge" id="applications-count">{{ total_pending_count }}</span>
+    </button>
+  </div>
+
+  <!-- Members Tab -->
+  <div class="tab-content active" id="members-tab">
+    <div class="people-grid">
+      {% if approved_members %}
+        {% for enrollment in approved_members %}
+          <div class="person-card">
+            <div class="person-image">
+              {{ enrollment.user.name|slice:":2"|upper }}
+            </div>
+            
+            <div class="person-content">
+              <div class="person-header">
+                <a href="{% url 'users:detail' enrollment.user.username %}" class="person-name" style="color: var(--color-brand-blue-peacock); text-decoration: none;">
+                  {{ enrollment.user.name }}<i class="bi bi-box-arrow-up-right"></i>
+                </a>
+              </div>
+
+              <div class="person-section">
+                <form method="post" onchange="this.submit()">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="update_support_needs">
+                  <input type="hidden" name="user_id" value="{{ enrollment.user.id }}">
+                  <input type="text" name="support_needs" 
+                         placeholder="support needs" 
+                         value="{{ enrollment.user.support_needs|default:'' }}"
+                         style="width: 100%; font-size: 0.7rem; padding: 2px 4px; border: 1px solid #ccc;">
+                </form>
+              </div>
+
+              <div class="info-row">
+                <div class="person-section">
+                  <div class="section-label">Buddy</div>
+                  <form method="post" onchange="this.submit()">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="assign_buddy">
+                    <input type="hidden" name="member_id" value="{{ enrollment.user.id }}">
+                    <select name="volunteer_id" class="buddy-select-compact">
+                      <option value="">No buddy assigned</option>
+                      {% for volunteer in approved_volunteers_list %}
+                        <option value="{{ volunteer.id }}" 
+                                {% if enrollment.user.id in buddy_map and buddy_map|lookup:enrollment.user.id == volunteer.id %}selected{% endif %}>
+                          {{ volunteer.name }}{% if volunteer.is_lead %} (Lead){% endif %}
+                        </option>
+                      {% endfor %}
+                    </select>
+                  </form>
+                </div>
+
+                <div class="person-section">
+                  <div class="section-label">Status</div>
+                  <form method="post" onchange="this.submit()">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_enrollment_status">
+                    <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
+                    <select name="status" class="status-select-compact approved">
+                      <option value="pending">Pending</option>
+                      <option value="approved" selected>Approved</option>
+                      <option value="waitlisted">Waitlisted</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="withdrawn">Withdrawn</option>
+                    </select>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      {% if waitlisted_members %}
+        {% for enrollment in waitlisted_members %}
+          <div class="person-card">
+            <div class="person-image">
+              {{ enrollment.user.name|slice:":2"|upper }}
+            </div>
+            
+            <div class="person-content">
+              <div class="person-header">
+                <a href="{% url 'users:detail' enrollment.user.username %}" class="person-name" style="color: var(--color-brand-blue-peacock); text-decoration: none;">
+                  {{ enrollment.user.name }}<i class="bi bi-box-arrow-up-right"></i>
+                </a>
+                <div class="person-contact">Waitlisted {{ enrollment.enrolled_at|date:"M d, Y" }}</div>
+              </div>
+
+              <div class="person-section">
+                <div class="section-label">Status</div>
+                <form method="post" onchange="this.submit()">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="update_enrollment_status">
+                  <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
+                  <select name="status" class="status-select-compact waitlisted">
+                    <option value="pending">Pending</option>
+                    <option value="approved">Approved</option>
+                    <option value="waitlisted" selected>Waitlisted</option>
+                    <option value="rejected">Rejected</option>
+                    <option value="withdrawn">Withdrawn</option>
+                  </select>
+                </form>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      {% if not approved_members and not waitlisted_members %}
+        <div class="empty-state">
+          <i class="bi bi-people"></i>
+          <p>No approved members yet</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Volunteers Tab -->
+  <div class="tab-content" id="volunteers-tab">
+    <div class="people-grid">
+      {% if approved_volunteers %}
+        {% for enrollment in approved_volunteers %}
+          <div class="person-card">
+            <div class="person-image">
+              {{ enrollment.user.name|slice:":2"|upper }}
+            </div>
+            
+            <div class="person-content">
+              <div class="person-header">
+              <a href="{% url 'users:detail' enrollment.user.username %}" class="person-name" style="color: var(--color-brand-blue-peacock); text-decoration: none;">
+                {{ enrollment.user.name }}
+                {% if enrollment.user.id in volunteer_leads_set %}⭐{% endif %}<i class="bi bi-box-arrow-up-right"></i>
+              </a>
+              {% if enrollment.user.role != 'volunteer' %}
+                <span class="role-badge {{ enrollment.user.role }}">{{ enrollment.user.get_role_display }}</span>
+              {% endif %}
+              </div>
+
+              <div class="info-row">
+                <div class="person-section">
+                  <div class="section-label">Lead Status</div>
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="toggle_volunteer_lead">
+                    <input type="hidden" name="volunteer_id" value="{{ enrollment.user.id }}">
+                    <button type="submit" class="btn-lead-compact {% if enrollment.user.id in volunteer_leads_set %}active{% endif %}">
+                      <i class="bi bi-star-fill"></i>
+                      {% if enrollment.user.id in volunteer_leads_set %}Remove Lead{% else %}Make Lead{% endif %}
+                    </button>
+                  </form>
+                </div>
+
+                <div class="person-section">
+                  <div class="section-label">Status</div>
+                  <form method="post" onchange="this.submit()">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="update_enrollment_status">
+                    <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
+                    <select name="status" class="status-select-compact approved">
+                      <option value="pending">Pending</option>
+                      <option value="approved" selected>Approved</option>
+                      <option value="waitlisted">Waitlisted</option>
+                      <option value="rejected">Rejected</option>
+                      <option value="withdrawn">Withdrawn</option>
+                    </select>
+                  </form>
+                </div>
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+      {% else %}
+        <div class="empty-state">
+          <i class="bi bi-people"></i>
+          <p>No active volunteers yet</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- Applications Tab -->
+  <div class="tab-content" id="applications-tab">
+    <div class="people-grid">
+      {% for enrollment in pending_members %}
+        <div class="person-card">
+          <div class="person-image">
+            {{ enrollment.user.name|slice:":2"|upper }}
+          </div>
+          
+          <div class="person-content">
+            <div class="person-header">
+              <a href="{% url 'users:detail' enrollment.user.username %}" class="person-name" style="color: var(--color-brand-blue-peacock); text-decoration: none;">
+                {{ enrollment.user.name }}<i class="bi bi-box-arrow-up-right"></i>
+              </a>
+              <span class="role-badge member">Member</span>
+              <div class="person-contact">Applied {{ enrollment.enrolled_at|date:"M d, Y" }}</div>
+            </div>
+
+            <div class="person-section">
+              <div class="section-label">Status</div>
+              <form method="post" onchange="this.submit()">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_enrollment_status">
+                <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
+                <select name="status" class="status-select-compact pending">
+                  <option value="pending" selected>Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="waitlisted">Waitlisted</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="withdrawn">Withdrawn</option>
+                </select>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+
+      {% for enrollment in rejected_members %}
+        <div class="person-card">
+          <div class="person-image">
+            {{ enrollment.user.name|slice:":2"|upper }}
+          </div>
+          
+          <div class="person-content">
+            <div class="person-header">
+              <a href="{% url 'users:detail' enrollment.user.username %}" class="person-name" style="color: var(--color-brand-blue-peacock); text-decoration: none;">
+                {{ enrollment.user.name }}<i class="bi bi-box-arrow-up-right"></i>
+              </a>
+              <span class="role-badge member">Member</span>
+              <div class="person-contact">Updated {{ enrollment.updated_at|date:"M d, Y" }}</div>
+            </div>
+
+            <div class="person-section">
+              <div class="section-label">Status</div>
+              <form method="post" onchange="this.submit()">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_enrollment_status">
+                <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
+                <select name="status" class="status-select-compact rejected">
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="waitlisted">Waitlisted</option>
+                  <option value="rejected" selected>Rejected</option>
+                  <option value="withdrawn">Withdrawn</option>
+                </select>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+
+      {% for enrollment in pending_volunteers %}
+        <div class="person-card">
+          <div class="person-image">
+            {{ enrollment.user.name|slice:":2"|upper }}
+          </div>
+          
+          <div class="person-content">
+            <div class="person-header">
+              <a href="{% url 'users:detail' enrollment.user.username %}" class="person-name" style="color: var(--color-brand-blue-peacock); text-decoration: none;">
+                {{ enrollment.user.name }}<i class="bi bi-box-arrow-up-right"></i>
+              </a>
+              <span class="role-badge {{ enrollment.user.role }}">{{ enrollment.user.get_role_display }}</span>
+              <div class="person-contact">Applied {{ enrollment.enrolled_at|date:"M d, Y" }}</div>
+            </div>
+
+            <div class="person-section">
+              <div class="section-label">Status</div>
+              <form method="post" onchange="this.submit()">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_enrollment_status">
+                <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
+                <select name="status" class="status-select-compact pending">
+                  <option value="pending" selected>Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="waitlisted">Waitlisted</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="withdrawn">Withdrawn</option>
+                </select>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+
+      {% for enrollment in rejected_volunteers %}
+        <div class="person-card">
+          <div class="person-image">
+            {{ enrollment.user.name|slice:":2"|upper }}
+          </div>
+          
+          <div class="person-content">
+            <div class="person-header">
+              <a href="{% url 'users:detail' enrollment.user.username %}" class="person-name" style="color: var(--color-brand-blue-peacock); text-decoration: none;">
+                {{ enrollment.user.name }}<i class="bi bi-box-arrow-up-right"></i>
+              </a>
+              <span class="role-badge {{ enrollment.user.role }}">{{ enrollment.user.get_role_display }}</span>
+              <div class="person-contact">Updated {{ enrollment.updated_at|date:"M d, Y" }}</div>
+            </div>
+
+            <div class="person-section">
+              <div class="section-label">Status</div>
+              <form method="post" onchange="this.submit()">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_enrollment_status">
+                <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
+                <select name="status" class="status-select-compact rejected">
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="waitlisted">Waitlisted</option>
+                  <option value="rejected" selected>Rejected</option>
+                  <option value="withdrawn">Withdrawn</option>
+                </select>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+
+      {% for enrollment in withdrawn_volunteers %}
+        <div class="person-card">
+          <div class="person-image">
+            {{ enrollment.user.name|slice:":2"|upper }}
+          </div>
+          
+          <div class="person-content">
+            <div class="person-header">
+              <a href="{% url 'users:detail' enrollment.user.username %}" class="person-name" style="color: var(--color-brand-blue-peacock); text-decoration: none;">
+                {{ enrollment.user.name }}<i class="bi bi-box-arrow-up-right"></i>
+              </a>
+              <span class="role-badge {{ enrollment.user.role }}">{{ enrollment.user.get_role_display }}</span>
+              <div class="person-contact">Updated {{ enrollment.updated_at|date:"M d, Y" }}</div>
+            </div>
+
+            <div class="person-section">
+              <div class="section-label">Status</div>
+              <form method="post" onchange="this.submit()">
+                {% csrf_token %}
+                <input type="hidden" name="action" value="update_enrollment_status">
+                <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
+                <select name="status" class="status-select-compact withdrawn">
+                  <option value="pending">Pending</option>
+                  <option value="approved">Approved</option>
+                  <option value="waitlisted">Waitlisted</option>
+                  <option value="rejected">Rejected</option>
+                  <option value="withdrawn" selected>Withdrawn</option>
+                </select>
+              </form>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+
+      {% if not pending_members and not pending_volunteers and not rejected_members and not rejected_volunteers and not withdrawn_volunteers %}
+        <div class="empty-state">
+          <i class="bi bi-inbox"></i>
+          <p>No applications</p>
+        </div>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Floating Add Button -->
+<div class="add-button-container">
+  <a href="{% url 'portal:manager_program_add_user' program.program_id %}" class="btn-add">
+    <i class="bi bi-person-plus"></i>
+    <span>Add User</span>
+  </a>
+</div>
+
+<script>
+  // Tab switching functionality
+  document.querySelectorAll('.tab').forEach(tab => {
+    tab.addEventListener('click', function() {
+      // Remove active class from all tabs and contents
+      document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      
+      // Add active class to clicked tab
+      this.classList.add('active');
+      
+      // Show corresponding content
+      const tabName = this.getAttribute('data-tab');
+      document.getElementById(tabName + '-tab').classList.add('active');
+    });
+  });
+
+  // Update status select styling based on value
+  function updateStatusSelectClass(select) {
+    // Remove all status classes
+    select.classList.remove('pending', 'approved', 'waitlisted', 'rejected', 'withdrawn');
+    // Add class based on current value
+    const value = select.value;
+    if (value) {
+      select.classList.add(value);
+    }
+  }
+
+  // Initialize all status selects
+  document.querySelectorAll('.status-select-compact').forEach(select => {
+    updateStatusSelectClass(select);
+    
+    // Update class when value changes
+    select.addEventListener('change', function() {
+      updateStatusSelectClass(this);
+    });
+  });
+</script>
+{% endblock %}

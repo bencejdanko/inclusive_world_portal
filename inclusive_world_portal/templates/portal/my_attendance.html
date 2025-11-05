@@ -1,0 +1,308 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}My Attendance{% endblock %}
+
+{% block page_title %}My Attendance{% endblock page_title %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  /* Compact single-row attendance display */
+  .attendance-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--space-md);
+  }
+
+  /* Total Hours Summary Card (for volunteers) */
+  .total-hours-card {
+    background: linear-gradient(135deg, var(--color-brand-blue-peacock) 0%, var(--color-dark-blue-peacock) 100%);
+    color: white;
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    box-shadow: var(--shadow-md);
+    margin-bottom: var(--space-lg);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+  }
+
+  .total-hours-icon {
+    font-size: 3rem;
+    opacity: 0.9;
+  }
+
+  .total-hours-content h3 {
+    margin: 0;
+    font-size: 0.875rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    opacity: 0.9;
+  }
+
+  .total-hours-content .hours-value {
+    font-size: 2.5rem;
+    font-weight: 700;
+    margin: 0;
+    line-height: 1;
+  }
+
+  /* Compact attendance table */
+  .attendance-table {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: var(--space-xl);
+  }
+
+  .attendance-table-header {
+    display: grid;
+    grid-template-columns: 2fr 2fr 150px 150px 100px;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .attendance-row {
+    display: grid;
+    grid-template-columns: 2fr 2fr 150px 150px 100px;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    align-items: center;
+    border-bottom: 1px solid var(--color-border);
+    transition: background-color 0.2s ease;
+  }
+
+  .attendance-row:hover {
+    background-color: #f8f9fa;
+  }
+
+  .attendance-row:last-child {
+    border-bottom: none;
+  }
+
+  .program-name {
+    font-weight: 600;
+    color: var(--color-brand-blue-peacock);
+    font-size: 0.95rem;
+  }
+
+  .attendance-date {
+    font-size: 0.875rem;
+    color: var(--color-muted-foreground);
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .attendance-status-badge {
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    white-space: nowrap;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+  }
+
+  .status-present {
+    background: var(--color-badge-dark-green);
+    color: white;
+  }
+
+  .status-tardy {
+    background: #FFA500;
+    color: white;
+  }
+
+  .status-informed {
+    background: #6C757D;
+    color: white;
+  }
+
+  .status-uninformed {
+    background: #DC3545;
+    color: white;
+  }
+
+  .attendance-hours {
+    font-weight: 600;
+    color: var(--color-brand-blue-peacock);
+    font-size: 1rem;
+  }
+
+  .attendance-notes {
+    font-size: 0.8rem;
+    color: var(--color-muted-foreground);
+    line-height: 1.4;
+  }
+
+  .attendance-notes-icon {
+    color: var(--color-brand-blue-peacock);
+    margin-right: 0.25rem;
+  }
+
+  /* Empty State */
+  .empty-state {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    text-align: center;
+    box-shadow: var(--shadow-md);
+  }
+
+  .empty-state-icon {
+    font-size: 4rem;
+    color: var(--color-muted);
+    margin-bottom: var(--space-lg);
+  }
+
+  .empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    margin-bottom: var(--space-sm);
+  }
+
+  .empty-state-text {
+    color: var(--color-muted-foreground);
+    margin-bottom: var(--space-lg);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 1024px) {
+    .attendance-table-header,
+    .attendance-row {
+      grid-template-columns: 2fr 150px 100px;
+    }
+
+    .attendance-date,
+    .attendance-notes {
+      display: none;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .attendance-container {
+      padding: var(--space-sm);
+    }
+
+    .total-hours-card {
+      flex-direction: column;
+      text-align: center;
+    }
+
+    .attendance-table-header {
+      display: none;
+    }
+
+    .attendance-row {
+      grid-template-columns: 1fr;
+      gap: var(--space-sm);
+      padding: var(--space-md);
+    }
+
+    .program-name {
+      grid-column: 1;
+      padding-bottom: var(--space-sm);
+      border-bottom: 1px solid var(--color-border);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="attendance-container">
+  {% if is_volunteer and attendance_records %}
+    <!-- Total Hours Summary (only for volunteers) -->
+    <div class="total-hours-card">
+      <div class="total-hours-icon">
+        <i class="bi bi-clock-history"></i>
+      </div>
+      <div class="total-hours-content">
+        <h3>Total Volunteer Hours</h3>
+        <p class="hours-value">{{ total_hours|floatformat:1 }}</p>
+      </div>
+    </div>
+  {% endif %}
+
+  {% if attendance_records %}
+    <!-- Attendance Records Table -->
+    <div class="attendance-table">
+      <div class="attendance-table-header">
+        <div>Program</div>
+        <div>Date</div>
+        <div>Status</div>
+        {% if is_volunteer %}
+        <div>Hours</div>
+        {% endif %}
+        <div>Notes</div>
+      </div>
+      {% for record in attendance_records %}
+        <div class="attendance-row">
+          <div class="program-name">
+            {{ record.program.name }}
+          </div>
+          <div class="attendance-date">
+            <i class="bi bi-calendar-event"></i>
+            {{ record.attendance_date|date:"M d, Y" }}
+          </div>
+          <div>
+            <span class="attendance-status-badge status-{{ record.attendance_status }}">
+              {% if record.attendance_status == 'present' %}
+                <i class="bi bi-check-circle-fill"></i>Present
+              {% elif record.attendance_status == 'tardy' %}
+                <i class="bi bi-clock"></i>Tardy
+              {% elif record.attendance_status == 'informed' %}
+                <i class="bi bi-telephone-fill"></i>Informed
+              {% elif record.attendance_status == 'uninformed' %}
+                <i class="bi bi-x-circle"></i>Uninformed
+              {% else %}
+                {{ record.get_attendance_status_display }}
+              {% endif %}
+            </span>
+          </div>
+          {% if is_volunteer %}
+          <div class="attendance-hours">
+            {% if record.hours %}
+              {{ record.hours|floatformat:1 }}h
+            {% else %}
+              —
+            {% endif %}
+          </div>
+          {% endif %}
+          <div class="attendance-notes">
+            {% if record.notes %}
+              <i class="bi bi-chat-left-text attendance-notes-icon"></i>{{ record.notes }}
+            {% else %}
+              —
+            {% endif %}
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <i class="bi bi-calendar-x"></i>
+      </div>
+      <h3 class="empty-state-title">No Attendance Records Yet</h3>
+      <p class="empty-state-text">
+        Your attendance records will appear here once you start participating in programs.
+      </p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

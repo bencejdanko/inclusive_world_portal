@@ -1,0 +1,236 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}{% if is_create %}Create Program{% else %}Edit Program{% endif %}{% endblock %}
+
+{% block page_title %}{% if is_create %}Create New Program{% else %}Edit Program{% endif %}{% endblock page_title %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  .form-container {
+    max-width: 800px;
+    margin: 2rem auto;
+    background: white;
+    padding: 2rem;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+  }
+
+  .form-group {
+    margin-bottom: 1.5rem;
+  }
+
+  .form-group label {
+    display: block;
+    font-weight: 600;
+    color: var(--color-brand-blue-peacock);
+    margin-bottom: 0.5rem;
+  }
+
+  .form-group label.required::after {
+    content: " *";
+    color: var(--color-brand-berry);
+  }
+
+  .form-group input[type="text"],
+  .form-group input[type="number"],
+  .form-group input[type="date"],
+  .form-group input[type="url"],
+  .form-group textarea,
+  .form-group select {
+    width: 100%;
+    padding: 0.75rem;
+    border: 2px solid var(--color-muted);
+    border-radius: var(--radius-lg);
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+  }
+
+  .form-group input:focus,
+  .form-group textarea:focus,
+  .form-group select:focus {
+    outline: none;
+    border-color: var(--color-brand-blue-peacock);
+  }
+
+  .form-group textarea {
+    min-height: 120px;
+    resize: vertical;
+  }
+
+  .form-group small {
+    display: block;
+    color: var(--color-text-muted);
+    margin-top: 0.25rem;
+    font-size: 0.875rem;
+  }
+
+  .checkbox-group {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .checkbox-group input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+  }
+
+  .checkbox-group label {
+    margin-bottom: 0;
+    cursor: pointer;
+  }
+
+  .form-actions {
+    display: flex;
+    gap: 1rem;
+    justify-content: flex-end;
+    margin-top: 2rem;
+    padding-top: 2rem;
+    border-top: 2px solid var(--color-muted);
+  }
+
+  .btn-submit {
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  }
+
+  .btn-submit:hover {
+    background: var(--color-dark-blue-peacock);
+    transform: translateY(-2px);
+  }
+
+  .btn-cancel {
+    background: var(--color-muted);
+    color: var(--color-text);
+    padding: 0.75rem 2rem;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: inline-block;
+  }
+
+  .btn-cancel:hover {
+    background: #95a5a6;
+    transform: translateY(-2px);
+  }
+
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+  }
+
+  @media (max-width: 768px) {
+    .form-row {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+  <div class="form-container">
+    <form method="post">
+      {% csrf_token %}
+      
+      <div class="form-group">
+        <label for="name" class="required">Program Name</label>
+        <input type="text" id="name" name="name" required 
+               value="{% if program %}{{ program.name }}{% elif form_data %}{{ form_data.name }}{% endif %}">
+        <small>The display name of the program</small>
+      </div>
+
+      <div class="form-group">
+        <label for="description">Description</label>
+        <textarea id="description" name="description">{% if program %}{{ program.description }}{% elif form_data %}{{ form_data.description }}{% endif %}</textarea>
+        <small>A detailed description of the program</small>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="fee">Program Fee ($)</label>
+          <input type="number" id="fee" name="fee" step="0.01" min="0" 
+                 value="{% if program %}{{ program.fee }}{% elif form_data %}{{ form_data.fee }}{% else %}0.00{% endif %}">
+          <small>Cost to participate (0 for free)</small>
+        </div>
+
+        <div class="form-group">
+          <label for="capacity">Capacity</label>
+          <input type="number" id="capacity" name="capacity" min="1" 
+                 value="{% if program %}{{ program.capacity }}{% elif form_data %}{{ form_data.capacity }}{% endif %}">
+          <small>Maximum participants (leave empty for unlimited)</small>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div class="form-group">
+          <label for="start_date">Start Date</label>
+          <input type="date" id="start_date" name="start_date" 
+                 value="{% if program %}{{ program.start_date|date:'Y-m-d' }}{% elif form_data %}{{ form_data.start_date }}{% endif %}">
+          <small>Program start date</small>
+        </div>
+
+        <div class="form-group">
+          <label for="end_date">End Date</label>
+          <input type="date" id="end_date" name="end_date" 
+                 value="{% if program %}{{ program.end_date|date:'Y-m-d' }}{% elif form_data %}{{ form_data.end_date }}{% endif %}">
+          <small>Program end date</small>
+        </div>
+      </div>
+
+      <div class="form-group">
+        <label for="enrollment_status">Enrollment Status</label>
+        <select id="enrollment_status" name="enrollment_status">
+          <option value="">-- Select Status --</option>
+          <option value="open" {% if program and program.enrollment_status == 'open' %}selected{% elif form_data and form_data.enrollment_status == 'open' %}selected{% endif %}>Open</option>
+          <option value="closed" {% if program and program.enrollment_status == 'closed' %}selected{% elif form_data and form_data.enrollment_status == 'closed' %}selected{% endif %}>Closed</option>
+          <option value="full" {% if program and program.enrollment_status == 'full' %}selected{% elif form_data and form_data.enrollment_status == 'full' %}selected{% endif %}>Full</option>
+        </select>
+        <small>Current enrollment status for this program</small>
+      </div>
+
+      <div class="form-group">
+        <label for="image_uri">Image URL</label>
+        <input type="url" id="image_uri" name="image_uri" 
+               value="{% if program %}{{ program.image_uri }}{% elif form_data %}{{ form_data.image_uri }}{% endif %}">
+        <small>URL to program image (optional)</small>
+      </div>
+
+      <div class="form-group">
+        <div class="checkbox-group">
+          <input type="checkbox" id="archived" name="archived" 
+                 {% if program and program.archived %}checked{% elif form_data and form_data.archived %}checked{% endif %}>
+          <label for="archived">Archive this program</label>
+        </div>
+        <small>Archived programs are hidden from regular users but visible to managers</small>
+      </div>
+
+      <div class="form-actions">
+        <a href="{% url 'portal:manager_programs' %}" class="btn-cancel">Cancel</a>
+        <button type="submit" class="btn-submit">
+          {% if is_create %}
+            <i class="bi bi-plus-circle me-2"></i>Create Program
+          {% else %}
+            <i class="bi bi-save me-2"></i>Save Changes
+          {% endif %}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

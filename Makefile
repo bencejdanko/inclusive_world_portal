@@ -42,6 +42,9 @@ migrate: ## Run database migrations
 makemigrations: ## Create new migrations
 	docker-compose exec django python manage.py makemigrations
 
+makemigrations-root: ## Create new migrations as root (for packages that need write access)
+	docker-compose exec -u root django python manage.py makemigrations
+
 superuser: ## Create Django superuser
 	docker-compose exec django python manage.py createsuperuser
 

@@ -52,6 +52,12 @@ def get_navigation_items(user):
                 'icon_class': 'bi bi-house-door',
             },
             {
+                'label': _('Notifications'),
+                'url': reverse('users:notification_list'),
+                'icon_class': 'bi bi-bell',
+                'show_notification_badge': True,
+            },
+            {
                 'label': _('One Page Description'),
                 'url': reverse('users:view_active_opd'),
                 'icon_class': 'bi bi-file-earmark-text',
@@ -87,6 +93,11 @@ def get_navigation_items(user):
                 'label': _('My Attendance'),
                 'url': reverse('portal:my_attendance'),
                 'icon_class': 'bi bi-calendar-check',
+            },
+            {
+                'label': _('Surveys'),
+                'url': '/surveys',
+                'icon_class': 'bi bi-file-earmark-bar-graph',
             },
         ]
         return nav_items
@@ -127,6 +138,12 @@ def get_navigation_items(user):
                 'icon_class': 'bi bi-house-door',
             },
             {
+                'label': _('Notifications'),
+                'url': reverse('users:notification_list'),
+                'icon_class': 'bi bi-bell',
+                'show_notification_badge': True,
+            },
+            {
                 'label': _('One Page Description'),
                 'url': reverse('users:view_active_opd'),
                 'icon_class': 'bi bi-file-earmark-text',
@@ -162,6 +179,11 @@ def get_navigation_items(user):
                 'label': _('My Attendance'),
                 'url': reverse('portal:my_attendance'),
                 'icon_class': 'bi bi-calendar-check',
+            },
+            {
+                'label': _('Surveys'),
+                'url': '/surveys',
+                'icon_class': 'bi bi-file-earmark-bar-graph',
             },
         ]
         return nav_items
@@ -200,6 +222,12 @@ def get_navigation_items(user):
                 'label': _('Dashboard'),
                 'url': reverse('users:pcm_dashboard'),
                 'icon_class': 'bi bi-house-door',
+            },
+            {
+                'label': _('Notifications'),
+                'url': reverse('users:notification_list'),
+                'icon_class': 'bi bi-bell',
+                'show_notification_badge': True,
             },
             {
                 'label': _('One Page Description'),
@@ -249,8 +277,8 @@ def get_navigation_items(user):
                 'icon_class': 'bi bi-people-fill',
             },
             {
-                'label': _('Reports'),
-                'url': '#',
+                'label': _('Surveys'),
+                'url': '/surveys',
                 'icon_class': 'bi bi-file-earmark-bar-graph',
             },
         ]
@@ -289,6 +317,12 @@ def get_navigation_items(user):
                 'label': _('Dashboard'),
                 'url': reverse('users:manager_dashboard'),
                 'icon_class': 'bi bi-house-door',
+            },
+            {
+                'label': _('Notifications'),
+                'url': reverse('users:notification_list'),
+                'icon_class': 'bi bi-bell',
+                'show_notification_badge': True,
             },
             {
                 'label': _('One Page Description'),
@@ -342,43 +376,13 @@ def get_navigation_items(user):
                 'url': reverse('portal:manager_programs'),
                 'icon_class': 'bi bi-gear-wide-connected',
             },
+            {
+                'label': _('Surveys'),
+                'url': '/surveys',
+                'icon_class': 'bi bi-file-earmark-bar-graph',
+            },
         ]
         return nav_items
-    
-    # Admin navigation
-    elif role == 'admin':
-        return [
-            {
-                'label': _('Dashboard'),
-                'url': reverse('home'),
-                'icon_class': 'bi bi-house-door',
-            },
-            {
-                'label': _('All Users'),
-                'url': '#',
-                'icon_class': 'bi bi-people',
-            },
-            {
-                'label': _('One Page Description'),
-                'url': reverse('users:view_active_opd'),
-                'icon_class': 'bi bi-file-earmark-text',
-            },
-            {
-                'label': _('Programs'),
-                'url': '#',
-                'icon_class': 'bi bi-layers',
-            },
-            {
-                'label': _('Admin Panel'),
-                'url': reverse('admin:index'),
-                'icon_class': 'bi bi-shield-lock',
-            },
-            {
-                'label': _('System Settings'),
-                'url': '#',
-                'icon_class': 'bi bi-gear',
-            },
-        ]
     
     return common_items
 
@@ -389,12 +393,16 @@ def navigation_context(request):
     """
     nav_items = []
     role_display = None
+    unread_notifications_count = 0
     
     if request.user.is_authenticated:
         nav_items = get_navigation_items(request.user)
         role_display = request.user.get_role_display()
+        # Get unread notification count
+        unread_notifications_count = request.user.notifications.unread().count()
     
     return {
         'nav_items': nav_items,
         'user_role_display': role_display,
+        'unread_notifications_count': unread_notifications_count,
     }

@@ -36,9 +36,18 @@ from .dashboard_views import (
     volunteer_dashboard_view,
     pcm_dashboard_view,
     manager_dashboard_view,
-    admin_dashboard_view,
 )
-
+from .notification_views import (
+    notification_list_view,
+    notification_detail,
+    mark_notification_read,
+    mark_notification_unread,
+    mark_all_read,
+    delete_notification,
+    create_bulk_notification_view,
+    notification_api_unread_count,
+    notification_api_unread_list,
+)
 app_name = "users"
 urlpatterns = [
     path("~redirect/", view=user_redirect_view, name="redirect"),
@@ -50,7 +59,19 @@ urlpatterns = [
     path("dashboard/volunteer/", volunteer_dashboard_view, name="volunteer_dashboard"),
     path("dashboard/pcm/", pcm_dashboard_view, name="pcm_dashboard"),
     path("dashboard/manager/", manager_dashboard_view, name="manager_dashboard"),
-    path("dashboard/admin/", admin_dashboard_view, name="admin_dashboard"),
+    
+    # Notification URLs
+    path("notifications/", notification_list_view, name="notification_list"),
+    path("notifications/create/", create_bulk_notification_view, name="create_notification"),
+    path("notifications/<int:notification_id>/", notification_detail, name="notification_detail"),
+    path("notifications/<int:notification_id>/read/", mark_notification_read, name="mark_notification_read"),
+    path("notifications/<int:notification_id>/unread/", mark_notification_unread, name="mark_notification_unread"),
+    path("notifications/<int:notification_id>/delete/", delete_notification, name="delete_notification"),
+    path("notifications/mark-all-read/", mark_all_read, name="mark_all_read"),
+    
+    # Notification API endpoints
+    path("api/notifications/unread-count/", notification_api_unread_count, name="api_notification_unread_count"),
+    path("api/notifications/unread-list/", notification_api_unread_list, name="api_notification_unread_list"),
     
     # Document Editor
     path("documents/editor/", view=document_editor_view, name="document_editor"),

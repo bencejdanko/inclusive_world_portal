@@ -130,27 +130,8 @@
 
 {% block content %}
 <div class="container-fluid">
-  {% if viewing_own_opd %}
-    <a href="{% url 'users:dashboard' %}" class="back-link">
-      <i class="bi bi-arrow-left"></i>
-      Back to Dashboard
-    </a>
-  {% else %}
-    <a href="javascript:history.back()" class="back-link">
-      <i class="bi bi-arrow-left"></i>
-      Back
-    </a>
-  {% endif %}
-
   <div class="opd-container">
     <div class="opd-header">
-      <h2>
-        {% if viewing_own_opd %}
-          My One Page Description
-        {% else %}
-          {{ target_user.name|default:target_user.username }}'s One Page Description
-        {% endif %}
-      </h2>
       <div class="opd-actions">
         {% if user.role == 'person_centered_manager' %}
           {% if viewing_own_opd %}

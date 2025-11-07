@@ -18,6 +18,9 @@ urlpatterns = [
     # Portal - Programs and Enrollment
     path("portal/", include("inclusive_world_portal.portal.urls", namespace="portal")),
     
+    # Django Survey - Survey creation and taking
+    path("surveys/", include("survey.urls")),
+    
     # Your stuff: custom urls includes go here
     path("pay/checkout/", pay.create_checkout, name="checkout"),
     path("stripe/webhook/", pay.stripe_webhook, name="stripe-webhook"),

@@ -1,8 +1,7 @@
 from django.contrib import admin
 from .models import (
     UserRole, Program, Enrollment, AttendanceRecord,
-    ProgramVolunteerLead, BuddyAssignment, Notification, UserNotification,
-    Survey, SurveyResponse, SurveyRoleAssociation, Payment, EnrollmentSettings
+    ProgramVolunteerLead, BuddyAssignment, Payment, EnrollmentSettings
 )
 
 # Basic registrations
@@ -11,11 +10,6 @@ admin.site.register(Enrollment)
 admin.site.register(AttendanceRecord)
 admin.site.register(ProgramVolunteerLead)
 admin.site.register(BuddyAssignment)
-admin.site.register(Notification)
-admin.site.register(UserNotification)
-admin.site.register(Survey)
-admin.site.register(SurveyResponse)
-admin.site.register(SurveyRoleAssociation)
 admin.site.register(Payment)
 
 # polish the admin UI 

@@ -87,6 +87,8 @@ THIRD_PARTY_APPS = [
     "django_celery_beat",
     "django_htmx",
     "django_quill",
+    "notifications",
+    "survey",  # django-survey-and-report
 ]
 
 LOCAL_APPS = [
@@ -237,6 +239,7 @@ TEMPLATES = [
                 "django.template.context_processors.tz",
                 "django.contrib.messages.context_processors.messages",
                 "inclusive_world_portal.users.context_processors.allauth_settings",
+                "inclusive_world_portal.users.context_processors.user_alerts",
                 "inclusive_world_portal.users.navigation.navigation_context",
             ],
         },
@@ -461,6 +464,22 @@ QUILL_CONFIGS = {
 STRIPE_PUBLIC_KEY = env("STRIPE_PUBLIC_KEY", default=env("PUBLIC_STRIPE_PUBLISHABLE_KEY", default=""))
 STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY", default="")
 STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
+
+# DJANGO-SURVEY-AND-REPORT SETTINGS
+# ------------------------------------------------------------------------------
+# Directories for survey exports
+CSV_DIRECTORY = BASE_DIR / "survey_exports" / "csv"
+TEX_DIRECTORY = BASE_DIR / "survey_exports" / "tex"
+
+# Ensure directories exist
+CSV_DIRECTORY.mkdir(parents=True, exist_ok=True)
+TEX_DIRECTORY.mkdir(parents=True, exist_ok=True)
+
+# Survey export settings
+EXCEL_COMPATIBLE_CSV = True  # Open CSV in Excel without separator issues
+CHOICES_SEPARATOR = "|"  # Separator for question choices
+USER_DID_NOT_ANSWER = "Left blank"  # What to show when user doesn't answer
+SURVEY_DEFAULT_PIE_COLOR = "blue!50"  # Default color for PDF pie charts
 
 # Your stuff...
 # ------------------------------------------------------------------------------

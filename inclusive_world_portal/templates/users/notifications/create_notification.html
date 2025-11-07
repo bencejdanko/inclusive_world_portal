@@ -1,0 +1,100 @@
+{% extends "base_portal.html" %}
+{% load static i18n crispy_forms_tags %}
+
+{% block page_title %}Create Notification{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-10">
+      <!-- Header -->
+      <div class="mb-4">
+        <h2><i class="bi bi-megaphone me-2"></i>Create Notification</h2>
+        <p class="text-muted">Send a notification to users by role, program, or individually</p>
+      </div>
+
+      <!-- Form -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-4">
+          <form method="post" action="">
+            {% csrf_token %}
+            
+            <!-- Notification Content -->
+            <div class="mb-4">
+              <h5 class="border-bottom pb-2 mb-3">Notification Content</h5>
+              {{ form.verb|as_crispy_field }}
+              {{ form.description|as_crispy_field }}
+              {{ form.level|as_crispy_field }}
+            </div>
+
+            <!-- Targeting Options -->
+            <div class="mb-4">
+              <h5 class="border-bottom pb-2 mb-3">Target Recipients</h5>
+              <p class="text-muted small">Select at least one targeting option below</p>
+              
+              <!-- Roles -->
+              <div class="card mb-3">
+                <div class="card-header bg-light">
+                  <strong><i class="bi bi-people me-2"></i>By Role</strong>
+                </div>
+                <div class="card-body">
+                  {{ form.target_roles }}
+                  {% if form.target_roles.errors %}
+                    <div class="text-danger small mt-1">{{ form.target_roles.errors }}</div>
+                  {% endif %}
+                  <div class="form-text">Send to all users with the selected roles</div>
+                </div>
+              </div>
+
+              <!-- Programs -->
+              <div class="card mb-3">
+                <div class="card-header bg-light">
+                  <strong><i class="bi bi-grid-3x3-gap me-2"></i>By Program</strong>
+                </div>
+                <div class="card-body">
+                  {{ form.target_programs }}
+                  {% if form.target_programs.errors %}
+                    <div class="text-danger small mt-1">{{ form.target_programs.errors }}</div>
+                  {% endif %}
+                  <div class="form-text">Send to all users enrolled in the selected programs</div>
+                </div>
+              </div>
+
+              <!-- Specific Users -->
+              <div class="card mb-3">
+                <div class="card-header bg-light">
+                  <strong><i class="bi bi-person me-2"></i>Specific Users</strong>
+                </div>
+                <div class="card-body">
+                  {{ form.target_users }}
+                  {% if form.target_users.errors %}
+                    <div class="text-danger small mt-1">{{ form.target_users.errors }}</div>
+                  {% endif %}
+                  <div class="form-text">Send to specific individual users (hold Ctrl/Cmd to select multiple)</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Form Errors -->
+            {% if form.non_field_errors %}
+              <div class="alert alert-danger">
+                {{ form.non_field_errors }}
+              </div>
+            {% endif %}
+
+            <!-- Actions -->
+            <div class="d-flex justify-content-between">
+              <a href="{% url 'users:notification_list' %}" class="btn btn-outline-secondary">
+                <i class="bi bi-arrow-left me-1"></i>Cancel
+              </a>
+              <button type="submit" class="btn btn-primary">
+                <i class="bi bi-send me-1"></i>Send Notification
+              </button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

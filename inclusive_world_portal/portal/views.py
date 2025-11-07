@@ -81,7 +81,7 @@ def program_detail_view(request, program_id):
             'available_spots': program.available_spots,
             'start_date': program.start_date.isoformat() if program.start_date else None,
             'end_date': program.end_date.isoformat() if program.end_date else None,
-            'image_uri': program.image_uri,
+            'image_url': program.image.url if program.image else None,
             'is_enrolled': is_enrolled,
         })
     
@@ -553,7 +553,7 @@ def manager_program_create_view(request):
         description = request.POST.get('description', '').strip()
         fee = request.POST.get('fee', '0')
         capacity = request.POST.get('capacity', '').strip()
-        image_uri = request.POST.get('image_uri', '').strip()
+        image = request.FILES.get('image')  # Get uploaded image file
         start_date = request.POST.get('start_date', '').strip()
         end_date = request.POST.get('end_date', '').strip()
         enrollment_status = request.POST.get('enrollment_status', '').strip()
@@ -574,7 +574,7 @@ def manager_program_create_view(request):
                 description=description,
                 fee=fee if fee else '0.00',
                 capacity=int(capacity) if capacity else None,
-                image_uri=image_uri,
+                image=image,  # Save uploaded image
                 start_date=start_date if start_date else None,
                 end_date=end_date if end_date else None,
                 enrollment_status=enrollment_status,
@@ -619,7 +619,7 @@ def manager_program_edit_view(request, program_id):
         description = request.POST.get('description', '').strip()
         fee = request.POST.get('fee', '0')
         capacity = request.POST.get('capacity', '').strip()
-        image_uri = request.POST.get('image_uri', '').strip()
+        image = request.FILES.get('image')  # Get uploaded image file
         start_date = request.POST.get('start_date', '').strip()
         end_date = request.POST.get('end_date', '').strip()
         enrollment_status = request.POST.get('enrollment_status', '').strip()
@@ -639,7 +639,9 @@ def manager_program_edit_view(request, program_id):
             program.description = description
             program.fee = fee if fee else '0.00'
             program.capacity = int(capacity) if capacity else None
-            program.image_uri = image_uri
+            # Only update image if a new one was uploaded
+            if image:
+                program.image = image
             program.start_date = start_date if start_date else None
             program.end_date = end_date if end_date else None
             program.enrollment_status = enrollment_status
@@ -1297,7 +1299,7 @@ def all_volunteers_view(request):
             try:
                 volunteer = get_object_or_404(User, id=user_id)
                 
-                # Validate role - managers can assign volunteer, manager, or PCM roles (not member or admin)
+                # Validate role - managers can assign volunteer, manager, or PCM roles (not member)
                 valid_roles = ['volunteer', 'person_centered_manager', 'manager']
                 if new_role in valid_roles:
                     volunteer.role = new_role
@@ -1338,7 +1340,7 @@ def all_volunteers_view(request):
     # Check if user can edit (managers can, PCMs cannot)
     can_edit = request.user.role == 'manager'
     
-    # Volunteer-only role choices (excluding member and admin)
+    # Volunteer-only role choices (excluding member)
     volunteer_role_choices = [
         ('volunteer', 'Volunteer'),
         ('person_centered_manager', 'Person Centered Manager'),

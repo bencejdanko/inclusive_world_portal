@@ -29,7 +29,9 @@ RUN apk add --no-cache \
     # WeasyPrint dependencies
     cairo-dev \
     pango-dev \
-    gdk-pixbuf-dev
+    gdk-pixbuf-dev \
+    # Git for installing from repositories
+    git
 
 WORKDIR /app
 

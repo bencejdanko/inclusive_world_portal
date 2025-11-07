@@ -145,7 +145,7 @@
 {% block content %}
 <div class="container-fluid">
   <div class="form-container">
-    <form method="post">
+    <form method="post" enctype="multipart/form-data">
       {% csrf_token %}
       
       <div class="form-group">
@@ -205,10 +205,19 @@
       </div>
 
       <div class="form-group">
-        <label for="image_uri">Image URL</label>
-        <input type="url" id="image_uri" name="image_uri" 
-               value="{% if program %}{{ program.image_uri }}{% elif form_data %}{{ form_data.image_uri }}{% endif %}">
-        <small>URL to program image (optional)</small>
+        <label for="image">Program Image</label>
+        <input type="file" id="image" name="image" accept="image/*">
+        <small>Upload a program image (optional)</small>
+        
+        {% if program and program.image %}
+          <div style="margin-top: 1rem;">
+            <label class="form-label">Current Image:</label>
+            <div>
+              <img src="{{ program.image.url }}" alt="{{ program.name }}" style="max-width: 300px; max-height: 200px; border-radius: var(--radius-lg);" class="img-thumbnail">
+            </div>
+            <small style="color: var(--color-text-muted);">Leave blank to keep current image, or upload a new one to replace it.</small>
+          </div>
+        {% endif %}
       </div>
 
       <div class="form-group">

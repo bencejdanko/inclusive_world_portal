@@ -1,0 +1,92 @@
+{% extends "base_portal.html" %}
+{% load static i18n %}
+
+{% block page_title %}{{ notification.verb }}{% endblock %}
+
+{% block content %}
+<div class="container">
+  <div class="row justify-content-center">
+    <div class="col-lg-8">
+      <!-- Back button -->
+      <div class="mb-3">
+        <a href="{% url 'users:notification_list' %}" class="btn btn-outline-secondary btn-sm">
+          <i class="bi bi-arrow-left me-1"></i>Back to Notifications
+        </a>
+      </div>
+
+      <!-- Notification Card -->
+      <div class="card border-0 shadow-sm">
+        <div class="card-header bg-light">
+          <div class="d-flex justify-content-between align-items-center">
+            <div>
+              <!-- Level badge -->
+              {% if notification.level == 'success' %}
+                <span class="badge badge-success me-2">
+                  <i class="bi bi-check-circle"></i> Success
+                </span>
+              {% elif notification.level == 'warning' %}
+                <span class="badge badge-warning me-2">
+                  <i class="bi bi-exclamation-triangle"></i> Warning
+                </span>
+              {% elif notification.level == 'error' %}
+                <span class="badge badge-error me-2">
+                  <i class="bi bi-x-circle"></i> Error
+                </span>
+              {% else %}
+                <span class="badge badge-info me-2">
+                  <i class="bi bi-info-circle"></i> Info
+                </span>
+              {% endif %}
+              
+              {% if notification.unread %}
+                <span class="badge badge-info">Unread</span>
+              {% endif %}
+            </div>
+            
+            <small class="text-muted">
+              <i class="bi bi-clock me-1"></i>{{ notification.timesince }} ago
+            </small>
+          </div>
+        </div>
+        
+        <div class="card-body p-4">
+          <h3 class="mb-3">{{ notification.verb }}</h3>
+          
+          {% if notification.description %}
+            <div class="mb-3">
+              <p class="text-muted">{{ notification.description|linebreaks }}</p>
+            </div>
+          {% endif %}
+          
+          <!-- Actions -->
+          <div class="d-flex gap-2 mt-4">
+            {% if notification.unread %}
+              <form method="post" action="{% url 'users:mark_notification_read' notification.id %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-primary">
+                  <i class="bi bi-check me-1"></i>Mark as Read
+                </button>
+              </form>
+            {% else %}
+              <form method="post" action="{% url 'users:mark_notification_unread' notification.id %}" class="d-inline">
+                {% csrf_token %}
+                <button type="submit" class="btn btn-outline-secondary">
+                  <i class="bi bi-envelope me-1"></i>Mark as Unread
+                </button>
+              </form>
+            {% endif %}
+            
+            <form method="post" action="{% url 'users:delete_notification' notification.id %}" class="d-inline">
+              {% csrf_token %}
+              <button type="submit" class="btn btn-outline-danger"
+                      onclick="return confirm('Are you sure you want to delete this notification?')">
+                <i class="bi bi-trash me-1"></i>Delete
+              </button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock content %}

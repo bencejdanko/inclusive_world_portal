@@ -778,8 +778,14 @@
         // Get CSRF token
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
         
+        // Build URL with user parameter if editing another user's document
+        let autogenerateUrl = '{% url "users:autogenerate_document" %}';
+        {% if not editing_own_document %}
+        autogenerateUrl += '?user={{ target_user.username }}';
+        {% endif %}
+        
         // Make AJAX request to autogenerate endpoint
-        fetch('{% url "users:autogenerate_document" %}', {
+        fetch(autogenerateUrl, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',

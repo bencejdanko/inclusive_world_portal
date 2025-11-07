@@ -71,6 +71,12 @@
           <div style="display:none; text-align: center;">
             <h5 style="color: #e84855; font-weight: bold;">Inclusive World</h5>
           </div>
+          
+            <div class="sidebar-username">@{{ request.user.username }}</div>
+            {% if request.user.name %}
+              <div class="sidebar-display-name">{{ request.user.name }}</div>
+            {% endif %}
+          
           {% if user_role_display %}
             <div class="sidebar-role">{{ user_role_display }}</div>
           {% endif %}
@@ -95,7 +101,9 @@
                      {% if item.registration_tooltip %}title="{{ item.registration_tooltip }}"{% endif %}>
                     <i class="{{ item.icon_class }}"></i>
                     <span>{{ item.label }}</span>
-                    {% if item.show_completion %}
+                    {% if item.show_notification_badge and unread_notifications_count > 0 %}
+                      <span class="badge badge-info rounded-pill ms-auto">{{ unread_notifications_count }}</span>
+                    {% elif item.show_completion %}
                       {% if item.is_complete %}
                         <i class="bi bi-check-circle-fill text-success ms-auto" title="Complete"></i>
                       {% else %}
@@ -131,6 +139,36 @@
 
       <!-- Main Content Area -->
       <main class="main-content">
+        <!-- Top Banner Alerts -->
+        <!-- DEBUG: show_form_completion_alert={{ show_form_completion_alert }}, profile_complete={{ profile_complete }}, survey_complete={{ survey_complete }}, forms_complete={{ forms_complete }}, user.role={{ user.role }} -->
+        {% if show_form_completion_alert %}
+          <div class="top-banner-alerts">
+            <div class="top-banner-alert top-banner-alert-warning">
+              <div class="top-banner-alert-content">
+                <i class="bi bi-exclamation-triangle-fill top-banner-alert-icon"></i>
+                <div class="top-banner-alert-text">
+                  <strong>Action Required:</strong>
+                  <span>Complete your profile and discovery survey to register for programs.</span>
+                </div>
+              </div>
+              <div class="top-banner-alert-actions">
+                {% if not profile_complete %}
+                  <a href="{% url 'users:detail' user.username %}" class="top-banner-btn top-banner-btn-warning">
+                    <i class="bi bi-person-circle"></i>
+                    Complete Profile
+                  </a>
+                {% endif %}
+                {% if not survey_complete %}
+                  <a href="{% url 'users:survey_start' %}" class="top-banner-btn top-banner-btn-warning">
+                    <i class="bi bi-clipboard-check"></i>
+                    Complete Survey
+                  </a>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        {% endif %}
+
         <!-- Top Bar -->
         <div class="top-bar">
           <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">

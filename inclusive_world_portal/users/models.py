@@ -29,7 +29,6 @@ class User(AbstractUser):
         VOLUNTEER = "volunteer", _("Volunteer")
         PERSON_CENTERED_MANAGER = "person_centered_manager", _("Person Centered Manager")
         MANAGER = "manager", _("Manager")
-        ADMIN = "admin", _("Admin")
 
     class Status(models.TextChoices):
         ACTIVE = "active", _("Active")

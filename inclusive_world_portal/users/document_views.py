@@ -365,13 +365,47 @@ def autogenerate_document_from_survey(request):
     """
     Generate One Page Profile document from Discovery Survey responses.
     Returns JSON with the generated HTML content.
+    Person-centered managers can generate for other users by passing ?user=username.
     """
+    from inclusive_world_portal.users.models import User
+    
     if request.method != 'POST':
         return JsonResponse({'error': 'Method not allowed'}, status=405)
     
     try:
-        # Get the user's discovery survey
-        survey = get_object_or_404(DiscoverySurvey, user=request.user)
+        # Determine which user's survey to use
+        target_username = request.GET.get('user')
+        if target_username:
+            # Only PCMs can generate for other users
+            if request.user.role != 'person_centered_manager':
+                return JsonResponse({
+                    'success': False,
+                    'error': 'You do not have permission to generate documents for other users.'
+                }, status=403)
+            
+            try:
+                target_user = User.objects.get(username=target_username)
+            except User.DoesNotExist:
+                return JsonResponse({
+                    'success': False,
+                    'error': 'User not found.'
+                }, status=404)
+        else:
+            target_user = request.user
+        
+        # Get the target user's discovery survey
+        try:
+            survey = DiscoverySurvey.objects.get(user=target_user)
+        except DiscoverySurvey.DoesNotExist:
+            user_display = target_user.name or target_user.username
+            if target_user.id == request.user.id:
+                error_msg = 'Please complete the Discovery Survey first before generating your profile.'
+            else:
+                error_msg = f'{user_display} has not completed the Discovery Survey yet. Please complete it first.'
+            return JsonResponse({
+                'success': False,
+                'error': error_msg
+            }, status=400)
         
         # Get template context from survey
         context = survey.get_template_context()
@@ -384,12 +418,6 @@ def autogenerate_document_from_survey(request):
             'html': html_content,
             'message': 'Document template generated successfully!'
         })
-        
-    except DiscoverySurvey.DoesNotExist:
-        return JsonResponse({
-            'success': False,
-            'error': 'Please complete the Discovery Survey first before generating your profile.'
-        }, status=400)
     except Exception as e:
         import logging
         logger = logging.getLogger(__name__)
@@ -631,7 +659,7 @@ def view_active_opd(request, username=None):
     # Determine which user's OPD to display
     if username:
         # Check if current user has permission to view other users' OPDs
-        if request.user.role not in ['person_centered_manager', 'manager', 'admin']:
+        if request.user.role not in ['person_centered_manager', 'manager']:
             messages.error(request, _('You do not have permission to view other users\' OPDs.'))
             return redirect('users:view_active_opd')
         

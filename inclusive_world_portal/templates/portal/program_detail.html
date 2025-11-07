@@ -96,8 +96,8 @@
     <div class="col-lg-10 mx-auto">
       <!-- Program Image/Hero -->
       <div class="program-detail-hero">
-        {% if program.image_uri %}
-          <img src="{{ program.image_uri }}" alt="{{ program.name }}">
+        {% if program.image %}
+          <img src="{{ program.image.url }}" alt="{{ program.name }}">
         {% else %}
           {{ program.name|slice:":2"|upper }}
         {% endif %}

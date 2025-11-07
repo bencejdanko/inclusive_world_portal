@@ -19,7 +19,6 @@ class UserRoleType(models.TextChoices):
     VOLUNTEER = "volunteer", "Volunteer"
     MANAGER = "manager", "Manager"
     PCM = "person_centered_manager", "Person-Centered Manager"
-    ADMIN = "admin", "Admin"
     UNASSIGNED = "unassigned", "Unassigned"
 
 class EnrollmentStatus(models.TextChoices):
@@ -28,11 +27,6 @@ class EnrollmentStatus(models.TextChoices):
     WAITLISTED = "waitlisted", "Waitlisted"
     REJECTED = "rejected", "Rejected"
     WITHDRAWN = "withdrawn", "Withdrawn"
-
-class SurveyCompletionStatus(models.TextChoices):
-    NOT_STARTED = "not-started", "Not started"
-    IN_PROGRESS = "in-progress", "In progress"
-    COMPLETED = "completed", "Completed"
 
 class OPDState(models.TextChoices):
     DRAFT = "draft", "Draft"
@@ -44,15 +38,6 @@ class AttendanceStatus(models.TextChoices):
     TARDY = "tardy", "Tardy"
     INFORMED = "informed", "Informed"
     UNINFORMED = "uninformed", "Uninformed"
-
-class SurveyRoleType(models.TextChoices):
-    MEMBER = "member", "Member"
-    VOLUNTEER = "volunteer", "Volunteer"
-    VOLUNTEER_LEAD = "volunteer_lead", "Volunteer lead"
-    TEEN_VOLUNTEER = "teen_volunteer", "Teen volunteer"
-    MANAGER = "manager", "Manager"
-    PCM = "person_centered_manager", "Person-Centered Manager"
-    ADMIN = "admin", "Admin"
 
 # -------------------------
 # Roles
@@ -85,7 +70,7 @@ class Program(models.Model):
     fee = models.DecimalField(max_digits=10, decimal_places=2, default=Decimal("0.00"))
     capacity = models.PositiveIntegerField(null=True, blank=True)
     archived = models.BooleanField(default=False)
-    image_uri = models.TextField(blank=True)
+    image = models.ImageField(upload_to='program_images/', blank=True, null=True)
     start_date = models.DateField(null=True, blank=True)
     end_date = models.DateField(null=True, blank=True)
     enrollment_status = models.CharField(max_length=64, blank=True)  # e.g., "open"/"closed"
@@ -103,6 +88,10 @@ class Program(models.Model):
         if self.capacity is None:
             return None
         return max(self.capacity - self.enrolled, 0)
+
+    def __str__(self) -> str:
+        """Return a friendly representation used in admin and form labels."""
+        return self.name
 
 class Enrollment(models.Model):
     enrollment_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
@@ -171,76 +160,10 @@ class BuddyAssignment(models.Model):
         ]
 
 # -------------------------
-# Notifications
-# -------------------------
-
-class Notification(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    message = models.TextField()
-    title = models.CharField(max_length=255, blank=True)
-    metadata = models.JSONField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-class UserNotification(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="notifications")
-    notification = models.ForeignKey(Notification, on_delete=models.CASCADE, related_name="recipient_links")
-    is_read = models.BooleanField(default=False)
-    read_at = models.DateTimeField(null=True, blank=True)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = (("user", "notification"),)
-        indexes = [
-            models.Index(fields=["user", "is_read"]),
-        ]
-
-    def save(self, *args, **kwargs):
-        # emulate the SQL trigger behavior
-        if self.is_read and self.read_at is None:
-            self.read_at = timezone.now()
-        if not self.is_read:
-            self.read_at = None
-        return super().save(*args, **kwargs)
-
-# -------------------------
 # Surveys
 # -------------------------
-
-class Survey(models.Model):
-    survey_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    title = models.CharField(max_length=255)
-    exp_date = models.DateTimeField(null=True, blank=True)
-    gform_url = models.TextField(blank=True)
-    google_form_id = models.CharField(max_length=255, blank=True)
-    archived = models.BooleanField(default=False)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-class SurveyResponse(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    survey = models.ForeignKey(Survey, on_delete=models.CASCADE, related_name="responses")
-    response_data = models.JSONField()
-    submitted_by_user = models.ForeignKey(
-        settings.AUTH_USER_MODEL, on_delete=models.SET_NULL, null=True, blank=True, related_name="survey_responses"
-    )
-    respondent_email = models.EmailField(blank=True)
-    submitted_at = models.DateTimeField(auto_now_add=True)
-    status = models.CharField(max_length=16, choices=SurveyCompletionStatus.choices)
-
-class SurveyRoleAssociation(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    survey = models.ForeignKey(Survey, on_delete=models.CASCADE, related_name="role_associations")
-    role = models.CharField(max_length=32, choices=SurveyRoleType.choices)
-    created_at = models.DateTimeField(auto_now_add=True)
-
-    class Meta:
-        unique_together = (("survey", "role"),)
-        indexes = [
-            models.Index(fields=["survey"]),
-            models.Index(fields=["role"]),
-        ]
+# Using django-survey-and-report package directly
+# No custom models needed - the package provides Survey, Question, Response, etc.
 
 # -------------------------
 # Payments

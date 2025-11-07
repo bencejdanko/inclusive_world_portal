@@ -617,6 +617,18 @@ wheels = [
 ]
 
 [[package]]
+name = "django-notifications-hq"
+version = "1.9.0"
+source = { git = "https://github.com/django-notifications/django-notifications.git#4c44bcea2504d9a3fcd26366b232a13732a08f2a" }
+dependencies = [
+    { name = "django" },
+    { name = "django-model-utils" },
+    { name = "jsonfield" },
+    { name = "packaging" },
+    { name = "swapper" },
+]
+
+[[package]]
 name = "django-quill-editor"
 version = "0.1.42"
 source = { registry = "https://pypi.org/simple" }
@@ -684,6 +696,20 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/9b/6f/a0bab0e6a7676ab3ca02d51b459444e9bd6dd747e3a43b9c24cae6d0a1c6/django_stubs_ext-5.2.7.tar.gz", hash = "sha256:b690655bd4cb8a44ae57abb314e0995dc90414280db8f26fff0cb9fb367d1cac", size = 6524 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/f8/c9/60445606e26706d3fccadf3b80ee1a9f32c1012683ff2ada7580937b2da9/django_stubs_ext-5.2.7-py3-none-any.whl", hash = "sha256:0466a7132587d49c5bbe12082ac9824d117a0dedcad5d0ada75a6e0d3aca6f60", size = 9979 },
+]
+
+[[package]]
+name = "django-survey-and-report"
+version = "1.4.11"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+    { name = "pytz" },
+    { name = "pyyaml" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/b4/94/8c76b68869ca2cc76c16f5809995947e48d9cf918d624060a0c4acd03361/django_survey_and_report-1.4.11.tar.gz", hash = "sha256:68a96303ae97a0dc68a187d7ec3f2c572f65bba9b1b4e7a0ca484629f729bad7", size = 242797 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/08/dd/7898efc1616b744332637b67ed9377aeeeff3881988397cd09bd2470eee1/django_survey_and_report-1.4.11-py3-none-any.whl", hash = "sha256:69d17fa7949b33fc9a391b7502be444226c9aa598911379769e114387b811a40", size = 297474 },
 ]
 
 [[package]]
@@ -904,9 +930,11 @@ dependencies = [
     { name = "django-environ" },
     { name = "django-htmx" },
     { name = "django-model-utils" },
+    { name = "django-notifications-hq" },
     { name = "django-quill-editor" },
     { name = "django-redis" },
     { name = "django-storages" },
+    { name = "django-survey-and-report" },
     { name = "gunicorn" },
     { name = "hiredis" },
     { name = "pillow" },
@@ -957,9 +985,11 @@ requires-dist = [
     { name = "django-environ", specifier = "==0.12.0" },
     { name = "django-htmx", specifier = ">=1.26.0" },
     { name = "django-model-utils", specifier = "==5.0.0" },
+    { name = "django-notifications-hq", git = "https://github.com/django-notifications/django-notifications.git" },
     { name = "django-quill-editor", specifier = ">=0.1.42" },
     { name = "django-redis", specifier = "==6.0.0" },
     { name = "django-storages", specifier = "==1.14.4" },
+    { name = "django-survey-and-report", specifier = ">=1.4.4" },
     { name = "gunicorn", specifier = "==23.0.0" },
     { name = "hiredis", specifier = "==3.3.0" },
     { name = "pillow", specifier = "==12.0.0" },
@@ -1104,6 +1134,18 @@ source = { registry = "https://pypi.org/simple" }
 sdist = { url = "https://files.pythonhosted.org/packages/12/ae/929aee9619e9eba9015207a9d2c1c54db18311da7eb4dcf6d41ad6f0eb67/json5-0.12.1.tar.gz", hash = "sha256:b2743e77b3242f8d03c143dd975a6ec7c52e2f2afe76ed934e53503dd4ad4990", size = 52191 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/85/e2/05328bd2621be49a6fed9e3030b1e51a2d04537d3f816d211b9cc53c5262/json5-0.12.1-py3-none-any.whl", hash = "sha256:d9c9b3bc34a5f54d43c35e11ef7cb87d8bdd098c6ace87117a7b7e83e705c1d5", size = 36119 },
+]
+
+[[package]]
+name = "jsonfield"
+version = "3.2.0"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "django" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/fa/e9/537e105246dba81d898853dbbe17eb3edd23d47a35074b99fd4add6f1662/jsonfield-3.2.0.tar.gz", hash = "sha256:ca53871bc3308ae4f4cddc3b4f99ed5c6fc6abb1832fbfb499bc6da566c70e4a", size = 17156 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/0a/22/2e08e7b957f50e5eceefde018ce9ee88aceb5126231128d9c1cb8167c1c8/jsonfield-3.2.0-py3-none-any.whl", hash = "sha256:ca4f6bf89c819f293e77074d613c0021e3c4e8521be95c73d03caecb4372e1ee", size = 8316 },
 ]
 
 [[package]]
@@ -1490,6 +1532,15 @@ wheels = [
 ]
 
 [[package]]
+name = "pytz"
+version = "2025.2"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/f8/bf/abbd3cdfb8fbc7fb3d4d38d320f2441b1e7cbe29be4f23797b4a2b5d8aac/pytz-2025.2.tar.gz", hash = "sha256:360b9e3dbb49a209c21ad61809c7fb453643e048b38924c765813546746e81c3", size = 320884 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/81/c4/34e93fe5f5429d7570ec1fa436f1986fb1f00c3e0f43a589fe2bbcd22c3f/pytz-2025.2-py2.py3-none-any.whl", hash = "sha256:5ddf76296dd8c44c26eb8f4b6f35488f3ccbf6fbbd7adee0b7262d43f0ec2f00", size = 509225 },
+]
+
+[[package]]
 name = "pyyaml"
 version = "6.0.3"
 source = { registry = "https://pypi.org/simple" }
@@ -1811,6 +1862,15 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/d8/36/edac714e44a1a0048e74cc659b6070b42dd7027473e8f9f06a727b3860b6/stripe-13.0.1.tar.gz", hash = "sha256:5869739430ff73bd9cd81275abfb79fd4089e97e9fd98d306a015f5defd39a0d", size = 1263853 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/3a/ac/a911f3c850420ab42447f5c049f570e55f34e0aa0b2e6a1d1a059a5656c4/stripe-13.0.1-py3-none-any.whl", hash = "sha256:7804cee14580ab37bbc1e5f6562e49dea0686ab3cb34384eb9386387ed8ebd0c", size = 1849008 },
+]
+
+[[package]]
+name = "swapper"
+version = "1.4.0"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/9b/3b/98ea1cfc04dc9805d58c5a96dd006f5d88a5a32b7b05e1f5a1c00363bb9a/swapper-1.4.0.tar.gz", hash = "sha256:9e083af114ee0593241a7b877e3e0e7d3a580454f5d59016c667a5563306f8fe", size = 12668 }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/e9/53/c59363308ef97507a680372471e25e1ebab2e706a45a7c416eea6474c928/swapper-1.4.0-py2.py3-none-any.whl", hash = "sha256:57b8378aad234242542fe32dc6e8cff0ed24b63493d20b3c88ee01f894b9345e", size = 7106 },
 ]
 
 [[package]]

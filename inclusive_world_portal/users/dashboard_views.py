@@ -26,8 +26,6 @@ class DashboardView(LoginRequiredMixin, TemplateView):
             return redirect('users:pcm_dashboard')
         elif user.role == User.Role.MANAGER:
             return redirect('users:manager_dashboard')
-        elif user.role == User.Role.ADMIN:
-            return redirect('users:admin_dashboard')
         else:
             messages.warning(request, "Your account role is not configured. Please contact support.")
             return redirect('home')
@@ -55,6 +53,9 @@ class MemberDashboardView(LoginRequiredMixin, TemplateView):
             'can_purchase': user.can_purchase_programs,
             'enrollment_open': enrollment_settings.enrollment_open,
             'enrollment_closure_reason': enrollment_settings.closure_reason,
+            # Notifications
+            'unread_notifications_count': user.notifications.unread().count(),
+            'recent_notifications': user.notifications.unread()[:5],
             # TODO: Add program enrollments
             # TODO: Add upcoming sessions
             # TODO: Add recent activities
@@ -75,6 +76,9 @@ class VolunteerDashboardView(LoginRequiredMixin, TemplateView):
         
         # Add volunteer-specific data
         context.update({
+            # Notifications
+            'unread_notifications_count': user.notifications.unread().count(),
+            'recent_notifications': user.notifications.unread()[:5],
             # TODO: Add upcoming volunteer sessions
             # TODO: Add assigned members
             # TODO: Add training requirements
@@ -95,6 +99,9 @@ class PersonCenteredManagerDashboardView(LoginRequiredMixin, TemplateView):
         
         # Add PCM-specific data
         context.update({
+            # Notifications
+            'unread_notifications_count': user.notifications.unread().count(),
+            'recent_notifications': user.notifications.unread()[:5],
             # TODO: Add caseload
             # TODO: Add pending reviews
             # TODO: Add reports
@@ -115,31 +122,12 @@ class ManagerDashboardView(LoginRequiredMixin, TemplateView):
         
         # Add manager-specific data
         context.update({
+            # Notifications
+            'unread_notifications_count': user.notifications.unread().count(),
+            'recent_notifications': user.notifications.unread()[:5],
             # TODO: Add organization stats
             # TODO: Add financial overview
             # TODO: Add staff overview
-        })
-        
-        return context
-
-
-class AdminDashboardView(LoginRequiredMixin, TemplateView):
-    """
-    Dashboard for admins.
-    """
-    template_name = 'users/dashboards/admin_dashboard.html'
-    
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        
-        # Add admin-specific data
-        context.update({
-            'total_users': User.objects.count(),
-            'total_members': User.objects.filter(role=User.Role.MEMBER).count(),
-            'total_volunteers': User.objects.filter(role=User.Role.VOLUNTEER).count(),
-            'total_staff': User.objects.filter(
-                role__in=[User.Role.PERSON_CENTERED_MANAGER, User.Role.MANAGER, User.Role.ADMIN]
-            ).count(),
         })
         
         return context
@@ -151,4 +139,3 @@ member_dashboard_view = MemberDashboardView.as_view()
 volunteer_dashboard_view = VolunteerDashboardView.as_view()
 pcm_dashboard_view = PersonCenteredManagerDashboardView.as_view()
 manager_dashboard_view = ManagerDashboardView.as_view()
-admin_dashboard_view = AdminDashboardView.as_view()

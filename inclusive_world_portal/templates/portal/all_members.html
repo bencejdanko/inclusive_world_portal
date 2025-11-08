@@ -1,5 +1,6 @@
 {% extends "base_portal.html" %}
 {% load static %}
+{% load portal_tags %}
 
 {% block title %}All Members{% endblock %}
 
@@ -8,26 +9,106 @@
 {% block css %}
 {{ block.super }}
 <style>
-  .back-link {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: var(--color-brand-blue-peacock);
-    text-decoration: none;
-    font-weight: 600;
-    margin-bottom: 1.5rem;
-    transition: color 0.2s ease;
-  }
-
-  .back-link:hover {
-    color: var(--color-dark-blue-peacock);
+  /* Members Container */
+  .members-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--space-md);
   }
 
   .page-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 2rem;
+    margin-bottom: 1rem;
+  }
+
+  /* Filter Toolbar */
+  .filter-toolbar {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    padding: var(--space-md) var(--space-lg);
+    margin-bottom: 1.5rem;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .filter-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+    flex: 1;
+    min-width: 250px;
+  }
+
+  .filter-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--color-muted-foreground);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .filter-select {
+    padding: 0.6rem 0.9rem;
+    border: 2px solid var(--color-muted);
+    border-radius: var(--radius-lg);
+    font-size: 0.95rem;
+    cursor: pointer;
+    background: white;
+    transition: all 0.2s ease;
+    color: var(--color-foreground);
+  }
+
+  .filter-select:focus {
+    outline: none;
+    border-color: var(--color-brand-blue-peacock);
+  }
+
+  .filter-actions {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-end;
+  }
+
+  .btn-filter {
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    padding: 0.6rem 1.25rem;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .btn-filter:hover {
+    background: var(--color-dark-blue-peacock);
+    transform: translateY(-1px);
+  }
+
+  .btn-clear-filter {
+    background: white;
+    color: var(--color-muted-foreground);
+    padding: 0.6rem 1.25rem;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    border: 2px solid var(--color-muted);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 0.95rem;
+  }
+
+  .btn-clear-filter:hover {
+    border-color: var(--color-brand-blue-peacock);
+    color: var(--color-brand-blue-peacock);
   }
 
   .header-actions {
@@ -57,161 +138,91 @@
     text-decoration: none;
   }
 
-  /* Catalog Grid Layout */
-  .people-grid {
-    display: flex;
-    flex-wrap: wrap;
-    gap: var(--space-lg);
-    margin-top: var(--space-lg);
+  .count-badge {
+    background: var(--color-brand-berry);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-left: 0.5rem;
   }
 
-  .person-card {
+  /* Members Table */
+  .members-table {
     background: white;
-    border-radius: var(--radius-xl);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
     overflow: hidden;
-    box-shadow: var(--shadow-md);
-    transition: all 0.3s ease;
-    position: relative;
+    margin-bottom: var(--space-xl);
+  }
+
+  .members-table-header {
     display: grid;
-    grid-template-columns: 140px 1fr;
-    grid-template-rows: 140px;
-    height: 140px;
-    flex: 1 1 calc(50% - var(--space-lg) / 2);
-    min-width: 400px;
-    max-width: calc(50% - var(--space-lg) / 2);
+    grid-template-columns: 30px 2fr 120px 120px;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
-  @media (max-width: 900px) {
-    .person-card {
-      flex: 1 1 100%;
-      max-width: 100%;
-    }
+  .member-item {
+    border-bottom: 1px solid var(--color-border);
   }
 
-  .person-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-xl);
+  .member-item:last-child {
+    border-bottom: none;
   }
 
-  .person-image {
-    width: 100%;
-    height: 100%;
-    max-height: 140px;
-    overflow: hidden;
-    background: linear-gradient(135deg, var(--color-brand-blue-peacock), var(--color-brand-berry));
+  .member-row {
+    display: grid;
+    grid-template-columns: 30px 2fr 120px 120px;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    align-items: center;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .member-row:hover {
+    background-color: #f8f9fa;
+  }
+
+  .chevron-icon {
+    color: var(--color-brand-blue-peacock);
+    font-size: 1rem;
     display: flex;
     align-items: center;
     justify-content: center;
-    color: white;
-    font-size: 2.5rem;
-    font-weight: bold;
   }
 
-  .person-content {
-    position: relative;
-    padding: var(--space-md);
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  .person-header {
-    margin-bottom: 0.5rem;
-  }
-
-  .person-name {
-    font-size: 1.1rem;
-    font-weight: 700;
+  .member-name {
+    font-weight: 600;
     color: var(--color-brand-blue-peacock);
-    margin: 0 0 0.25rem 0;
-    line-height: 1.2;
+    font-size: 1rem;
   }
 
-  a.person-name:hover {
-    color: var(--color-dark-blue-peacock);
-    text-decoration: underline !important;
+  .member-name a {
+    color: var(--color-brand-blue-peacock);
+    text-decoration: none;
   }
 
-  a.person-name i {
-    font-size: 0.75rem;
-    margin-left: 0.25rem;
-    opacity: 0.7;
+  .member-name a:hover {
+    text-decoration: underline;
   }
 
-  .person-section {
-    margin-bottom: 0.5rem;
-    flex: 1;
+  .member-date {
+    font-size: 0.9rem;
+    color: var(--color-muted-foreground);
   }
 
-  .person-section:last-child {
-    margin-bottom: 0;
-  }
-
-  .section-label {
-    font-size: 0.7rem;
-    font-weight: 600;
-    color: var(--color-text-muted);
-    text-transform: uppercase;
-    margin-bottom: 0.25rem;
-    letter-spacing: 0.5px;
-  }
-
-  .role-select-compact {
-    width: 100%;
-    padding: 0.4rem 0.5rem;
-    border: 2px solid var(--color-muted);
-    border-radius: var(--radius-lg);
-    font-size: 0.75rem;
-    font-weight: 600;
-    cursor: pointer;
-    background: white;
-    transition: all 0.2s ease;
-  }
-
-  .role-select-compact:focus {
-    outline: none;
-    border-color: var(--color-brand-blue-peacock);
-  }
-
-  .role-select-compact:disabled {
-    background: #f5f5f5;
-    cursor: not-allowed;
-    opacity: 0.7;
-  }
-
-  .role-badge {
-    display: inline-block;
+  .status-select-inline {
     padding: 0.3rem 0.6rem;
-    border-radius: var(--radius-lg);
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-  }
-
-  .role-badge.member {
-    background: #e3f2fd;
-    color: #1565c0;
-  }
-
-  .role-badge.volunteer {
-    background: #f3e5f5;
-    color: #6a1b9a;
-  }
-
-  .role-badge.manager {
-    background: #fff3cd;
-    color: #856404;
-  }
-
-  .role-badge.person_centered_manager {
-    background: #e7d4f7;
-    color: #6a1b9a;
-  }
-
-  .status-select-compact {
-    width: 100%;
-    padding: 0.4rem 0.5rem;
     border: 2px solid var(--color-muted);
     border-radius: var(--radius-lg);
     font-size: 0.75rem;
@@ -219,48 +230,74 @@
     cursor: pointer;
     background: white;
     transition: all 0.2s ease;
+    width: 100%;
   }
 
-  .status-select-compact:focus {
+  .status-select-inline:focus {
     outline: none;
     border-color: var(--color-brand-blue-peacock);
   }
 
-  .status-select-compact:disabled {
-    background: #f5f5f5;
-    cursor: not-allowed;
-    opacity: 0.7;
-  }
-
-  .status-select-compact.active {
+  .status-select-inline.active {
     background: #d4edda;
     color: #155724;
     border-color: #28a745;
   }
 
-  .status-select-compact.inactive {
+  .status-select-inline.inactive {
     background: #e2e3e5;
     color: #383d41;
     border-color: #6c757d;
   }
 
-  .status-select-compact.suspended {
+  .status-select-inline.suspended {
     background: #f8d7da;
     color: #721c24;
     border-color: #dc3545;
   }
 
-  .status-select-compact.pending_verification {
+  .status-select-inline.pending_verification {
     background: #fff3cd;
     color: #856404;
     border-color: #ffc107;
+  }
+
+  /* Enrollment status colors (for course filter view) */
+  .status-select-inline.pending {
+    background: #fff3cd;
+    color: #856404;
+    border-color: #ffc107;
+  }
+
+  .status-select-inline.approved {
+    background: #d4edda;
+    color: #155724;
+    border-color: #28a745;
+  }
+
+  .status-select-inline.waitlisted {
+    background: #d1ecf1;
+    color: #0c5460;
+    border-color: #17a2b8;
+  }
+
+  .status-select-inline.rejected {
+    background: #f8d7da;
+    color: #721c24;
+    border-color: #dc3545;
+  }
+
+  .status-select-inline.withdrawn {
+    background: #e2e3e5;
+    color: #383d41;
+    border-color: #6c757d;
   }
 
   .status-badge {
     display: inline-block;
     padding: 0.3rem 0.6rem;
     border-radius: var(--radius-lg);
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
@@ -286,209 +323,372 @@
     color: #856404;
   }
 
-  .info-row {
+  /* Expandable member details section */
+  .member-details {
+    display: none;
+    padding: var(--space-lg);
+    background-color: #f8f9fa;
+    border-top: 1px solid var(--color-border);
+    animation: slideDown 0.3s ease-out;
+  }
+
+  .member-details.expanded {
+    display: block;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .member-details h4 {
+    margin-top: 0;
+    margin-bottom: var(--space-md);
+    color: var(--color-brand-blue-peacock);
+  }
+
+  .support-needs-section {
+    margin-bottom: var(--space-lg);
+    padding-bottom: var(--space-lg);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .support-needs-form {
     display: flex;
-    gap: 0.75rem;
-    align-items: flex-start;
+    flex-direction: column;
+    gap: var(--space-sm);
   }
 
-  .info-row > div {
-    flex: 1;
-    min-width: 0;
-  }
-
-  .btn-edit-opd {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-    padding: 0.4rem 0.6rem;
-    background: var(--color-brand-blue-peacock);
-    color: white;
-    border-radius: var(--radius-lg);
-    font-size: 0.75rem;
+  .support-needs-label {
+    font-size: 0.9rem;
     font-weight: 600;
-    text-decoration: none;
-    transition: all 0.2s ease;
-    white-space: nowrap;
+    color: var(--color-brand-blue-peacock);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
   }
 
-  .btn-edit-opd:hover {
-    background: var(--color-dark-blue-peacock);
-    color: white;
-    text-decoration: none;
-    transform: translateY(-1px);
+  .support-needs-textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: var(--space-sm);
+    border: 2px solid var(--color-muted);
+    border-radius: var(--radius-lg);
+    font-family: inherit;
+    font-size: 0.9rem;
+    resize: vertical;
+    transition: border-color 0.2s ease;
   }
 
-  .btn-edit-opd i {
-    font-size: 0.85rem;
+  .support-needs-textarea:focus {
+    outline: none;
+    border-color: var(--color-brand-blue-peacock);
   }
 
-  .btn-opd-active {
-    background: #28a745;
+  .support-needs-textarea:read-only {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
   }
 
-  .btn-opd-active:hover {
-    background: #218838;
+  .support-needs-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: flex-end;
   }
 
-  .btn-opd-missing {
-    background: #ffc107;
-    color: #000;
-  }
-
-  .btn-opd-missing:hover {
-    background: #e0a800;
-    color: #000;
-  }
-
-  .empty-state {
-    text-align: center;
-    padding: 3rem 1rem;
-    color: var(--color-text-muted);
-    grid-column: 1 / -1;
-  }
-
-  .empty-state i {
-    font-size: 3rem;
-    color: var(--color-muted);
-    margin-bottom: 1rem;
-  }
-
-  .count-badge {
+  .btn-save-support {
     background: var(--color-brand-berry);
     color: white;
-    padding: 0.25rem 0.75rem;
-    border-radius: var(--radius-full);
-    font-size: 0.9rem;
-    font-weight: 600;
-    margin-left: 0.5rem;
-  }
-
-  .view-note {
-    background: #e3f2fd;
-    border-left: 4px solid var(--color-brand-blue-peacock);
-    padding: 1rem 1.5rem;
+    padding: 0.5rem 1rem;
+    border: none;
     border-radius: var(--radius-lg);
-    margin-bottom: 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
     font-size: 0.9rem;
   }
 
-  .view-note i {
-    margin-right: 0.5rem;
+  .btn-save-support:hover {
+    background: var(--color-dark-berry);
+    transform: translateY(-2px);
+  }
+
+  .btn-save-support:disabled {
+    background: var(--color-muted);
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Empty State */
+  .empty-state {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    text-align: center;
+    box-shadow: var(--shadow-md);
+  }
+
+  .empty-state-icon {
+    font-size: 4rem;
+    color: var(--color-muted);
+    margin-bottom: var(--space-lg);
+  }
+
+  .empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 700;
     color: var(--color-brand-blue-peacock);
+    margin-bottom: var(--space-sm);
+  }
+
+  .empty-state-text {
+    color: var(--color-muted-foreground);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .members-container {
+      padding: var(--space-sm);
+    }
+
+    .members-table-header,
+    .member-row {
+      grid-template-columns: 24px 2fr 100px 100px;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+    }
+
+    .member-details {
+      padding: var(--space-md);
+    }
   }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="members-container">
   <div class="page-header">
-    <h1>
-      All Members
-      <span class="count-badge">{{ members|length }}</span>
-    </h1>
     <div class="header-actions">
-      <a href="{% url 'portal:all_volunteers' %}" class="btn-secondary">
+      <a href="{% url 'portal:all_volunteers' %}{% if course_filter %}?course={{ course_filter }}{% endif %}" class="btn-secondary">
         <i class="bi bi-people"></i>
         View Volunteers
       </a>
     </div>
   </div>
 
-  <div class="people-grid">
-    {% if members %}
+  <!-- Filter Toolbar -->
+  <div class="filter-toolbar">
+    <div class="filter-group">
+      <select id="course-filter" class="filter-select">
+        <option value="">All Courses</option>
+        {% for program in all_programs %}
+          <option value="{{ program.program_id }}" {% if course_filter == program.program_id|stringformat:"s" %}selected{% endif %}>
+            {{ program.name }}
+          </option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="filter-actions">
+      <button type="button" class="btn-filter" onclick="applyFilter()">
+        <i class="bi bi-check-circle"></i> Apply
+      </button>
+      {% if course_filter %}
+      <button type="button" class="btn-clear-filter" onclick="clearFilter()">
+        <i class="bi bi-x-circle"></i> Clear
+      </button>
+      {% endif %}
+    </div>
+  </div>
+
+  {% if members %}
+    <!-- Members Table with Collapsible Rows -->
+    <div class="members-table">
+      <div class="members-table-header">
+        <div></div>
+        <div>Member Name</div>
+        <div>{% if course_filter %}Enrollment Status{% else %}Member Since{% endif %}</div>
+        <div>Status</div>
+      </div>
       {% for member in members %}
-        <div class="person-card">
-          <div class="person-image">
-            {% if member.name %}
-              {{ member.name|slice:":2"|upper }}
-            {% else %}
-              {{ member.username|slice:":2"|upper }}
-            {% endif %}
-          </div>
-          
-          <div class="person-content">
-            <div class="person-header">
-              <a href="{% url 'users:detail' member.username %}" class="person-name" style="color: var(--color-brand-blue-peacock); text-decoration: none;">
+        <div class="member-item">
+          <div class="member-row" onclick="toggleMemberDetails(this)">
+            <div class="chevron-icon">
+              <i class="bi bi-chevron-down"></i>
+            </div>
+            <div class="member-name">
+              <a href="{% url 'users:detail' member.username %}" onclick="event.stopPropagation()">
                 {% if member.name %}
                   {{ member.name }}
                 {% else %}
                   @{{ member.username }}
-                {% endif %}<i class="bi bi-box-arrow-up-right"></i>
+                {% endif %}
               </a>
             </div>
-
-            <div class="info-row">
-              <div class="person-section">
-                <div class="section-label">Role</div>
-                <span class="role-badge {{ member.role }}">{{ member.get_role_display }}</span>
-              </div>
-
-              <div class="person-section">
-                <div class="section-label">Status</div>
-                {% if can_edit %}
-                  <form method="post" onchange="this.submit()">
-                    {% csrf_token %}
-                    <input type="hidden" name="action" value="update_status">
-                    <input type="hidden" name="user_id" value="{{ member.id }}">
-                    <select name="status" class="status-select-compact {{ member.status }}">
-                      {% for value, label in status_choices %}
-                        <option value="{{ value }}" {% if member.status == value %}selected{% endif %}>{{ label }}</option>
-                      {% endfor %}
-                    </select>
-                  </form>
-                {% else %}
-                  <span class="status-badge {{ member.status }}">{{ member.get_status_display }}</span>
-                {% endif %}
-              </div>
-
-              {% if user.role == 'person_centered_manager' %}
-              <div class="person-section">
-                <div class="section-label">OPD</div>
-                {% if member.id in users_with_active_opd %}
-                  <a href="{% url 'users:view_active_opd_for_user' member.username %}" class="btn-edit-opd btn-opd-active" title="View/Edit OPD (Active)">
-                    <i class="bi bi-file-earmark-text-fill"></i> View
-                  </a>
-                {% else %}
-                  <a href="{% url 'users:view_active_opd_for_user' member.username %}" class="btn-edit-opd btn-opd-missing" title="View/Edit OPD (No active OPD)">
-                    <i class="bi bi-exclamation-triangle-fill"></i> View
-                  </a>
-                {% endif %}
-              </div>
+            <div class="member-date">
+              {% if course_filter and can_edit %}
+                {% with enrollment=course_enrollments|get_item:member.id %}
+                  {% if enrollment %}
+                    <form method="post" onchange="this.submit()" onclick="event.stopPropagation()">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="update_enrollment_status">
+                      <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
+                      <input type="hidden" name="course_filter" value="{{ course_filter }}">
+                      <select name="enrollment_status" class="status-select-inline {{ enrollment.status }}">
+                        {% for value, label in enrollment_statuses %}
+                          <option value="{{ value }}" {% if enrollment.status == value %}selected{% endif %}>{{ label }}</option>
+                        {% endfor %}
+                      </select>
+                    </form>
+                  {% endif %}
+                {% endwith %}
+              {% else %}
+                {{ member.date_joined|date:"M d, Y" }}
+              {% endif %}
+            </div>
+            <div>
+              {% if can_edit %}
+                <form method="post" onchange="this.submit()" onclick="event.stopPropagation()">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="update_status">
+                  <input type="hidden" name="user_id" value="{{ member.id }}">
+                  <input type="hidden" name="course_filter" value="{{ course_filter }}">
+                  <select name="status" class="status-select-inline {{ member.status }}">
+                    {% for value, label in status_choices %}
+                      <option value="{{ value }}" {% if member.status == value %}selected{% endif %}>{{ label }}</option>
+                    {% endfor %}
+                  </select>
+                </form>
+              {% else %}
+                <span class="status-badge {{ member.status }}">{{ member.get_status_display }}</span>
               {% endif %}
             </div>
           </div>
+          <div class="member-details">
+            <!-- Support Needs Section -->
+            <div class="support-needs-section">
+              <h4><i class="bi bi-heart-pulse"></i> Support Needs</h4>
+              {% if can_edit %}
+                <form method="post" class="support-needs-form">
+                  {% csrf_token %}
+                  <input type="hidden" name="action" value="update_support_needs">
+                  <input type="hidden" name="user_id" value="{{ member.id }}">
+                  <input type="hidden" name="course_filter" value="{{ course_filter }}">
+                  <label for="support_needs_{{ member.id }}" class="support-needs-label">
+                    <i class="bi bi-info-circle"></i>
+                    Special accommodations or support requirements
+                  </label>
+                  <textarea 
+                    name="support_needs" 
+                    id="support_needs_{{ member.id }}"
+                    class="support-needs-textarea"
+                    placeholder="Enter any special accommodations or support requirements for this member..."
+                  >{{ member.support_needs }}</textarea>
+                  <div class="support-needs-actions">
+                    <button type="submit" class="btn-save-support">
+                      <i class="bi bi-check-circle"></i> Save Support Needs
+                    </button>
+                  </div>
+                </form>
+              {% else %}
+                <div class="support-needs-label">
+                  <i class="bi bi-info-circle"></i>
+                  Special accommodations or support requirements
+                </div>
+                <textarea 
+                  class="support-needs-textarea"
+                  readonly
+                >{{ member.support_needs|default:"No support needs specified." }}</textarea>
+              {% endif %}
+            </div>
+
+            <!-- Program Enrollments Section -->
+            <h4><i class="bi bi-grid-3x3-gap"></i> Program Enrollments</h4>
+            {% include "portal/_programs_table.html" with enrollments=member.enrollments.all can_edit=can_edit enrollment_statuses=enrollment_statuses program_volunteers=program_volunteers buddy_map=buddy_map enrollment_user_role=enrollment_user_role %}
+          </div>
         </div>
       {% endfor %}
-    {% else %}
-      <div class="empty-state">
+    </div>
+
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-state-icon">
         <i class="bi bi-people"></i>
-        <p>No members found</p>
       </div>
-    {% endif %}
-  </div>
+      <h3 class="empty-state-title">No Members Found</h3>
+      <p class="empty-state-text">
+        There are currently no members in the system.
+      </p>
+    </div>
+  {% endif %}
 </div>
 
 <script>
-  // Update status select styling based on value
-  function updateStatusSelectClass(select) {
-    // Remove all status classes
-    select.classList.remove('active', 'inactive', 'suspended', 'pending_verification');
-    // Add class based on current value
-    const value = select.value;
-    if (value) {
-      select.classList.add(value);
-    }
+function applyFilter() {
+  const courseSelect = document.getElementById('course-filter');
+  const courseValue = courseSelect.value;
+  
+  if (courseValue) {
+    window.location.href = '?course=' + encodeURIComponent(courseValue);
+  } else {
+    window.location.href = window.location.pathname;
   }
+}
 
-  // Initialize all status selects
-  document.querySelectorAll('.status-select-compact').forEach(select => {
-    updateStatusSelectClass(select);
-    
-    // Update class when value changes
-    select.addEventListener('change', function() {
-      updateStatusSelectClass(this);
-    });
+function clearFilter() {
+  window.location.href = window.location.pathname;
+}
+
+function toggleMemberDetails(rowElement) {
+  const memberItem = rowElement.parentElement;
+  const detailsElement = memberItem.querySelector('.member-details');
+  
+  // Toggle expansion
+  const isExpanded = memberItem.classList.contains('expanded');
+  
+  // Close all other open details
+  document.querySelectorAll('.member-item.expanded').forEach(item => {
+    if (item !== memberItem) {
+      item.classList.remove('expanded');
+      item.querySelector('.member-details').classList.remove('expanded');
+    }
   });
+  
+  // Toggle current member
+  if (!isExpanded) {
+    memberItem.classList.add('expanded');
+    detailsElement.classList.add('expanded');
+  } else {
+    memberItem.classList.remove('expanded');
+    detailsElement.classList.remove('expanded');
+  }
+}
+
+// Update status select styling based on value
+function updateStatusSelectClass(select) {
+  // Remove all status classes
+  select.classList.remove('active', 'inactive', 'suspended', 'pending_verification');
+  // Add class based on current value
+  const value = select.value;
+  if (value) {
+    select.classList.add(value);
+  }
+}
+
+// Initialize all status selects
+document.querySelectorAll('.status-select-inline').forEach(select => {
+  updateStatusSelectClass(select);
+  
+  // Update class when value changes
+  select.addEventListener('change', function() {
+    updateStatusSelectClass(this);
+  });
+});
 </script>
 {% endblock %}

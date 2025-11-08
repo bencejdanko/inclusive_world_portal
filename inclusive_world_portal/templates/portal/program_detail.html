@@ -167,17 +167,6 @@
           {% endif %}
         </div>
 
-        <!-- Action Buttons -->
-        <div class="action-buttons">
-          <a href="{% url 'portal:program_catalog' %}" class="btn btn-secondary btn-lg">
-            <i class="bi bi-arrow-left me-2"></i>Back to Catalog
-          </a>
-          {% if not is_enrolled %}
-            <a href="{% url 'portal:program_catalog' %}#program-{{ program.program_id }}" class="btn btn-primary btn-lg">
-              <i class="bi bi-plus-circle me-2"></i>Select This Program
-            </a>
-          {% endif %}
-        </div>
       </div>
     </div>
   </div>

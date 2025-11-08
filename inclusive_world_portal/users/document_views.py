@@ -363,7 +363,7 @@ def export_document_pdf(request):
 @login_required
 def autogenerate_document_from_survey(request):
     """
-    Generate One Page Profile document from Discovery Survey responses.
+    Generate One Page Profile document from Discovery Questions responses.
     Returns JSON with the generated HTML content.
     Person-centered managers can generate for other users by passing ?user=username.
     """
@@ -399,9 +399,9 @@ def autogenerate_document_from_survey(request):
         except DiscoverySurvey.DoesNotExist:
             user_display = target_user.name or target_user.username
             if target_user.id == request.user.id:
-                error_msg = 'Please complete the Discovery Survey first before generating your profile.'
+                error_msg = 'Please complete the Discovery Questions first before generating your profile.'
             else:
-                error_msg = f'{user_display} has not completed the Discovery Survey yet. Please complete it first.'
+                error_msg = f'{user_display} has not completed the Discovery Questions yet. Please complete it first.'
             return JsonResponse({
                 'success': False,
                 'error': error_msg

@@ -11,7 +11,7 @@ from django.utils import timezone
 import json
 import stripe
 
-from .models import Program, Enrollment, Payment, EnrollmentSettings
+from .models import Program, Enrollment, Payment, EnrollmentSettings, EnrollmentStatus, BuddyAssignment
 
 stripe.api_key = settings.STRIPE_SECRET_KEY if hasattr(settings, 'STRIPE_SECRET_KEY') else None
 
@@ -28,9 +28,9 @@ def program_catalog_view(request):
     if not request.user.forms_are_complete:
         messages.warning(
             request,
-            "Please complete your profile and discovery survey before browsing programs."
+            "Please complete your profile and discovery questions before browsing programs."
         )
-        return redirect('users:survey_start')
+        return redirect('users:survey_form')
     
     # Check if enrollment is open
     if not enrollment_settings.enrollment_open:
@@ -102,9 +102,9 @@ def program_selection_view(request):
     if not request.user.forms_are_complete:
         messages.warning(
             request,
-            "Please complete your profile and discovery survey before enrolling in programs."
+            "Please complete your profile and discovery questions before enrolling in programs."
         )
-        return redirect('users:survey_start')
+        return redirect('users:survey_form')
     
     # Check if enrollment is open
     if not enrollment_settings.enrollment_open:
@@ -185,8 +185,8 @@ def checkout_view(request):
     
     # Check forms completion
     if not request.user.forms_are_complete:
-        messages.warning(request, "Please complete your profile and discovery survey first.")
-        return redirect('users:survey_start')
+        messages.warning(request, "Please complete your profile and discovery questions first.")
+        return redirect('users:survey_form')
     
     # Check if enrollment is open
     if not enrollment_settings.enrollment_open:
@@ -347,9 +347,9 @@ def volunteer_program_catalog_view(request):
     if not request.user.forms_are_complete:
         messages.warning(
             request,
-            "Please complete your profile and discovery survey before browsing programs."
+            "Please complete your profile and discovery questions before browsing programs."
         )
-        return redirect('users:survey_start')
+        return redirect('users:survey_form')
     
     # Check if enrollment is open
     if not enrollment_settings.enrollment_open:
@@ -399,9 +399,9 @@ def volunteer_program_selection_view(request):
     if not request.user.forms_are_complete:
         messages.warning(
             request,
-            "Please complete your profile and discovery survey before enrolling in programs."
+            "Please complete your profile and discovery questions before enrolling in programs."
         )
-        return redirect('users:survey_start')
+        return redirect('users:survey_form')
     
     # Check if enrollment is open
     if not enrollment_settings.enrollment_open:
@@ -526,7 +526,8 @@ def manager_programs_view(request):
         return redirect('home')
     
     # Get all programs (including archived), ordered by name
-    programs = Program.objects.all().order_by('name')
+    # Prefetch volunteer leads for efficient display
+    programs = Program.objects.prefetch_related('volunteer_leads__volunteer').all().order_by('name')
     
     context = {
         'programs': programs,
@@ -669,217 +670,6 @@ def manager_program_edit_view(request, program_id):
 
 @login_required
 @require_http_methods(["GET", "POST"])
-def manager_program_people_view(request, program_id):
-    """
-    Manage program members and volunteers.
-    - View all enrolled members and volunteers
-    - Manage enrollment applications (approve/reject/waitlist)
-    - Assign volunteer buddies to members
-    - Toggle volunteer lead status
-    Only accessible to managers.
-    """
-    # Check if user is a manager
-    if request.user.role != 'manager':
-        messages.error(request, "This page is only accessible to managers.")
-        return redirect('home')
-    
-    program = get_object_or_404(Program, program_id=program_id)
-    
-    if request.method == 'POST':
-        action = request.POST.get('action')
-        
-        # Handle enrollment status changes
-        if action == 'update_enrollment_status':
-            enrollment_id = request.POST.get('enrollment_id')
-            new_status = request.POST.get('status')
-            
-            try:
-                from .models import Enrollment, EnrollmentStatus
-                enrollment = get_object_or_404(Enrollment, enrollment_id=enrollment_id, program=program)
-                
-                old_status = enrollment.status
-                enrollment.status = new_status
-                enrollment.assigned_by = request.user
-                enrollment.assigned_at = timezone.now()
-                enrollment.save()
-                
-                # Update program enrolled count if status changed to/from approved
-                if old_status != EnrollmentStatus.APPROVED and new_status == EnrollmentStatus.APPROVED:
-                    program.enrolled += 1
-                    program.save()
-                elif old_status == EnrollmentStatus.APPROVED and new_status != EnrollmentStatus.APPROVED:
-                    program.enrolled = max(0, program.enrolled - 1)
-                    program.save()
-                
-                messages.success(request, f"Enrollment status updated to {new_status}.")
-            except Exception as e:
-                messages.error(request, f"Error updating enrollment: {str(e)}")
-            
-            return redirect('portal:manager_program_people', program_id=program_id)
-        
-        # Handle support needs update
-        elif action == 'update_support_needs':
-            user_id = request.POST.get('user_id')
-            support_needs = request.POST.get('support_needs', '').strip()
-            
-            try:
-                from inclusive_world_portal.users.models import User
-                user = get_object_or_404(User, id=user_id)
-                user.support_needs = support_needs
-                user.save()
-                messages.success(request, f"Support needs updated for {user.name}.")
-            except Exception as e:
-                messages.error(request, f"Error updating support needs: {str(e)}")
-            
-            return redirect('portal:manager_program_people', program_id=program_id)
-        
-        # Handle buddy assignment
-        elif action == 'assign_buddy':
-            from .models import BuddyAssignment
-            member_id = request.POST.get('member_id')
-            volunteer_id = request.POST.get('volunteer_id', '').strip()
-            
-            try:
-                from inclusive_world_portal.users.models import User
-                member = get_object_or_404(User, id=member_id)
-                
-                # If volunteer_id is empty, remove the buddy assignment
-                if not volunteer_id:
-                    deleted_count, _ = BuddyAssignment.objects.filter(
-                        program=program,
-                        member_user=member
-                    ).delete()
-                    if deleted_count > 0:
-                        messages.success(request, f"Removed buddy assignment for {member.name}.")
-                    else:
-                        messages.info(request, f"{member.name} had no buddy assigned.")
-                else:
-                    volunteer = get_object_or_404(User, id=volunteer_id)
-                    
-                    # Create or update buddy assignment
-                    assignment, created = BuddyAssignment.objects.update_or_create(
-                        program=program,
-                        member_user=member,
-                        defaults={'volunteer_user': volunteer}
-                    )
-                    
-                    if created:
-                        messages.success(request, f"Assigned {volunteer.name} as buddy for {member.name}.")
-                    else:
-                        messages.success(request, f"Updated buddy assignment for {member.name} to {volunteer.name}.")
-            except Exception as e:
-                messages.error(request, f"Error managing buddy assignment: {str(e)}")
-            
-            return redirect('portal:manager_program_people', program_id=program_id)
-        
-        # Handle remove buddy assignment
-        elif action == 'remove_buddy':
-            from .models import BuddyAssignment
-            member_id = request.POST.get('member_id')
-            
-            try:
-                BuddyAssignment.objects.filter(
-                    program=program,
-                    member_user_id=member_id
-                ).delete()
-                messages.success(request, "Buddy assignment removed.")
-            except Exception as e:
-                messages.error(request, f"Error removing buddy: {str(e)}")
-            
-            return redirect('portal:manager_program_people', program_id=program_id)
-        
-        # Handle toggle volunteer lead
-        elif action == 'toggle_volunteer_lead':
-            from .models import ProgramVolunteerLead
-            volunteer_id = request.POST.get('volunteer_id')
-            
-            try:
-                from inclusive_world_portal.users.models import User
-                volunteer = get_object_or_404(User, id=volunteer_id)
-                
-                # Check if already a lead
-                existing_lead = ProgramVolunteerLead.objects.filter(
-                    program=program,
-                    volunteer=volunteer
-                ).first()
-                
-                if existing_lead:
-                    # Remove lead status
-                    existing_lead.delete()
-                    messages.success(request, f"{volunteer.name} is no longer a lead for this program.")
-                else:
-                    # Add lead status
-                    ProgramVolunteerLead.objects.create(
-                        program=program,
-                        volunteer=volunteer
-                    )
-                    messages.success(request, f"{volunteer.name} is now a lead for this program.")
-            except Exception as e:
-                messages.error(request, f"Error toggling lead status: {str(e)}")
-            
-            return redirect('portal:manager_program_people', program_id=program_id)
-    
-    # GET request - gather all data
-    from .models import Enrollment, EnrollmentStatus, BuddyAssignment, ProgramVolunteerLead
-    from inclusive_world_portal.users.models import User
-    
-    # Get all enrollments for this program
-    all_enrollments = Enrollment.objects.filter(program=program).select_related('user')
-    
-    # Separate members and volunteers (volunteers include managers and person-centered managers)
-    member_enrollments = all_enrollments.filter(user__role='member')
-    volunteer_enrollments = all_enrollments.filter(user__role__in=['volunteer', 'manager', 'person_centered_manager'])
-    
-    # Categorize member enrollments by status
-    pending_members = member_enrollments.filter(status=EnrollmentStatus.PENDING).order_by('enrolled_at')
-    approved_members = member_enrollments.filter(status=EnrollmentStatus.APPROVED).order_by('user__name')
-    waitlisted_members = member_enrollments.filter(status=EnrollmentStatus.WAITLISTED).order_by('enrolled_at')
-    rejected_members = member_enrollments.filter(status=EnrollmentStatus.REJECTED).order_by('-updated_at')
-    
-    # Categorize volunteer enrollments by status
-    pending_volunteers = volunteer_enrollments.filter(status=EnrollmentStatus.PENDING).order_by('enrolled_at')
-    approved_volunteers = volunteer_enrollments.filter(status=EnrollmentStatus.APPROVED).order_by('user__name')
-    rejected_volunteers = volunteer_enrollments.filter(status=EnrollmentStatus.REJECTED).order_by('-updated_at')
-    withdrawn_volunteers = volunteer_enrollments.filter(status=EnrollmentStatus.WITHDRAWN).order_by('-updated_at')
-    
-    # Get buddy assignments
-    buddy_assignments = BuddyAssignment.objects.filter(program=program)
-    
-    # Create a mapping of member_id -> volunteer_id (using only IDs, no need to load related users)
-    buddy_map = {ba.member_user_id: ba.volunteer_user_id for ba in buddy_assignments}
-    
-    # Get volunteer leads
-    volunteer_leads = ProgramVolunteerLead.objects.filter(program=program).values_list('volunteer_id', flat=True)
-    volunteer_leads_set = set(volunteer_leads)
-    
-    # Prepare approved volunteers list for buddy assignment dropdown
-    approved_volunteers_list = [
-        {
-            'id': e.user.id,
-            'name': e.user.name,
-            'is_lead': e.user.id in volunteer_leads_set
-        }
-        for e in approved_volunteers
-    ]
-    
-    context = {
-        'program': program,
-        'pending_members': pending_members,
-        'approved_members': approved_members,
-        'waitlisted_members': waitlisted_members,
-        'rejected_members': rejected_members,
-        'pending_volunteers': pending_volunteers,
-        'approved_volunteers': approved_volunteers,
-        'rejected_volunteers': rejected_volunteers,
-        'withdrawn_volunteers': withdrawn_volunteers,
-        'approved_volunteers_list': approved_volunteers_list,
-        'buddy_map': buddy_map,
-        'volunteer_leads_set': volunteer_leads_set,
-        'enrollment_statuses': EnrollmentStatus.choices,
-        'total_pending_count': pending_members.count() + pending_volunteers.count(),
-    }
-    
-    return render(request, 'portal/manager_program_people.html', context)
 
 
 @login_required
@@ -921,7 +711,8 @@ def manager_program_add_user_view(request, program_id):
                 )
                 messages.success(request, f"Successfully added {user.name} to the program with pending status.")
             
-            return redirect('portal:manager_program_people', program_id=program_id)
+            from django.urls import reverse
+            return redirect(reverse('portal:all_members') + f'?course={program_id}')
         except Exception as e:
             messages.error(request, f"Error adding user: {str(e)}")
             return redirect('portal:manager_program_add_user', program_id=program_id)
@@ -1222,6 +1013,7 @@ def all_members_view(request):
         return redirect('home')
     
     from inclusive_world_portal.users.models import User
+    from django.db.models import Q
     
     # Handle POST requests for status updates (managers only)
     if request.method == 'POST' and request.user.role == 'manager':
@@ -1245,10 +1037,152 @@ def all_members_view(request):
             except Exception as e:
                 messages.error(request, f"Error updating status: {str(e)}")
             
+            # Preserve course filter when redirecting
+            course_filter = request.POST.get('course_filter', '')
+            redirect_url = 'portal:all_members'
+            if course_filter:
+                from django.urls import reverse
+                redirect_url = reverse('portal:all_members') + f'?course={course_filter}'
+                return redirect(redirect_url)
+            return redirect('portal:all_members')
+        
+        elif action == 'update_enrollment_status':
+            enrollment_id = request.POST.get('enrollment_id')
+            new_status = request.POST.get('enrollment_status')
+            
+            try:
+                enrollment = get_object_or_404(Enrollment, enrollment_id=enrollment_id)
+                
+                # Validate status
+                valid_statuses = [choice[0] for choice in EnrollmentStatus.choices]
+                if new_status in valid_statuses:
+                    old_status = enrollment.status
+                    enrollment.status = new_status
+                    enrollment.assigned_by = request.user
+                    enrollment.assigned_at = timezone.now()
+                    enrollment.save()
+                    
+                    # Update program enrolled count if status changed to/from approved
+                    program = enrollment.program
+                    if old_status != EnrollmentStatus.APPROVED and new_status == EnrollmentStatus.APPROVED:
+                        program.enrolled += 1
+                        program.save()
+                    elif old_status == EnrollmentStatus.APPROVED and new_status != EnrollmentStatus.APPROVED:
+                        program.enrolled = max(0, program.enrolled - 1)
+                        program.save()
+                    
+                    messages.success(request, f"Enrollment status updated for {enrollment.user.name or enrollment.user.username}.")
+                else:
+                    messages.error(request, "Invalid enrollment status selection.")
+            except Exception as e:
+                messages.error(request, f"Error updating enrollment status: {str(e)}")
+            
+            # Preserve course filter when redirecting
+            course_filter = request.POST.get('course_filter', '')
+            redirect_url = 'portal:all_members'
+            if course_filter:
+                from django.urls import reverse
+                redirect_url = reverse('portal:all_members') + f'?course={course_filter}'
+                return redirect(redirect_url)
+            return redirect('portal:all_members')
+        
+        elif action == 'update_support_needs':
+            user_id = request.POST.get('user_id')
+            support_needs = request.POST.get('support_needs', '').strip()
+            
+            try:
+                member = get_object_or_404(User, id=user_id)
+                member.support_needs = support_needs
+                member.save()
+                messages.success(request, f"Support needs updated for {member.name or member.username}.")
+            except Exception as e:
+                messages.error(request, f"Error updating support needs: {str(e)}")
+            
+            # Preserve course filter when redirecting
+            course_filter = request.POST.get('course_filter', '')
+            redirect_url = 'portal:all_members'
+            if course_filter:
+                from django.urls import reverse
+                redirect_url = reverse('portal:all_members') + f'?course={course_filter}'
+                return redirect(redirect_url)
+            return redirect('portal:all_members')
+        
+        elif action == 'assign_buddy':
+            from .models import BuddyAssignment
+            member_id = request.POST.get('member_id')
+            volunteer_id = request.POST.get('volunteer_id', '').strip()
+            enrollment_id = request.POST.get('enrollment_id')
+            
+            try:
+                enrollment = get_object_or_404(Enrollment, enrollment_id=enrollment_id)
+                member = enrollment.user
+                program = enrollment.program
+                
+                # If volunteer_id is empty, remove the buddy assignment
+                if not volunteer_id:
+                    deleted_count, _ = BuddyAssignment.objects.filter(
+                        program=program,
+                        member_user=member
+                    ).delete()
+                    if deleted_count > 0:
+                        messages.success(request, f"Removed buddy assignment for {member.name}.")
+                else:
+                    volunteer = get_object_or_404(User, id=volunteer_id)
+                    
+                    # Create or update buddy assignment
+                    assignment, created = BuddyAssignment.objects.update_or_create(
+                        program=program,
+                        member_user=member,
+                        defaults={'volunteer_user': volunteer}
+                    )
+                    
+                    if created:
+                        messages.success(request, f"Assigned {volunteer.name} as buddy for {member.name}.")
+                    else:
+                        messages.success(request, f"Updated buddy assignment for {member.name} to {volunteer.name}.")
+            except Exception as e:
+                messages.error(request, f"Error managing buddy assignment: {str(e)}")
+            
+            # Preserve course filter when redirecting
+            course_filter = request.POST.get('course_filter', '')
+            redirect_url = 'portal:all_members'
+            if course_filter:
+                from django.urls import reverse
+                redirect_url = reverse('portal:all_members') + f'?course={course_filter}'
+                return redirect(redirect_url)
             return redirect('portal:all_members')
     
-    # Get all members ordered by name
-    members = User.objects.filter(role='member').order_by('name')
+    # Get course filter from query params
+    course_filter = request.GET.get('course', '').strip()
+    
+    # Get all members ordered by name with prefetched enrollment data
+    members_query = User.objects.filter(role='member').prefetch_related(
+        'enrollments__program'
+    )
+    
+    # Apply course filter if provided
+    filtered_program = None
+    if course_filter:
+        members_query = members_query.filter(
+            enrollments__program__program_id=course_filter
+        ).distinct()
+        # Get the program object for the filter
+        try:
+            filtered_program = Program.objects.get(program_id=course_filter)
+        except Program.DoesNotExist:
+            pass
+    
+    members = members_query.order_by('name')
+    
+    # If filtering by course, get the enrollment for each member in that course
+    course_enrollments = {}
+    if course_filter and filtered_program:
+        enrollments = Enrollment.objects.filter(
+            program=filtered_program,
+            user__in=members
+        ).select_related('user')
+        for enrollment in enrollments:
+            course_enrollments[enrollment.user.id] = enrollment
     
     # Check if user can edit (managers can, PCMs cannot)
     can_edit = request.user.role == 'manager'
@@ -1263,11 +1197,53 @@ def all_members_view(request):
         ).values_list('user_id', flat=True)
         users_with_active_opd = set(active_exports)
     
+    # Build program volunteers mapping and buddy assignments for the enrollments partial
+    program_volunteers = {}
+    buddy_map = {}
+    
+    if can_edit:
+        # Get all unique programs that members are enrolled in
+        program_ids = set()
+        for member in members:
+            for enrollment in member.enrollments.all():
+                program_ids.add(enrollment.program.program_id)
+        
+        # For each program, get approved volunteers
+        for program_id in program_ids:
+            volunteers = User.objects.filter(
+                role__in=['volunteer', 'manager', 'person_centered_manager'],
+                enrollments__program__program_id=program_id,
+                enrollments__status=EnrollmentStatus.APPROVED
+            ).distinct().order_by('name')
+            program_volunteers[str(program_id)] = list(volunteers)
+        
+        # Get all buddy assignments for these members
+        from .models import BuddyAssignment
+        buddy_assignments = BuddyAssignment.objects.filter(
+            member_user__in=members
+        ).select_related('volunteer_user', 'program')
+        
+        # Build buddy_map keyed by (program_id, member_id) tuple
+        for assignment in buddy_assignments:
+            key = (str(assignment.program.program_id), assignment.member_user_id)
+            buddy_map[key] = assignment.volunteer_user_id
+    
+    # Get all available programs for filter dropdown
+    all_programs = Program.objects.filter(archived=False).order_by('name')
+    
     context = {
         'members': members,
         'can_edit': can_edit,
         'status_choices': User.Status.choices,
         'users_with_active_opd': users_with_active_opd,
+        'enrollment_statuses': EnrollmentStatus.choices,
+        'program_volunteers': program_volunteers,
+        'buddy_map': buddy_map,
+        'enrollment_user_role': 'member',
+        'all_programs': all_programs,
+        'course_filter': course_filter,
+        'filtered_program': filtered_program,
+        'course_enrollments': course_enrollments,
     }
     
     return render(request, 'portal/all_members.html', context)
@@ -1287,6 +1263,7 @@ def all_volunteers_view(request):
         return redirect('home')
     
     from inclusive_world_portal.users.models import User
+    from django.db.models import Q
     
     # Handle POST requests for role/status updates (managers only)
     if request.method == 'POST' and request.user.role == 'manager':
@@ -1310,6 +1287,13 @@ def all_volunteers_view(request):
             except Exception as e:
                 messages.error(request, f"Error updating role: {str(e)}")
             
+            # Preserve course filter when redirecting
+            course_filter = request.POST.get('course_filter', '')
+            redirect_url = 'portal:all_volunteers'
+            if course_filter:
+                from django.urls import reverse
+                redirect_url = reverse('portal:all_volunteers') + f'?course={course_filter}'
+                return redirect(redirect_url)
             return redirect('portal:all_volunteers')
         
         elif action == 'update_status':
@@ -1330,12 +1314,88 @@ def all_volunteers_view(request):
             except Exception as e:
                 messages.error(request, f"Error updating status: {str(e)}")
             
+            # Preserve course filter when redirecting
+            course_filter = request.POST.get('course_filter', '')
+            redirect_url = 'portal:all_volunteers'
+            if course_filter:
+                from django.urls import reverse
+                redirect_url = reverse('portal:all_volunteers') + f'?course={course_filter}'
+                return redirect(redirect_url)
+            return redirect('portal:all_volunteers')
+        
+        elif action == 'update_enrollment_status':
+            enrollment_id = request.POST.get('enrollment_id')
+            new_status = request.POST.get('enrollment_status')
+            
+            try:
+                enrollment = get_object_or_404(Enrollment, enrollment_id=enrollment_id)
+                
+                # Validate status
+                valid_statuses = [choice[0] for choice in EnrollmentStatus.choices]
+                if new_status in valid_statuses:
+                    old_status = enrollment.status
+                    enrollment.status = new_status
+                    enrollment.assigned_by = request.user
+                    enrollment.assigned_at = timezone.now()
+                    enrollment.save()
+                    
+                    # Update program enrolled count if status changed to/from approved
+                    program = enrollment.program
+                    if old_status != EnrollmentStatus.APPROVED and new_status == EnrollmentStatus.APPROVED:
+                        program.enrolled += 1
+                        program.save()
+                    elif old_status == EnrollmentStatus.APPROVED and new_status != EnrollmentStatus.APPROVED:
+                        program.enrolled = max(0, program.enrolled - 1)
+                        program.save()
+                    
+                    messages.success(request, f"Enrollment status updated for {enrollment.user.name or enrollment.user.username}.")
+                else:
+                    messages.error(request, "Invalid enrollment status selection.")
+            except Exception as e:
+                messages.error(request, f"Error updating enrollment status: {str(e)}")
+            
+            # Preserve course filter when redirecting
+            course_filter = request.POST.get('course_filter', '')
+            redirect_url = 'portal:all_volunteers'
+            if course_filter:
+                from django.urls import reverse
+                redirect_url = reverse('portal:all_volunteers') + f'?course={course_filter}'
+                return redirect(redirect_url)
             return redirect('portal:all_volunteers')
     
-    # Get all volunteers, managers, and person-centered managers ordered by name
-    volunteers = User.objects.filter(
+    # Get course filter from query params
+    course_filter = request.GET.get('course', '').strip()
+    
+    # Get all volunteers, managers, and person-centered managers ordered by name with prefetched enrollment data
+    volunteers_query = User.objects.filter(
         role__in=['volunteer', 'manager', 'person_centered_manager']
-    ).order_by('name')
+    ).prefetch_related(
+        'enrollments__program'
+    )
+    
+    # Apply course filter if provided
+    filtered_program = None
+    if course_filter:
+        volunteers_query = volunteers_query.filter(
+            enrollments__program__program_id=course_filter
+        ).distinct()
+        # Get the program object for the filter
+        try:
+            filtered_program = Program.objects.get(program_id=course_filter)
+        except Program.DoesNotExist:
+            pass
+    
+    volunteers = volunteers_query.order_by('name')
+    
+    # If filtering by course, get the enrollment for each volunteer in that course
+    course_enrollments = {}
+    if course_filter and filtered_program:
+        enrollments = Enrollment.objects.filter(
+            program=filtered_program,
+            user__in=volunteers
+        ).select_related('user')
+        for enrollment in enrollments:
+            course_enrollments[enrollment.user.id] = enrollment
     
     # Check if user can edit (managers can, PCMs cannot)
     can_edit = request.user.role == 'manager'
@@ -1357,12 +1417,137 @@ def all_volunteers_view(request):
         ).values_list('user_id', flat=True)
         users_with_active_opd = set(active_exports)
     
+    # Get all available programs for filter dropdown
+    all_programs = Program.objects.filter(archived=False).order_by('name')
+    
+    # Note: Volunteers don't need buddy assignments, so we don't build those maps
+    # We still pass enrollment_statuses for the status dropdown
     context = {
         'volunteers': volunteers,
         'can_edit': can_edit,
         'role_choices': volunteer_role_choices if can_edit else [],
         'status_choices': User.Status.choices,
         'users_with_active_opd': users_with_active_opd,
+        'enrollment_statuses': EnrollmentStatus.choices,
+        'program_volunteers': {},  # Empty since volunteers don't have buddies
+        'buddy_map': {},  # Empty since volunteers don't have buddies
+        'enrollment_user_role': 'volunteer',
+        'all_programs': all_programs,
+        'course_filter': course_filter,
+        'filtered_program': filtered_program,
+        'course_enrollments': course_enrollments,
     }
     
     return render(request, 'portal/all_volunteers.html', context)
+
+
+# -------------------------
+# AJAX endpoints for enrollment management
+# -------------------------
+
+@login_required
+@require_http_methods(["POST"])
+def ajax_update_enrollment_status(request):
+    """
+    AJAX endpoint to update enrollment status.
+    Only accessible to managers.
+    """
+    if request.user.role != 'manager':
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    try:
+        enrollment_id = request.POST.get('enrollment_id')
+        new_status = request.POST.get('status')
+        
+        enrollment = get_object_or_404(Enrollment, enrollment_id=enrollment_id)
+        
+        # Validate status
+        valid_statuses = [choice[0] for choice in EnrollmentStatus.choices]
+        if new_status not in valid_statuses:
+            return JsonResponse({'error': 'Invalid status'}, status=400)
+        
+        old_status = enrollment.status
+        enrollment.status = new_status
+        enrollment.assigned_by = request.user
+        enrollment.assigned_at = timezone.now()
+        enrollment.save()
+        
+        # Update program enrolled count if status changed to/from approved
+        program = enrollment.program
+        if old_status != EnrollmentStatus.APPROVED and new_status == EnrollmentStatus.APPROVED:
+            program.enrolled += 1
+            program.save()
+        elif old_status == EnrollmentStatus.APPROVED and new_status != EnrollmentStatus.APPROVED:
+            program.enrolled = max(0, program.enrolled - 1)
+            program.save()
+        
+        return JsonResponse({
+            'success': True,
+            'status': new_status,
+            'status_display': enrollment.get_status_display()
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
+
+
+@login_required
+@require_http_methods(["POST"])
+def ajax_update_buddy_assignment(request):
+    """
+    AJAX endpoint to update buddy assignment for a member in a program.
+    Only accessible to managers.
+    """
+    if request.user.role != 'manager':
+        return JsonResponse({'error': 'Permission denied'}, status=403)
+    
+    try:
+        enrollment_id = request.POST.get('enrollment_id')
+        volunteer_id = request.POST.get('volunteer_id', '').strip()
+        
+        from inclusive_world_portal.users.models import User
+        
+        enrollment = get_object_or_404(Enrollment, enrollment_id=enrollment_id)
+        member = enrollment.user
+        program = enrollment.program
+        
+        # Verify the user is a member
+        if member.role != 'member':
+            return JsonResponse({'error': 'Buddy assignments are only for members'}, status=400)
+        
+        # If volunteer_id is empty, remove the buddy assignment
+        if not volunteer_id:
+            deleted_count, _ = BuddyAssignment.objects.filter(
+                program=program,
+                member_user=member
+            ).delete()
+            return JsonResponse({
+                'success': True,
+                'buddy_name': None,
+                'message': 'Buddy assignment removed'
+            })
+        
+        # Validate the volunteer is enrolled in the program
+        volunteer = get_object_or_404(User, id=volunteer_id)
+        volunteer_enrollment = Enrollment.objects.filter(
+            program=program,
+            user=volunteer,
+            status=EnrollmentStatus.APPROVED
+        ).first()
+        
+        if not volunteer_enrollment:
+            return JsonResponse({'error': 'Selected volunteer is not enrolled in this program'}, status=400)
+        
+        # Create or update buddy assignment
+        assignment, created = BuddyAssignment.objects.update_or_create(
+            program=program,
+            member_user=member,
+            defaults={'volunteer_user': volunteer}
+        )
+        
+        return JsonResponse({
+            'success': True,
+            'buddy_name': volunteer.name or volunteer.username,
+            'message': 'Buddy assignment updated'
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)

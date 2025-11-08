@@ -37,7 +37,7 @@ def get_navigation_items(user):
         elif not forms_complete:
             # Forms incomplete
             registration_status = 'closed_forms'
-            registration_url = reverse('users:survey_start')
+            registration_url = reverse('users:survey_form')
             registration_tooltip = _('Complete your profile and discovery questions to register')
         else:
             # Forms complete but enrollment closed
@@ -71,7 +71,7 @@ def get_navigation_items(user):
             },
             {
                 'label': _('Discovery Questions'),
-                'url': reverse('users:survey_start'),
+                'url': reverse('users:survey_form'),
                 'icon_class': 'bi bi-clipboard-check',
                 'show_completion': True,
                 'is_complete': user.survey_is_complete,
@@ -123,7 +123,7 @@ def get_navigation_items(user):
         elif not forms_complete:
             # Forms incomplete
             registration_status = 'closed_forms'
-            registration_url = reverse('users:survey_start')
+            registration_url = reverse('users:survey_form')
             registration_tooltip = _('Complete your profile and discovery questions to register')
         else:
             # Forms complete but enrollment closed
@@ -157,7 +157,7 @@ def get_navigation_items(user):
             },
             {
                 'label': _('Discovery Questions'),
-                'url': reverse('users:survey_start'),
+                'url': reverse('users:survey_form'),
                 'icon_class': 'bi bi-clipboard-check',
                 'show_completion': True,
                 'is_complete': user.survey_is_complete,
@@ -209,7 +209,7 @@ def get_navigation_items(user):
         elif not forms_complete:
             # Forms incomplete
             registration_status = 'closed_forms'
-            registration_url = reverse('users:survey_start')
+            registration_url = reverse('users:survey_form')
             registration_tooltip = _('Complete your profile and discovery questions to register')
         else:
             # Forms complete but enrollment closed
@@ -243,7 +243,7 @@ def get_navigation_items(user):
             },
             {
                 'label': _('Discovery Questions'),
-                'url': reverse('users:survey_start'),
+                'url': reverse('users:survey_form'),
                 'icon_class': 'bi bi-clipboard-check',
                 'show_completion': True,
                 'is_complete': user.survey_is_complete,
@@ -304,7 +304,7 @@ def get_navigation_items(user):
         elif not forms_complete:
             # Forms incomplete
             registration_status = 'closed_forms'
-            registration_url = reverse('users:survey_start')
+            registration_url = reverse('users:survey_form')
             registration_tooltip = _('Complete your profile and discovery questions to register')
         else:
             # Forms complete but enrollment closed
@@ -338,7 +338,7 @@ def get_navigation_items(user):
             },
             {
                 'label': _('Discovery Questions'),
-                'url': reverse('users:survey_start'),
+                'url': reverse('users:survey_form'),
                 'icon_class': 'bi bi-clipboard-check',
                 'show_completion': True,
                 'is_complete': user.survey_is_complete,

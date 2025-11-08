@@ -1,0 +1,223 @@
+{% extends "base_portal.html" %}
+{% load crispy_forms_tags %}
+
+{% block title %}Discovery Questions{% endblock %}
+
+{% block page_title %}Discovery Questions - More About You{% endblock page_title %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  .survey-form-card {
+    background: white;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-lg);
+    margin: var(--space-xl) 0;
+  }
+  
+  .survey-card-header {
+    background: linear-gradient(135deg, var(--color-brand-blue-peacock) 0%, var(--color-dark-blue-peacock) 100%);
+    color: white;
+    padding: var(--space-xl);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+    border-bottom: 4px solid var(--color-brand-splashy-aqua);
+  }
+  
+  .survey-card-header h2 {
+    font-size: 1.75rem;
+    font-weight: 700;
+    margin: 0;
+  }
+  
+  .survey-card-header p {
+    margin: var(--space-sm) 0 0 0;
+    opacity: 0.95;
+    font-size: 1rem;
+  }
+  
+  .survey-form {
+    padding: var(--space-xl);
+  }
+  
+  .form-section-title {
+    color: var(--color-brand-blue-peacock);
+    font-weight: 700;
+    font-size: 1.25rem;
+    margin-top: var(--space-xl);
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-sm);
+    border-bottom: 2px solid var(--color-brand-splashy-aqua);
+  }
+  
+  .form-section-title:first-child {
+    margin-top: 0;
+  }
+  
+  .learning-style-checkboxes {
+    margin: var(--space-md) 0;
+  }
+  
+  .learning-style-checkboxes .form-check {
+    margin-bottom: var(--space-md);
+    padding-left: 1.5rem;
+  }
+  
+  .learning-style-checkboxes .form-check label {
+    line-height: 1.6;
+    color: var(--color-brand-black-olive);
+  }
+  
+  .btn-submit-survey {
+    background: linear-gradient(135deg, var(--color-brand-berry) 0%, var(--color-dark-berry) 100%);
+    color: white;
+    font-size: 1.125rem;
+    font-weight: 700;
+    padding: 1rem 2.5rem;
+    border-radius: var(--radius-lg);
+    border: none;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+  }
+  
+  .btn-submit-survey:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+    color: white;
+  }
+  
+  .survey-note {
+    background: rgba(0, 73, 79, 0.1);
+    border-left: 4px solid var(--color-brand-blue-peacock);
+    padding: var(--space-md);
+    margin: var(--space-xl) 0;
+    border-radius: var(--radius-md);
+  }
+  
+  .survey-note i {
+    color: var(--color-brand-blue-peacock);
+    margin-right: var(--space-sm);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+  <div class="col-lg-10">
+    
+    {% if previously_completed %}
+    <div class="alert alert-info alert-dismissible fade show" role="alert">
+      <i class="bi bi-info-circle me-2"></i>
+      <strong>Previously Submitted:</strong> You've already completed this survey. You can update your answers at any time.
+      <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+    {% endif %}
+    
+    <div class="survey-form-card">
+      <div class="survey-card-header">
+        <h2><i class="bi bi-clipboard-heart me-2"></i>More About You</h2>
+        <p>Please share as much or as little as you're comfortable with. All fields are optional.</p>
+      </div>
+      
+      <form method="post">
+        {% csrf_token %}
+        <div class="survey-form">
+          
+          <h3 class="form-section-title">Your Support Team</h3>
+          <div class="mb-4">
+            {{ form.people_closest_to_you|as_crispy_field }}
+          </div>
+          
+          <h3 class="form-section-title">About You</h3>
+          <div class="mb-4">
+            {{ form.great_things_about_you|as_crispy_field }}
+          </div>
+          
+          <h3 class="form-section-title">Activities & Learning</h3>
+          <div class="mb-4">
+            {{ form.things_like_to_do|as_crispy_field }}
+          </div>
+          <div class="mb-4">
+            {{ form.things_want_to_learn|as_crispy_field }}
+          </div>
+          
+          <h3 class="form-section-title">Communication</h3>
+          <div class="mb-4">
+            {{ form.what_makes_you_happy|as_crispy_field }}
+          </div>
+          <div class="mb-4">
+            {{ form.what_makes_you_sad|as_crispy_field }}
+          </div>
+          
+          <h3 class="form-section-title">School Experience</h3>
+          <div class="mb-4">
+            {{ form.learned_at_school_liked|as_crispy_field }}
+          </div>
+          <div class="mb-4">
+            {{ form.learned_at_school_disliked|as_crispy_field }}
+          </div>
+          
+          <h3 class="form-section-title">Employment</h3>
+          <div class="mb-4">
+            {{ form.prior_jobs|as_crispy_field }}
+          </div>
+          
+          <h3 class="form-section-title">IEP (Individualized Education Program)</h3>
+          <div class="mb-4">
+            {{ form.iep_working|as_crispy_field }}
+          </div>
+          <div class="mb-4">
+            {{ form.iep_not_working|as_crispy_field }}
+          </div>
+          
+          <h3 class="form-section-title">How You Learn Best</h3>
+          <p class="text-muted mb-3">Check all that apply:</p>
+          <div class="learning-style-checkboxes mb-4">
+            <div class="form-check">
+              {{ form.learning_visual }} {{ form.learning_visual.label_tag }}
+            </div>
+            <div class="form-check">
+              {{ form.learning_auditory }} {{ form.learning_auditory.label_tag }}
+            </div>
+            <div class="form-check">
+              {{ form.learning_reading_writing }} {{ form.learning_reading_writing.label_tag }}
+            </div>
+            <div class="form-check">
+              {{ form.learning_kinesthetic }} {{ form.learning_kinesthetic.label_tag }}
+            </div>
+          </div>
+          
+          <h3 class="form-section-title">Learning Environment</h3>
+          <div class="mb-4">
+            {{ form.supportive_devices|as_crispy_field }}
+          </div>
+          <div class="mb-4">
+            {{ form.working_environment_preferences|as_crispy_field }}
+          </div>
+          
+          <h3 class="form-section-title">Form Assistance</h3>
+          <div class="mb-4">
+            {{ form.form_helper|as_crispy_field }}
+          </div>
+          
+          <div class="survey-note">
+            <i class="bi bi-info-circle"></i>
+            <strong>Note:</strong> All fields are optional. Answer what you're comfortable sharing.
+          </div>
+          
+          <div class="text-center mt-5">
+            <button type="submit" class="btn btn-submit-survey">
+              <i class="bi bi-check-circle me-2"></i>Complete Survey
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+    
+    <div class="text-center mt-4 mb-5">
+      <a href="{% url 'users:dashboard' %}" class="btn btn-outline-secondary">
+        <i class="bi bi-arrow-left me-2"></i>Back to Dashboard
+      </a>
+    </div>
+  </div>
+</div>
+{% endblock %}

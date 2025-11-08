@@ -665,7 +665,7 @@
         <div class="empty-state">
           <i class="bi bi-people"></i>
           <p>No approved participants in this program yet.</p>
-          <p>Add and approve participants in the <a href="{% url 'portal:manager_program_people' program.program_id %}">People</a> section first.</p>
+          <p>Add and approve participants in the <a href="{% url 'portal:all_members' %}?course={{ program.program_id }}">People</a> section first.</p>
         </div>
       {% endif %}
     </div>

@@ -580,7 +580,7 @@
     
                 <div class="document-controls">
                     {{ form.state }}
-                    <button type="button" id="autogenerateBtn" class="autogenerate-button" title="Generate from Discovery Survey">
+                    <button type="button" id="autogenerateBtn" class="autogenerate-button" title="Generate from Discovery Questions">
                         <i class="bi bi-magic"></i>
                         <span>Auto-Generate</span>
                     </button>
@@ -766,7 +766,7 @@
         // Confirm before overwriting
         const currentContent = quillInstance.root.innerHTML.trim();
         if (currentContent && currentContent !== '<p><br></p>' && currentContent !== '') {
-            if (!confirm('This will replace your current document content with a template generated from your Discovery Survey. Do you want to continue?')) {
+            if (!confirm('This will replace your current document content with a template generated from your Discovery Questions. Do you want to continue?')) {
                 return;
             }
         }

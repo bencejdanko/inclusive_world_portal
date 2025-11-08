@@ -26,7 +26,6 @@ urlpatterns = [
     path("manager/programs/", views.manager_programs_view, name="manager_programs"),
     path("manager/programs/create/", views.manager_program_create_view, name="manager_program_create"),
     path("manager/programs/<uuid:program_id>/edit/", views.manager_program_edit_view, name="manager_program_edit"),
-    path("manager/programs/<uuid:program_id>/people/", views.manager_program_people_view, name="manager_program_people"),
     path("manager/programs/<uuid:program_id>/add-user/", views.manager_program_add_user_view, name="manager_program_add_user"),
     path("manager/programs/<uuid:program_id>/attendance/", views.manager_program_attendance_list_view, name="manager_program_attendance"),
     path("manager/programs/<uuid:program_id>/attendance/edit/", views.manager_program_attendance_view, name="manager_program_attendance_edit"),
@@ -42,4 +41,8 @@ urlpatterns = [
     
     # My Attendance
     path("my-attendance/", views.my_attendance_view, name="my_attendance"),
+    
+    # AJAX endpoints for enrollment management
+    path("ajax/enrollment/update-status/", views.ajax_update_enrollment_status, name="ajax_update_enrollment_status"),
+    path("ajax/enrollment/update-buddy/", views.ajax_update_buddy_assignment, name="ajax_update_buddy_assignment"),
 ]

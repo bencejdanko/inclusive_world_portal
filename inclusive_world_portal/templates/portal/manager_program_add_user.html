@@ -199,7 +199,7 @@
 
 {% block content %}
 <div class="container-fluid">
-  <a href="{% url 'portal:manager_program_people' program.program_id %}" class="back-link">
+  <a href="{% url 'portal:all_members' %}?course={{ program.program_id }}" class="back-link">
     <i class="bi bi-arrow-left"></i>
     Back to Program Members
   </a>

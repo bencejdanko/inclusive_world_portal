@@ -8,138 +8,195 @@
 {% block css %}
 {{ block.super }}
 <style>
-  .programs-grid {
+  /* Page-specific container */
+  .programs-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--space-md);
+  }
+
+  /* Program table styles */
+  .program-table {
+    background: white;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: var(--space-xl);
+  }
+
+  .program-table-header {
+    display: grid;
+    grid-template-columns: 30px 2.5fr 1.5fr 50px;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .program-item {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .program-item:last-child {
+    border-bottom: none;
+  }
+
+  .program-row {
+    display: grid;
+    grid-template-columns: 30px 2.5fr 1.5fr 50px;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    align-items: center;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .chevron-icon {
+    color: var(--color-brand-blue-peacock);
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+  }
+
+  .program-item.expanded .chevron-icon {
+    transform: rotate(180deg);
+  }
+
+  .program-row:hover {
+    background-color: #f8f9fa;
+  }
+
+  .program-name-cell {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+  }
+
+  .program-name {
+    font-weight: 600;
+    color: var(--color-brand-blue-peacock);
+    font-size: 1rem;
+  }
+
+  .archived-badge {
+    background: var(--color-muted);
+    color: white;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+    text-transform: uppercase;
+  }
+
+  .program-leads {
     display: flex;
     flex-wrap: wrap;
-    gap: var(--space-lg);
-    margin-top: var(--space-xl);
+    gap: 0.5rem;
+    align-items: center;
   }
 
-  .program-card {
-    background: white;
-    border-radius: var(--radius-xl);
-    overflow: hidden;
-    box-shadow: var(--shadow-md);
-    transition: all 0.3s ease;
-    position: relative;
-    display: grid;
-    grid-template-columns: 1fr 2fr;
-    grid-template-rows: 140px;
-    height: 140px;
-    flex: 1 1 calc(50% - var(--space-lg) / 2);
-    min-width: 400px;
-    max-width: calc(50% - var(--space-lg) / 2);
+  .lead-badge {
+    background: var(--color-badge-dark-green);
+    color: white;
+    padding: 0.3rem 0.6rem;
+    border-radius: var(--radius-full);
+    font-size: 0.7rem;
+    font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
   }
 
-  @media (max-width: 900px) {
-    .program-card {
-      flex: 1 1 100%;
-      max-width: 100%;
+  .no-leads {
+    color: var(--color-muted-foreground);
+    font-size: 0.85rem;
+    font-style: italic;
+  }
+
+  .program-info-link {
+    color: var(--color-brand-blue-peacock);
+    font-size: 1.25rem;
+    transition: all 0.2s ease;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .program-info-link:hover {
+    color: var(--color-dark-blue-peacock);
+    transform: scale(1.15);
+  }
+
+  /* Expandable details section */
+  .program-details {
+    display: none;
+    padding: var(--space-lg);
+    background-color: #f8f9fa;
+    border-top: 1px solid var(--color-border);
+    animation: slideDown 0.3s ease-out;
+  }
+
+  .program-details.expanded {
+    display: block;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
     }
   }
 
-  .program-card:hover {
-    transform: translateY(-4px);
-    box-shadow: var(--shadow-xl);
+  .details-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: var(--space-lg);
+    margin-bottom: var(--space-lg);
   }
 
-  .program-card.archived {
-    opacity: 0.6;
-    border: 2px solid var(--color-muted);
-  }
-
-  .program-image {
-    width: 100%;
-    height: 100%;
-    max-height: 140px;
-    overflow: hidden;
-    object-fit: cover;
-    background: linear-gradient(135deg, var(--color-brand-blue-peacock), var(--color-brand-berry));
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: white;
-    font-size: 1.75rem;
-    font-weight: bold;
-  }
-
-  .program-image img {
-    width: 100%;
-    height: 100%;
-    max-height: 140px;
-    object-fit: cover;
-  }
-
-  .program-badge {
-    position: absolute;
-    top: var(--space-sm);
-    left: var(--space-sm);
-    background: var(--color-brand-berry);
-    color: white;
-    padding: 0.25rem 0.65rem;
-    border-radius: var(--radius-full);
-    font-size: 0.75rem;
-    font-weight: 600;
-    z-index: 10;
-  }
-
-  .program-badge.archived-badge {
-    background: var(--color-muted);
-  }
-
-  .program-content {
-    position: relative;
-    padding: var(--space-md);
+  .detail-item {
     display: flex;
     flex-direction: column;
+    gap: 0.25rem;
   }
 
-  .program-header {
-    display: flex;
-    align-items: flex-start;
-    gap: var(--space-md);
-    padding-right: 40px;
+  .detail-label {
+    font-size: 0.75rem;
+    color: var(--color-muted-foreground);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
   }
 
-  .program-title {
-    font-size: 1.15rem;
-    font-weight: 700;
+  .detail-value {
+    font-size: 0.95rem;
+    color: var(--color-foreground);
+    font-weight: 500;
+  }
+
+  .detail-value i {
+    margin-right: 0.375rem;
     color: var(--color-brand-blue-peacock);
-    margin: 0;
-    flex: 1;
-    line-height: 1.3;
-  }
-
-  .info-icon {
-    position: absolute;
-    top: var(--space-md);
-    right: var(--space-md);
-    background: var(--color-muted);
-    border-radius: 50%;
-    width: 36px;
-    height: 36px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    font-size: 1rem;
-    z-index: 5;
-  }
-
-  .info-icon:hover {
-    background: var(--color-brand-blue-peacock);
-    color: white;
-    transform: scale(1.1);
   }
 
   .program-actions {
-    position: absolute;
-    bottom: var(--space-md);
-    left: var(--space-md);
     display: flex;
     gap: 0.5rem;
-    z-index: 5;
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--color-border);
+    margin-top: var(--space-md);
   }
 
   .btn-edit-program,
@@ -187,6 +244,34 @@
     color: white;
   }
 
+  /* Empty State */
+  .empty-state {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    text-align: center;
+    box-shadow: var(--shadow-md);
+  }
+
+  .empty-state-icon {
+    font-size: 4rem;
+    color: var(--color-muted);
+    margin-bottom: var(--space-lg);
+  }
+
+  .empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    margin-bottom: var(--space-sm);
+  }
+
+  .empty-state-text {
+    color: var(--color-muted-foreground);
+    margin-bottom: var(--space-lg);
+  }
+
+  /* Floating Add Button */
   .add-button-container {
     position: fixed;
     bottom: var(--space-xl);
@@ -217,63 +302,160 @@
     box-shadow: 0 8px 24px rgba(127, 72, 87, 0.4);
     color: white;
   }
+
+  /* Responsive adjustments for smaller screens */
+  @media (max-width: 768px) {
+    .programs-container {
+      padding: var(--space-sm);
+    }
+
+    .program-table-header,
+    .program-row {
+      grid-template-columns: 24px 2fr 1fr 40px;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+    }
+
+    .program-details {
+      padding: var(--space-md);
+    }
+
+    .details-grid {
+      grid-template-columns: 1fr;
+      gap: var(--space-md);
+    }
+
+    .program-actions {
+      flex-wrap: wrap;
+    }
+  }
 </style>
 {% endblock %}
 
 {% block content %}
-<div class="container-fluid">
+<div class="programs-container">
+  {% if programs %}
+    <div class="program-table">
+      <div class="program-table-header">
+        <div></div>
+        <div>Program Name</div>
+        <div>Program Leads</div>
+        <div></div>
+      </div>
+      {% for program in programs %}
+        <div class="program-item">
+          <div class="program-row" onclick="toggleProgramDetails(this)">
+            <div class="chevron-icon">
+              <i class="bi bi-chevron-down"></i>
+            </div>
+            <div class="program-name-cell">
+              <span class="program-name">{{ program.name }}</span>
+              {% if program.archived %}
+                <span class="archived-badge">Archived</span>
+              {% endif %}
+            </div>
+            <div class="program-leads">
+              {% if program.volunteer_leads.all %}
+                {% for lead in program.volunteer_leads.all %}
+                  <span class="lead-badge">
+                    <i class="bi bi-star-fill"></i>
+                    {{ lead.volunteer.get_full_name }}
+                  </span>
+                {% endfor %}
+              {% else %}
+                <span class="no-leads">No leads assigned</span>
+              {% endif %}
+            </div>
+            <div>
+              <a href="{% url 'portal:program_detail' program.program_id %}" 
+                 class="program-info-link" 
+                 title="View details"
+                 onclick="event.stopPropagation()">
+                <i class="bi bi-info-circle-fill"></i>
+              </a>
+            </div>
+          </div>
+          <div class="program-details">
+            <div class="details-grid">
+              <div class="detail-item">
+                <div class="detail-label">Program Dates</div>
+                <div class="detail-value">
+                  <i class="bi bi-calendar-range"></i>
+                  {% if program.start_date and program.end_date %}
+                    {{ program.start_date|date:"M d" }} - {{ program.end_date|date:"M d, Y" }}
+                  {% elif program.start_date %}
+                    From {{ program.start_date|date:"M d, Y" }}
+                  {% else %}
+                    Not specified
+                  {% endif %}
+                </div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Enrollment Status</div>
+                <div class="detail-value">
+                  <i class="bi bi-door-{% if program.enrollment_status == 'open' %}open{% else %}closed{% endif %}"></i>
+                  {% if program.enrollment_status %}
+                    {{ program.enrollment_status|title }}
+                  {% else %}
+                    Not set
+                  {% endif %}
+                </div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Capacity</div>
+                <div class="detail-value">
+                  <i class="bi bi-people"></i>
+                  {% if program.capacity %}
+                    {{ program.enrolled }}/{{ program.capacity }} enrolled
+                  {% else %}
+                    {{ program.enrolled }} enrolled (unlimited)
+                  {% endif %}
+                </div>
+              </div>
+              <div class="detail-item">
+                <div class="detail-label">Fee</div>
+                <div class="detail-value">
+                  <i class="bi bi-currency-dollar"></i>
+                  ${{ program.fee }}
+                </div>
+              </div>
+              {% if program.description %}
+              <div class="detail-item" style="grid-column: 1 / -1;">
+                <div class="detail-label">Description</div>
+                <div class="detail-value">
+                  {{ program.description|truncatewords:50 }}
+                </div>
+              </div>
+              {% endif %}
+            </div>
+            <div class="program-actions">
+              <a href="{% url 'portal:manager_program_edit' program.program_id %}" class="btn-edit-program">
+                <i class="bi bi-pencil-fill"></i>Edit
+              </a>
+              <a href="{% url 'portal:all_members' %}?course={{ program.program_id }}" class="btn-people-program">
+                <i class="bi bi-people-fill"></i>People
+              </a>
+              <a href="{% url 'portal:manager_program_attendance' program.program_id %}" class="btn-attendance-program">
+                <i class="bi bi-calendar-check"></i>Attendance
+              </a>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
 
-  <div class="programs-grid">
-    {% for program in programs %}
-      <div class="program-card {% if program.archived %}archived{% endif %}" 
-           id="program-{{ program.program_id }}"
-           data-program-id="{{ program.program_id }}">
-        
-        {% if program.archived %}
-          <div class="program-badge archived-badge">Archived</div>
-        {% endif %}
-        
-        <div class="program-image">
-          {% if program.image %}
-            <img src="{{ program.image.url }}" alt="{{ program.name }}">
-          {% else %}
-            {{ program.name|slice:":2"|upper }}
-          {% endif %}
-        </div>
-        
-        <div class="program-content">
-          <div class="program-header">
-            <a href="{% url 'portal:program_detail' program.program_id %}" style="text-decoration: none; color: inherit; flex: 1;">
-              <h3 class="program-title" style="transition: color 0.2s;" onmouseover="this.style.color='var(--color-dark-blue-peacock)'" onmouseout="this.style.color='var(--color-brand-blue-peacock)'">{{ program.name }}</h3>
-            </a>
-          </div>
-          
-          <a href="{% url 'portal:program_detail' program.program_id %}" class="info-icon" title="More information">
-            <i class="bi bi-info-circle-fill"></i>
-          </a>
-          
-          <div class="program-actions">
-            <a href="{% url 'portal:manager_program_edit' program.program_id %}" class="btn-edit-program">
-              <i class="bi bi-pencil-fill"></i>Edit
-            </a>
-            <a href="{% url 'portal:manager_program_people' program.program_id %}" class="btn-people-program">
-              <i class="bi bi-people-fill"></i>People
-            </a>
-            <a href="{% url 'portal:manager_program_attendance' program.program_id %}" class="btn-attendance-program">
-              <i class="bi bi-calendar-check"></i>Attendance
-            </a>
-          </div>
-        </div>
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <i class="bi bi-inbox"></i>
       </div>
-    {% empty %}
-      <div class="col-12">
-        <div class="alert alert-warning">
-          <i class="bi bi-exclamation-triangle me-2"></i>
-          No programs exist yet. Click the Add Program button to create your first program.
-        </div>
-      </div>
-    {% endfor %}
-  </div>
+      <h3 class="empty-state-title">No Programs Yet</h3>
+      <p class="empty-state-text">
+        No programs exist yet. Click the Add Program button to create your first program.
+      </p>
+    </div>
+  {% endif %}
 </div>
 
 <!-- Floating Add Button -->
@@ -283,4 +465,34 @@
     <span>Add Program</span>
   </a>
 </div>
+
+<script>
+// Define toggleProgramDetails function
+if (typeof window.toggleProgramDetails === 'undefined') {
+  window.toggleProgramDetails = function(rowElement) {
+    const programItem = rowElement.parentElement;
+    const detailsElement = programItem.querySelector('.program-details');
+    
+    // Toggle expansion
+    const isExpanded = programItem.classList.contains('expanded');
+    
+    // Close all other open program details
+    document.querySelectorAll('.program-item.expanded').forEach(item => {
+      if (item !== programItem) {
+        item.classList.remove('expanded');
+        item.querySelector('.program-details').classList.remove('expanded');
+      }
+    });
+    
+    // Toggle current program
+    if (!isExpanded) {
+      programItem.classList.add('expanded');
+      detailsElement.classList.add('expanded');
+    } else {
+      programItem.classList.remove('expanded');
+      detailsElement.classList.remove('expanded');
+    }
+  };
+}
+</script>
 {% endblock %}

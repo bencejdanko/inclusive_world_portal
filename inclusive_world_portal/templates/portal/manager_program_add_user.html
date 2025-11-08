@@ -199,10 +199,17 @@
 
 {% block content %}
 <div class="container-fluid">
-  <a href="{% url 'portal:all_members' %}?course={{ program.program_id }}" class="back-link">
-    <i class="bi bi-arrow-left"></i>
-    Back to Program Members
-  </a>
+  {% if next_page == 'all_volunteers' %}
+    <a href="{% url 'portal:all_volunteers' %}?course={{ program.program_id }}" class="back-link">
+      <i class="bi bi-arrow-left"></i>
+      Back to Program Volunteers
+    </a>
+  {% else %}
+    <a href="{% url 'portal:all_members' %}?course={{ program.program_id }}" class="back-link">
+      <i class="bi bi-arrow-left"></i>
+      Back to Program Members
+    </a>
+  {% endif %}
 
   <div class="search-card">
     <div class="info-box">
@@ -210,6 +217,7 @@
     </div>
 
     <form method="get" class="search-form">
+      <input type="hidden" name="next" value="{{ next_page }}">
       <input 
         type="text" 
         name="q" 
@@ -259,6 +267,7 @@
                     <form method="post" style="display: inline;">
                       {% csrf_token %}
                       <input type="hidden" name="user_id" value="{{ user.id }}">
+                      <input type="hidden" name="next" value="{{ next_page }}">
                       <button type="submit" class="btn-add" onclick="return confirm('Add {{ user.name }} to this program?')">
                         <i class="bi bi-person-plus"></i> Add to Program
                       </button>

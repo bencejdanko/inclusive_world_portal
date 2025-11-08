@@ -178,6 +178,32 @@
     border-bottom: none;
   }
 
+  /* Add Member Row */
+  .add-member-row {
+    border-bottom: none;
+    background: #f8f9fa;
+  }
+
+  .add-member-row a {
+    display: block;
+    padding: var(--space-lg);
+    text-align: center;
+    text-decoration: none;
+    color: var(--color-brand-blue-peacock);
+    font-weight: 600;
+    font-size: 1rem;
+    transition: all 0.2s ease;
+  }
+
+  .add-member-row a:hover {
+    background: #e3f2fd;
+    color: var(--color-dark-blue-peacock);
+  }
+
+  .add-member-row a i {
+    margin-right: 0.5rem;
+  }
+
   .member-row {
     display: grid;
     grid-template-columns: 30px 2fr 120px 120px;
@@ -648,6 +674,15 @@
           </div>
         </div>
       {% endfor %}
+      
+      <!-- Add Member Row (only shown when filtering and user is manager) -->
+      {% if course_filter and can_edit %}
+        <div class="member-item add-member-row">
+          <a href="{% url 'portal:manager_program_add_user' course_filter %}?next=all_members">
+            <i class="bi bi-plus-circle"></i> Add Member
+          </a>
+        </div>
+      {% endif %}
     </div>
 
   {% else %}

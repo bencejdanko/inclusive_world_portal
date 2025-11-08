@@ -39,17 +39,17 @@ class UserSignupForm(SignupForm):
         required=False,
     )
     
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Get role from GET parameter if available
-        if 'data' not in kwargs:
-            initial_role = self.initial.get('role', User.Role.MEMBER)
-            self.fields['role'].initial = initial_role
-    
     def save(self, request):
         user = super().save(request)
-        # Set the role from the form
-        role = self.cleaned_data.get('role', User.Role.MEMBER)
+        # Get role from cleaned_data first, then fall back to request GET params
+        role = self.cleaned_data.get('role')
+        if not role or role == User.Role.MEMBER:
+            # Check if a different role was specified in the URL
+            role = request.GET.get('role', User.Role.MEMBER)
+            # Validate the role
+            valid_roles = [choice[0] for choice in User.Role.choices]
+            if role not in valid_roles:
+                role = User.Role.MEMBER
         user.role = role
         user.save()
         return user

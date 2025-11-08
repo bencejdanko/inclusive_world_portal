@@ -5,7 +5,7 @@
 {% block auth_title %}{% trans "Sign Up" %}{% endblock auth_title %}
 
 {% block content %}
-<form method="post" action="{% url 'account_signup' %}" class="auth-form">
+<form method="post" action="{% url 'account_signup' %}{% if request.GET.role %}?role={{ request.GET.role }}{% endif %}" class="auth-form">
   {% csrf_token %}
   
   {# Display non-field errors (e.g., username already exists, password validation) #}
@@ -19,8 +19,8 @@
   
   {% for field in form %}
     {% if field.name == 'role' %}
-      {# Hidden field for role - don't display #}
-      {{ field }}
+      {# Hidden field for role - ensure value is preserved #}
+      <input type="hidden" name="role" value="{{ request.GET.role|default:'member' }}" />
     {% else %}
       <div class="form-group">
         {% if field.field.required %}

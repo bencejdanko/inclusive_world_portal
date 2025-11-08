@@ -696,9 +696,13 @@ def manager_program_add_user_view(request, program_id):
     
     program = get_object_or_404(Program, program_id=program_id)
     
+    # Get the 'next' parameter to determine where to redirect back
+    next_page = request.GET.get('next', 'all_members')
+    
     if request.method == 'POST':
         # Add user to program
         user_id = request.POST.get('user_id')
+        next_page = request.POST.get('next', 'all_members')
         
         try:
             from inclusive_world_portal.users.models import User
@@ -722,7 +726,11 @@ def manager_program_add_user_view(request, program_id):
                 messages.success(request, f"Successfully added {user.name} to the program with pending status.")
             
             from django.urls import reverse
-            return redirect(reverse('portal:all_members') + f'?course={program_id}')
+            # Redirect to the appropriate page based on next parameter
+            if next_page == 'all_volunteers':
+                return redirect(reverse('portal:all_volunteers') + f'?course={program_id}')
+            else:
+                return redirect(reverse('portal:all_members') + f'?course={program_id}')
         except Exception as e:
             messages.error(request, f"Error adding user: {str(e)}")
             return redirect('portal:manager_program_add_user', program_id=program_id)
@@ -755,6 +763,7 @@ def manager_program_add_user_view(request, program_id):
         'query': query,
         'users': users,
         'enrolled_user_ids': enrolled_user_ids,
+        'next_page': next_page,
     }
     
     return render(request, 'portal/manager_program_add_user.html', context)

@@ -5,7 +5,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
 from django.db.models import Prefetch, Q
 
-from .models import Enrollment, Payment, Program
+from .models import Enrollment, Payment, Program, EnrollmentStatus
 
 
 @login_required
@@ -49,6 +49,7 @@ def fees_overview_view(request):
         'total_paid': total_paid,
         'has_enrollments': enrollments.exists(),
         'has_payments': payments.exists(),
+        'enrollment_statuses': EnrollmentStatus.choices,
     }
     
     return render(request, 'portal/my_programs.html', context)

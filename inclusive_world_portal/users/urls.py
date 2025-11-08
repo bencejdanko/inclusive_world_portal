@@ -35,10 +35,14 @@ from .notification_views import (
     notification_api_unread_count,
     notification_api_unread_list,
 )
+from .signup_views import RoleSelectionView
 app_name = "users"
 urlpatterns = [
     path("~redirect/", view=user_redirect_view, name="redirect"),
     path("~update/", view=user_update_view, name="update"),
+    
+    # Role Selection for Signup
+    path("role-selection/", RoleSelectionView.as_view(), name="role_selection"),
     
     # Dashboard URLs (must come before <str:username>/ pattern)
     path("dashboard/", dashboard_view, name="dashboard"),

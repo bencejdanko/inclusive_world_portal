@@ -529,8 +529,18 @@ def manager_programs_view(request):
     # Prefetch volunteer leads for efficient display
     programs = Program.objects.prefetch_related('volunteer_leads__volunteer').all().order_by('name')
     
+    # Get users with active OPDs for all volunteer leads
+    from inclusive_world_portal.portal.models import ProgramVolunteerLead, DocumentExport
+    lead_user_ids = ProgramVolunteerLead.objects.values_list('volunteer_id', flat=True).distinct()
+    active_exports = DocumentExport.objects.filter(
+        is_active=True,
+        user_id__in=lead_user_ids
+    ).values_list('user_id', flat=True)
+    users_with_active_opd = set(active_exports)
+    
     context = {
         'programs': programs,
+        'users_with_active_opd': users_with_active_opd,
     }
     
     return render(request, 'portal/manager_programs_list.html', context)
@@ -1187,15 +1197,14 @@ def all_members_view(request):
     # Check if user can edit (managers can, PCMs cannot)
     can_edit = request.user.role == 'manager'
     
-    # Get users with active OPDs (for PCMs to see status indicator)
+    # Get users with active OPDs (for all managers and PCMs to see status indicator)
     users_with_active_opd = set()
-    if request.user.role == 'person_centered_manager':
-        from inclusive_world_portal.portal.models import DocumentExport
-        active_exports = DocumentExport.objects.filter(
-            is_active=True,
-            user__in=members
-        ).values_list('user_id', flat=True)
-        users_with_active_opd = set(active_exports)
+    from inclusive_world_portal.portal.models import DocumentExport
+    active_exports = DocumentExport.objects.filter(
+        is_active=True,
+        user__in=members
+    ).values_list('user_id', flat=True)
+    users_with_active_opd = set(active_exports)
     
     # Build program volunteers mapping and buddy assignments for the enrollments partial
     program_volunteers = {}
@@ -1362,6 +1371,42 @@ def all_volunteers_view(request):
                 redirect_url = reverse('portal:all_volunteers') + f'?course={course_filter}'
                 return redirect(redirect_url)
             return redirect('portal:all_volunteers')
+        
+        elif action == 'toggle_volunteer_lead':
+            volunteer_id = request.POST.get('volunteer_id')
+            program_id = request.POST.get('program_id')
+            is_lead = request.POST.get('is_lead') == 'true'
+            
+            try:
+                from inclusive_world_portal.portal.models import ProgramVolunteerLead
+                volunteer = get_object_or_404(User, id=volunteer_id)
+                program = get_object_or_404(Program, program_id=program_id)
+                
+                if is_lead:
+                    # Add volunteer as lead if not already
+                    ProgramVolunteerLead.objects.get_or_create(
+                        program=program,
+                        volunteer=volunteer
+                    )
+                    messages.success(request, f"{volunteer.name or volunteer.username} is now a volunteer lead for {program.name}.")
+                else:
+                    # Remove volunteer lead status
+                    ProgramVolunteerLead.objects.filter(
+                        program=program,
+                        volunteer=volunteer
+                    ).delete()
+                    messages.success(request, f"{volunteer.name or volunteer.username} is no longer a volunteer lead for {program.name}.")
+            except Exception as e:
+                messages.error(request, f"Error updating volunteer lead status: {str(e)}")
+            
+            # Preserve course filter when redirecting
+            course_filter = request.POST.get('course_filter', '')
+            redirect_url = 'portal:all_volunteers'
+            if course_filter:
+                from django.urls import reverse
+                redirect_url = reverse('portal:all_volunteers') + f'?course={course_filter}'
+                return redirect(redirect_url)
+            return redirect('portal:all_volunteers')
     
     # Get course filter from query params
     course_filter = request.GET.get('course', '').strip()
@@ -1407,18 +1452,26 @@ def all_volunteers_view(request):
         ('manager', 'Manager'),
     ]
     
-    # Get users with active OPDs (for PCMs to see status indicator)
+    # Get users with active OPDs (for all managers and PCMs to see status indicator)
     users_with_active_opd = set()
-    if request.user.role == 'person_centered_manager':
-        from inclusive_world_portal.portal.models import DocumentExport
-        active_exports = DocumentExport.objects.filter(
-            is_active=True,
-            user__in=volunteers
-        ).values_list('user_id', flat=True)
-        users_with_active_opd = set(active_exports)
+    from inclusive_world_portal.portal.models import DocumentExport
+    active_exports = DocumentExport.objects.filter(
+        is_active=True,
+        user__in=volunteers
+    ).values_list('user_id', flat=True)
+    users_with_active_opd = set(active_exports)
     
     # Get all available programs for filter dropdown
     all_programs = Program.objects.filter(archived=False).order_by('name')
+    
+    # Get volunteer leads for the filtered program if applicable
+    volunteer_leads = set()
+    if course_filter and filtered_program:
+        from inclusive_world_portal.portal.models import ProgramVolunteerLead
+        lead_user_ids = ProgramVolunteerLead.objects.filter(
+            program=filtered_program
+        ).values_list('volunteer_id', flat=True)
+        volunteer_leads = set(lead_user_ids)
     
     # Note: Volunteers don't need buddy assignments, so we don't build those maps
     # We still pass enrollment_statuses for the status dropdown
@@ -1436,6 +1489,7 @@ def all_volunteers_view(request):
         'course_filter': course_filter,
         'filtered_program': filtered_program,
         'course_enrollments': course_enrollments,
+        'volunteer_leads': volunteer_leads,
     }
     
     return render(request, 'portal/all_volunteers.html', context)

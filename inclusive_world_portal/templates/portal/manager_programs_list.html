@@ -102,16 +102,65 @@
     align-items: center;
   }
 
-  .lead-badge {
-    background: var(--color-badge-dark-green);
-    color: white;
-    padding: 0.3rem 0.6rem;
-    border-radius: var(--radius-full);
-    font-size: 0.7rem;
+  .lead-link {
+    color: var(--color-brand-blue-peacock);
+    text-decoration: none;
     font-weight: 600;
+    transition: all 0.2s ease;
+  }
+
+  .lead-link:hover {
+    text-decoration: underline;
+    color: var(--color-dark-blue-peacock);
+  }
+
+  .lead-item {
     display: inline-flex;
     align-items: center;
     gap: 0.25rem;
+  }
+
+  .opd-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 0.25rem;
+    vertical-align: middle;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .opd-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+  }
+
+  .opd-badge.active {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .opd-badge.active:hover {
+    background: #c3e6cb;
+    color: #155724;
+  }
+
+  .opd-badge.inactive {
+    background: #e2e3e5;
+    color: #6c757d;
+    border: 1px solid #d6d8db;
+  }
+
+  .opd-badge.inactive:hover {
+    background: #d6d8db;
+    color: #6c757d;
   }
 
   .no-leads {
@@ -354,16 +403,22 @@
                 <span class="archived-badge">Archived</span>
               {% endif %}
             </div>
-            <div class="program-leads">
+            <div class="program-leads" onclick="event.stopPropagation()">
               {% if program.volunteer_leads.all %}
                 {% for lead in program.volunteer_leads.all %}
-                  <span class="lead-badge">
-                    <i class="bi bi-star-fill"></i>
-                    {{ lead.volunteer.get_full_name }}
+                  <span class="lead-item">
+                    <a href="{% url 'users:detail' lead.volunteer.username %}" class="lead-link">
+                      {{ lead.volunteer.name|default:lead.volunteer.username }}
+                    </a>
+                    {% if lead.volunteer.id in users_with_active_opd %}
+                      <a href="{% url 'users:view_active_opd_for_user' lead.volunteer.username %}" class="opd-badge active">OPD</a>
+                    {% else %}
+                      <a href="{% url 'users:view_active_opd_for_user' lead.volunteer.username %}" class="opd-badge inactive">OPD</a>
+                    {% endif %}{% if not forloop.last %},{% endif %}
                   </span>
                 {% endfor %}
               {% else %}
-                <span class="no-leads">No leads assigned</span>
+                <span class="no-leads">None</span>
               {% endif %}
             </div>
             <div>

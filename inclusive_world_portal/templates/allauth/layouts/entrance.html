@@ -60,7 +60,7 @@
       <p class="auth-branding-subtitle">{% block branding_subtitle %}{% trans "Create an account to get started with Inclusive World Portal" %}{% endblock branding_subtitle %}</p>
       
       <div class="auth-cta">
-        <a href="{% block branding_cta_url %}{% url 'account_signup' %}{% endblock branding_cta_url %}" class="btn-auth-cta">
+        <a href="{% block branding_cta_url %}{% url 'users:role_selection' %}{% endblock branding_cta_url %}" class="btn-auth-cta">
           {% block branding_cta %}{% trans "Sign Up" %}{% endblock branding_cta %}
         </a>
       </div>

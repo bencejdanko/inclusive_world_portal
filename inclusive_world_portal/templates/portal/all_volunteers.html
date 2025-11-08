@@ -170,6 +170,10 @@
     letter-spacing: 0.5px;
   }
 
+  .volunteers-table-header.with-lead-toggle {
+    grid-template-columns: 30px 2fr 120px 80px 120px;
+  }
+
   .volunteer-item {
     border-bottom: 1px solid var(--color-border);
   }
@@ -187,6 +191,10 @@
     transition: background-color 0.2s ease;
     cursor: pointer;
     user-select: none;
+  }
+
+  .volunteer-row.with-lead-toggle {
+    grid-template-columns: 30px 2fr 120px 80px 120px;
   }
 
   .volunteer-row:hover {
@@ -238,6 +246,11 @@
     border-color: var(--color-brand-blue-peacock);
   }
 
+  .status-select-inline:disabled {
+    cursor: not-allowed;
+    opacity: 0.9;
+  }
+
   .status-select-inline.active {
     background: #d4edda;
     color: #155724;
@@ -262,7 +275,6 @@
     border-color: #ffc107;
   }
 
-  /* Enrollment status colors (for course filter view) */
   .status-select-inline.pending {
     background: #fff3cd;
     color: #856404;
@@ -293,46 +305,77 @@
     border-color: #6c757d;
   }
 
-  .status-badge {
+  /* Volunteer Lead Toggle */
+  .lead-toggle-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .lead-toggle {
+    position: relative;
     display: inline-block;
+    width: 44px;
+    height: 24px;
+  }
+
+  .lead-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .lead-toggle-slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ccc;
+    transition: 0.3s;
+    border-radius: 24px;
+  }
+
+  .lead-toggle-slider:before {
+    position: absolute;
+    content: "";
+    height: 18px;
+    width: 18px;
+    left: 3px;
+    bottom: 3px;
+    background-color: white;
+    transition: 0.3s;
+    border-radius: 50%;
+  }
+
+  .lead-toggle input:checked + .lead-toggle-slider {
+    background-color: var(--color-brand-blue-peacock);
+  }
+
+  .lead-toggle input:checked + .lead-toggle-slider:before {
+    transform: translateX(20px);
+  }
+
+  .lead-toggle input:disabled + .lead-toggle-slider {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  .role-select-inline {
     padding: 0.3rem 0.6rem;
+    border: none;
     border-radius: var(--radius-lg);
     font-size: 0.75rem;
     font-weight: 600;
     text-transform: uppercase;
     letter-spacing: 0.5px;
-  }
-
-  .status-badge.active {
-    background: #d4edda;
-    color: #155724;
-  }
-
-  .status-badge.inactive {
-    background: #e2e3e5;
-    color: #383d41;
-  }
-
-  .status-badge.suspended {
-    background: #f8d7da;
-    color: #721c24;
-  }
-
-  .status-badge.pending_verification {
-    background: #fff3cd;
-    color: #856404;
-  }
-
-  .role-select-inline {
-    padding: 0.3rem 0.6rem;
-    border: 2px solid var(--color-muted);
-    border-radius: var(--radius-lg);
-    font-size: 0.75rem;
-    font-weight: 600;
     cursor: pointer;
-    background: white;
     transition: all 0.2s ease;
-    width: 100%;
+  }
+
+  .role-select-inline:hover {
+    opacity: 0.8;
   }
 
   .role-select-inline:focus {
@@ -363,6 +406,50 @@
   .role-badge.person_centered_manager {
     background: #e7d4f7;
     color: #6a1b9a;
+  }
+
+  /* OPD Badge */
+  .opd-badge {
+    display: inline-block;
+    padding: 0.25rem 0.5rem;
+    border-radius: var(--radius-lg);
+    font-size: 0.65rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .opd-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+  }
+
+  .opd-badge.active {
+    background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .opd-badge.active:hover {
+    background: #c3e6cb;
+    color: #155724;
+  }
+
+  .opd-badge.inactive {
+    background: #e2e3e5;
+    color: #6c757d;
+    border: 1px solid #d6d8db;
+  }
+
+  .opd-badge.inactive:hover {
+    background: #d6d8db;
+    color: #6c757d;
   }
 
   /* Expandable volunteer details section */
@@ -466,6 +553,11 @@
       padding: var(--space-sm) var(--space-md);
     }
 
+    .volunteers-table-header.with-lead-toggle,
+    .volunteer-row.with-lead-toggle {
+      grid-template-columns: 24px 2fr 90px 60px 90px;
+    }
+
     .volunteer-details {
       padding: var(--space-md);
     }
@@ -511,15 +603,18 @@
   {% if volunteers %}
     <!-- Volunteers Table with Collapsible Rows -->
     <div class="volunteers-table">
-      <div class="volunteers-table-header">
+      <div class="volunteers-table-header {% if course_filter %}with-lead-toggle{% endif %}">
         <div></div>
         <div>Volunteer Name</div>
         <div>{% if course_filter %}Enrollment Status{% else %}Member Since{% endif %}</div>
+        {% if course_filter %}
+          <div>Lead</div>
+        {% endif %}
         <div>Status</div>
       </div>
       {% for volunteer in volunteers %}
         <div class="volunteer-item">
-          <div class="volunteer-row" onclick="toggleVolunteerDetails(this)">
+          <div class="volunteer-row {% if course_filter %}with-lead-toggle{% endif %}" onclick="toggleVolunteerDetails(this)">
             <div class="chevron-icon">
               <i class="bi bi-chevron-down"></i>
             </div>
@@ -531,28 +626,63 @@
                   @{{ volunteer.username }}
                 {% endif %}
               </a>
+              {% if volunteer.id in users_with_active_opd %}
+                <a href="{% url 'users:view_active_opd_for_user' volunteer.username %}" class="opd-badge active" onclick="event.stopPropagation()">OPD</a>
+              {% else %}
+                <a href="{% url 'users:view_active_opd_for_user' volunteer.username %}" class="opd-badge inactive" onclick="event.stopPropagation()">OPD</a>
+              {% endif %}
             </div>
             <div class="volunteer-date">
-              {% if course_filter and can_edit %}
+              {% if course_filter %}
                 {% with enrollment=course_enrollments|get_item:volunteer.id %}
                   {% if enrollment %}
-                    <form method="post" onchange="this.submit()" onclick="event.stopPropagation()">
-                      {% csrf_token %}
-                      <input type="hidden" name="action" value="update_enrollment_status">
-                      <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
-                      <input type="hidden" name="course_filter" value="{{ course_filter }}">
-                      <select name="enrollment_status" class="status-select-inline {{ enrollment.status }}">
+                    {% if can_edit %}
+                      <form method="post" onchange="this.submit()" onclick="event.stopPropagation()">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_enrollment_status">
+                        <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
+                        <input type="hidden" name="course_filter" value="{{ course_filter }}">
+                        <select name="enrollment_status" class="status-select-inline {{ enrollment.status }}">
+                          {% for value, label in enrollment_statuses %}
+                            <option value="{{ value }}" {% if enrollment.status == value %}selected{% endif %}>{{ label }}</option>
+                          {% endfor %}
+                        </select>
+                      </form>
+                    {% else %}
+                      <select class="status-select-inline {{ enrollment.status }}" disabled>
                         {% for value, label in enrollment_statuses %}
                           <option value="{{ value }}" {% if enrollment.status == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                       </select>
-                    </form>
+                    {% endif %}
                   {% endif %}
                 {% endwith %}
               {% else %}
                 {{ volunteer.date_joined|date:"M d, Y" }}
               {% endif %}
             </div>
+            {% if course_filter %}
+              <div class="lead-toggle-container" onclick="event.stopPropagation()">
+                {% if can_edit %}
+                  <form method="post" onchange="this.submit()">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" value="toggle_volunteer_lead">
+                    <input type="hidden" name="volunteer_id" value="{{ volunteer.id }}">
+                    <input type="hidden" name="program_id" value="{{ course_filter }}">
+                    <input type="hidden" name="course_filter" value="{{ course_filter }}">
+                    <label class="lead-toggle">
+                      <input type="checkbox" name="is_lead" value="true" {% if volunteer.id in volunteer_leads %}checked{% endif %} onchange="this.form.submit()">
+                      <span class="lead-toggle-slider"></span>
+                    </label>
+                  </form>
+                {% else %}
+                  <label class="lead-toggle">
+                    <input type="checkbox" {% if volunteer.id in volunteer_leads %}checked{% endif %} disabled>
+                    <span class="lead-toggle-slider"></span>
+                  </label>
+                {% endif %}
+              </div>
+            {% endif %}
             <div>
               {% if can_edit %}
                 <form method="post" onchange="this.submit()" onclick="event.stopPropagation()">
@@ -567,7 +697,11 @@
                   </select>
                 </form>
               {% else %}
-                <span class="status-badge {{ volunteer.status }}">{{ volunteer.get_status_display }}</span>
+                <select class="status-select-inline {{ volunteer.status }}" disabled>
+                  {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if volunteer.status == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
               {% endif %}
             </div>
           </div>

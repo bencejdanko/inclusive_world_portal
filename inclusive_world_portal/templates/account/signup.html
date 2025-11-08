@@ -8,25 +8,39 @@
 <form method="post" action="{% url 'account_signup' %}" class="auth-form">
   {% csrf_token %}
   
-  {% for field in form.visible_fields %}
-    <div class="form-group">
-      {% if field.field.required %}
-        <label for="{{ field.id_for_label }}" class="form-label form-label-required">
-          {{ field.label }} <span style="color: var(--color-error);">*</span>
-        </label>
-      {% else %}
-        <label for="{{ field.id_for_label }}" class="form-label">
-          {{ field.label }}
-        </label>
-      {% endif %}
-      {{ field }}
-      {% if field.help_text %}
-        <span class="form-help-text">{{ field.help_text }}</span>
-      {% endif %}
-      {% if field.errors %}
-        <span class="form-error">{{ field.errors.0 }}</span>
-      {% endif %}
+  {# Display non-field errors (e.g., username already exists, password validation) #}
+  {% if form.non_field_errors %}
+    <div class="alert alert-error" style="margin-bottom: var(--space-lg);">
+      {% for error in form.non_field_errors %}
+        {{ error }}
+      {% endfor %}
     </div>
+  {% endif %}
+  
+  {% for field in form %}
+    {% if field.name == 'role' %}
+      {# Hidden field for role - don't display #}
+      {{ field }}
+    {% else %}
+      <div class="form-group">
+        {% if field.field.required %}
+          <label for="{{ field.id_for_label }}" class="form-label form-label-required">
+            {{ field.label }} <span style="color: var(--color-error);">*</span>
+          </label>
+        {% else %}
+          <label for="{{ field.id_for_label }}" class="form-label">
+            {{ field.label }}
+          </label>
+        {% endif %}
+        {{ field }}
+        {% if field.help_text %}
+          <span class="form-help-text">{{ field.help_text }}</span>
+        {% endif %}
+        {% if field.errors %}
+          <span class="form-error">{{ field.errors.0 }}</span>
+        {% endif %}
+      </div>
+    {% endif %}
   {% endfor %}
   
   {% if redirect_field_value %}

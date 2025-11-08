@@ -2,15 +2,17 @@ import pytest
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from inclusive_world_portal.portal.models import (
-    UserRole, UserRoleType, Program, Enrollment, UserNotification
+    Program, Enrollment, UserNotification
 )
 
 User = get_user_model()
 
 @pytest.mark.django_db
-def test_default_role_created():
+def test_user_has_default_role():
+    """Test that new users get the default 'member' role set on the User model."""
     u = User.objects.create(username="alice", email="a@example.com")
-    assert UserRole.objects.filter(user=u, role=UserRoleType.MEMBER).exists()
+    # The User model has a 'role' field with default='member'
+    assert u.role == 'member'
 
 @pytest.mark.django_db
 def test_enrollment_bumps_program_enrolled():

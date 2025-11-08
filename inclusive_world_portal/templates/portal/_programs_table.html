@@ -78,18 +78,6 @@ Parameters:
     font-size: 1rem;
   }
 
-  .program-status-badge {
-    padding: 0.3rem 0.6rem;
-    border-radius: var(--radius-full);
-    font-size: 0.7rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    white-space: nowrap;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.25rem;
-  }
-
   .status-dropdown,
   .buddy-dropdown {
     padding: 0.3rem 0.6rem;
@@ -111,16 +99,19 @@ Parameters:
 
   .status-dropdown:disabled,
   .buddy-dropdown:disabled {
-    background: #f8f9fa;
     cursor: not-allowed;
-    opacity: 0.6;
+    opacity: 0.9;
   }
 
-  /* Enrollment status colors - unified with top-level views */
   .status-dropdown.status-pending {
     background: #fff3cd;
     color: #856404;
     border-color: #ffc107;
+  }
+
+  .status-dropdown.status-pending option {
+    background: white;
+    color: #212529;
   }
 
   .status-dropdown.status-approved {
@@ -129,10 +120,20 @@ Parameters:
     border-color: #28a745;
   }
 
+  .status-dropdown.status-approved option {
+    background: white;
+    color: #212529;
+  }
+
   .status-dropdown.status-waitlisted {
     background: #d1ecf1;
     color: #0c5460;
     border-color: #17a2b8;
+  }
+
+  .status-dropdown.status-waitlisted option {
+    background: white;
+    color: #212529;
   }
 
   .status-dropdown.status-rejected {
@@ -141,38 +142,20 @@ Parameters:
     border-color: #dc3545;
   }
 
+  .status-dropdown.status-rejected option {
+    background: white;
+    color: #212529;
+  }
+
   .status-dropdown.status-withdrawn {
     background: #e2e3e5;
     color: #383d41;
     border-color: #6c757d;
   }
 
-  /* Status badges (for non-editable view) */
-  .status-approved {
-    background: #d4edda;
-    color: #155724;
-  }
-
-  .status-pending {
-    background: #fff3cd;
-    color: #856404;
-  }
-
-  .status-waitlisted {
-    background: #d1ecf1;
-    color: #0c5460;
-  }
-
-  .status-rejected,
-  .status-withdrawn {
-    background: #f8d7da;
-    color: #721c24;
-  }
-
-  .status-rejected,
-  .status-withdrawn {
-    background: #DC3545;
-    color: white;
+  .status-dropdown.status-withdrawn option {
+    background: white;
+    color: #212529;
   }
 
   .program-info-link {
@@ -316,17 +299,13 @@ Parameters:
                 </select>
               </form>
             {% else %}
-              <span class="program-status-badge status-{{ enrollment.status }}">
-                {% if enrollment.status == 'approved' %}
-                  <i class="bi bi-check-circle-fill"></i>Approved
-                {% elif enrollment.status == 'pending' %}
-                  <i class="bi bi-clock-history"></i>Pending
-                {% elif enrollment.status == 'waitlisted' %}
-                  <i class="bi bi-hourglass-split"></i>Waitlist
-                {% else %}
-                  <i class="bi bi-x-circle"></i>{{ enrollment.get_status_display }}
-                {% endif %}
-              </span>
+              <select class="status-dropdown status-{{ enrollment.status }}" disabled>
+                {% for status_value, status_label in enrollment_statuses %}
+                  <option value="{{ status_value }}" {% if enrollment.status == status_value %}selected{% endif %}>
+                    {{ status_label }}
+                  </option>
+                {% endfor %}
+              </select>
             {% endif %}
           </div>
           {% if can_edit and enrollment.user.role == 'member' %}

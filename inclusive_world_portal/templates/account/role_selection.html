@@ -1,0 +1,332 @@
+{% extends "base.html" %}
+{% load i18n static %}
+
+{% block bodyclass %}role-selection-page{% endblock bodyclass %}
+
+{% block title %}{% trans "Join Inclusive World" %}{% endblock title %}
+
+{% block body %}
+<a href="#main-content" class="skip-to-content-link">Skip to main content</a>
+
+<div class="role-selection-layout">
+  <!-- Left Side: Role Selection -->
+  <div class="role-selection-side">
+    <div class="role-selection-container" id="main-content">
+      <!-- Logo -->
+      <img src="{% static 'images/inclusive-world-logo.png' %}" alt="Inclusive World Logo" class="role-selection-logo">
+      
+      <!-- Title -->
+      <h1 class="role-selection-title">{% trans "Join Inclusive World" %}</h1>
+      
+      <!-- Subtitle -->
+      <p class="role-selection-subtitle">
+        {% trans "Choose how you would like to participate in our community" %}
+      </p>
+      
+      <!-- Messages -->
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-dismissible {% if message.tags %}alert-{{ message.tags }}{% endif %}">
+            {{ message }}
+            <button type="button"
+                    class="btn-close"
+                    data-bs-dismiss="alert"
+                    aria-label="Close">&times;</button>
+          </div>
+        {% endfor %}
+      {% endif %}
+      
+      <!-- Role Cards -->
+      <div class="role-cards">
+        <!-- Member Card -->
+        <div class="role-card">
+          <div class="role-icon member-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+              <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0z"/>
+              <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8zm8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1z"/>
+            </svg>
+          </div>
+          <h2 class="role-card-title">{% trans "Join as Member" %}</h2>
+          <p class="role-card-description">
+            {% trans "Participate in community activities, events, and programs designed to create an inclusive environment for everyone." %}
+          </p>
+          <a href="{% url 'account_signup' %}?role=member" class="btn btn-primary btn-lg btn-block role-btn">
+            {% trans "Sign Up as Member" %}
+          </a>
+        </div>
+        
+        <!-- Volunteer Card -->
+        <div class="role-card">
+          <div class="role-icon volunteer-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" fill="currentColor" viewBox="0 0 16 16">
+              <path fill-rule="evenodd" d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+            </svg>
+          </div>
+          <h2 class="role-card-title">{% trans "Volunteer with Us" %}</h2>
+          <p class="role-card-description">
+            {% trans "Help organize events, support our mission, and take on leadership roles to make a meaningful impact in the community." %}
+          </p>
+          <a href="{% url 'account_signup' %}?role=volunteer" class="btn btn-secondary btn-lg btn-block role-btn">
+            {% trans "Sign Up as Volunteer" %}
+          </a>
+        </div>
+      </div>
+      
+      <!-- Help Text -->
+      <div class="role-selection-footer">
+        <p class="role-help-text">
+          {% trans "Not sure which option is right for you? Learn more about our community roles and how you can contribute to creating an inclusive world for everyone." %}
+        </p>
+        
+        <!-- Already have account -->
+        <p class="role-login-text">
+          {% trans "Already have an account?" %} 
+          <a href="{% url 'account_login' %}" class="auth-link">{% trans "Login" %}</a>
+        </p>
+      </div>
+    </div>
+  </div>
+  
+  <!-- Right Side: Branding -->
+  <div class="role-branding-side">
+    <div class="role-branding-content">
+      <h2 class="role-branding-title">{% trans "Welcome!" %}</h2>
+      <p class="role-branding-subtitle">
+        {% trans "Join our inclusive community where everyone belongs. Whether you are looking to participate or lead, there is a place for you here." %}
+      </p>
+    </div>
+  </div>
+</div>
+
+<style>
+/* Role Selection Page Styles */
+.role-selection-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  min-height: 100vh;
+  background: var(--color-background);
+}
+
+.role-selection-side {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-3xl) var(--space-2xl);
+  background: var(--color-background);
+}
+
+.role-branding-side {
+  position: relative;
+  background: linear-gradient(135deg, #00494F 0%, #003338 100%);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: var(--space-3xl);
+  color: white;
+  overflow: hidden;
+}
+
+.role-branding-side::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: url('/static/images/logo-loginAndSignup.png');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  opacity: 0.15;
+  z-index: 0;
+}
+
+.role-branding-content {
+  position: relative;
+  z-index: 1;
+  text-align: center;
+  max-width: 500px;
+}
+
+.role-branding-title {
+  font-size: 3rem;
+  font-weight: 700;
+  margin-bottom: var(--space-lg);
+  color: white;
+  line-height: 1.2;
+}
+
+.role-branding-subtitle {
+  font-size: 1.25rem;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.9);
+  line-height: 1.6;
+}
+
+.role-selection-container {
+  width: 100%;
+  max-width: 700px;
+}
+
+.role-selection-logo {
+  max-width: 200px;
+  height: auto;
+  margin: 0 auto var(--space-xl);
+  display: block;
+}
+
+.role-selection-title {
+  font-size: 2.25rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-bottom: var(--space-sm);
+  text-align: center;
+}
+
+.role-selection-subtitle {
+  font-size: 1.0625rem;
+  color: var(--color-muted-foreground);
+  margin-bottom: var(--space-2xl);
+  text-align: center;
+}
+
+.role-cards {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-xl);
+  margin-bottom: var(--space-2xl);
+}
+
+.role-card {
+  background: white;
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-xl);
+  padding: var(--space-2xl);
+  text-align: center;
+  transition: all 0.3s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.role-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-xl);
+  border-color: var(--color-brand-blue-peacock);
+}
+
+.role-icon {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: var(--space-lg);
+}
+
+.member-icon {
+  background-color: rgba(0, 73, 79, 0.1);
+  color: var(--color-brand-blue-peacock);
+}
+
+.volunteer-icon {
+  background-color: rgba(127, 72, 87, 0.1);
+  color: var(--color-brand-berry);
+}
+
+.role-card-title {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--color-foreground);
+  margin-bottom: var(--space-md);
+}
+
+.role-card-description {
+  font-size: 0.9375rem;
+  color: var(--color-muted-foreground);
+  line-height: 1.6;
+  margin-bottom: var(--space-xl);
+  flex: 1;
+}
+
+.role-btn {
+  margin-top: auto;
+}
+
+.role-selection-footer {
+  text-align: center;
+  border-top: 1px solid var(--color-border);
+  padding-top: var(--space-xl);
+}
+
+.role-help-text {
+  font-size: 0.9375rem;
+  color: var(--color-muted-foreground);
+  line-height: 1.6;
+  margin-bottom: var(--space-lg);
+}
+
+.role-login-text {
+  font-size: 0.9375rem;
+  color: var(--color-muted-foreground);
+  margin: 0;
+}
+
+/* Responsive Design */
+@media (max-width: 991px) {
+  .role-selection-layout {
+    grid-template-columns: 1fr;
+  }
+  
+  .role-branding-side {
+    display: none;
+  }
+  
+  .role-selection-side {
+    padding: var(--space-2xl) var(--space-lg);
+  }
+}
+
+@media (max-width: 768px) {
+  .role-cards {
+    grid-template-columns: 1fr;
+    gap: var(--space-lg);
+  }
+  
+  .role-selection-side {
+    padding: var(--space-xl) var(--space-md);
+  }
+  
+  .role-selection-title {
+    font-size: 1.75rem;
+  }
+  
+  .role-selection-logo {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .role-selection-title {
+    font-size: 1.5rem;
+  }
+  
+  .role-card {
+    padding: var(--space-xl);
+  }
+  
+  .role-icon {
+    width: 64px;
+    height: 64px;
+  }
+  
+  .role-icon svg {
+    width: 36px;
+    height: 36px;
+  }
+}
+</style>
+{% endblock body %}

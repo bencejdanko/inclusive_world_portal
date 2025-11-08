@@ -13,6 +13,7 @@ urlpatterns = [
     path(settings.ADMIN_URL, admin.site.urls),
     # User management
     path("users/", include("inclusive_world_portal.users.urls", namespace="users")),
+    # Allauth - authentication URLs
     path("accounts/", include("allauth.urls")),
     
     # Portal - Programs and Enrollment

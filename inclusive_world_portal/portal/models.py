@@ -40,26 +40,6 @@ class AttendanceStatus(models.TextChoices):
     UNINFORMED = "uninformed", "Uninformed"
 
 # -------------------------
-# Roles
-# -------------------------
-
-class UserRole(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="roles")
-    role = models.CharField(max_length=32, choices=UserRoleType.choices)
-    created_at = models.DateTimeField(auto_now_add=True)
-    updated_at = models.DateTimeField(auto_now=True)
-
-    class Meta:
-        unique_together = (("user", "role"),)
-        indexes = [
-            models.Index(fields=["user", "role"]),
-        ]
-
-    def __str__(self):
-        return f"{self.user_id}:{self.role}"
-
-# -------------------------
 # Programs & Enrollment
 # -------------------------
 

@@ -238,6 +238,11 @@
     border-color: var(--color-brand-blue-peacock);
   }
 
+  .status-select-inline:disabled {
+    cursor: not-allowed;
+    opacity: 0.9;
+  }
+
   .status-select-inline.active {
     background: #d4edda;
     color: #155724;
@@ -262,7 +267,6 @@
     border-color: #ffc107;
   }
 
-  /* Enrollment status colors (for course filter view) */
   .status-select-inline.pending {
     background: #fff3cd;
     color: #856404;
@@ -293,34 +297,48 @@
     border-color: #6c757d;
   }
 
-  .status-badge {
+  /* OPD Badge */
+  .opd-badge {
     display: inline-block;
-    padding: 0.3rem 0.6rem;
+    padding: 0.25rem 0.5rem;
     border-radius: var(--radius-lg);
-    font-size: 0.75rem;
-    font-weight: 600;
+    font-size: 0.65rem;
+    font-weight: 700;
     text-transform: uppercase;
     letter-spacing: 0.5px;
+    margin-left: 0.5rem;
+    vertical-align: middle;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
   }
 
-  .status-badge.active {
+  .opd-badge:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    text-decoration: none;
+  }
+
+  .opd-badge.active {
     background: #d4edda;
+    color: #155724;
+    border: 1px solid #c3e6cb;
+  }
+
+  .opd-badge.active:hover {
+    background: #c3e6cb;
     color: #155724;
   }
 
-  .status-badge.inactive {
+  .opd-badge.inactive {
     background: #e2e3e5;
-    color: #383d41;
+    color: #6c757d;
+    border: 1px solid #d6d8db;
   }
 
-  .status-badge.suspended {
-    background: #f8d7da;
-    color: #721c24;
-  }
-
-  .status-badge.pending_verification {
-    background: #fff3cd;
-    color: #856404;
+  .opd-badge.inactive:hover {
+    background: #d6d8db;
+    color: #6c757d;
   }
 
   /* Expandable member details section */
@@ -529,22 +547,35 @@
                   @{{ member.username }}
                 {% endif %}
               </a>
+              {% if member.id in users_with_active_opd %}
+                <a href="{% url 'users:view_active_opd_for_user' member.username %}" class="opd-badge active" onclick="event.stopPropagation()">OPD</a>
+              {% else %}
+                <a href="{% url 'users:view_active_opd_for_user' member.username %}" class="opd-badge inactive" onclick="event.stopPropagation()">OPD</a>
+              {% endif %}
             </div>
             <div class="member-date">
-              {% if course_filter and can_edit %}
+              {% if course_filter %}
                 {% with enrollment=course_enrollments|get_item:member.id %}
                   {% if enrollment %}
-                    <form method="post" onchange="this.submit()" onclick="event.stopPropagation()">
-                      {% csrf_token %}
-                      <input type="hidden" name="action" value="update_enrollment_status">
-                      <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
-                      <input type="hidden" name="course_filter" value="{{ course_filter }}">
-                      <select name="enrollment_status" class="status-select-inline {{ enrollment.status }}">
+                    {% if can_edit %}
+                      <form method="post" onchange="this.submit()" onclick="event.stopPropagation()">
+                        {% csrf_token %}
+                        <input type="hidden" name="action" value="update_enrollment_status">
+                        <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
+                        <input type="hidden" name="course_filter" value="{{ course_filter }}">
+                        <select name="enrollment_status" class="status-select-inline {{ enrollment.status }}">
+                          {% for value, label in enrollment_statuses %}
+                            <option value="{{ value }}" {% if enrollment.status == value %}selected{% endif %}>{{ label }}</option>
+                          {% endfor %}
+                        </select>
+                      </form>
+                    {% else %}
+                      <select class="status-select-inline {{ enrollment.status }}" disabled>
                         {% for value, label in enrollment_statuses %}
                           <option value="{{ value }}" {% if enrollment.status == value %}selected{% endif %}>{{ label }}</option>
                         {% endfor %}
                       </select>
-                    </form>
+                    {% endif %}
                   {% endif %}
                 {% endwith %}
               {% else %}
@@ -565,7 +596,11 @@
                   </select>
                 </form>
               {% else %}
-                <span class="status-badge {{ member.status }}">{{ member.get_status_display }}</span>
+                <select class="status-select-inline {{ member.status }}" disabled>
+                  {% for value, label in status_choices %}
+                    <option value="{{ value }}" {% if member.status == value %}selected{% endif %}>{{ label }}</option>
+                  {% endfor %}
+                </select>
               {% endif %}
             </div>
           </div>

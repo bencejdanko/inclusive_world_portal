@@ -3,15 +3,9 @@ from django.dispatch import receiver
 from django.conf import settings
 import django.db.models as models
 
-from .models import Enrollment, Program, UserRole, UserRoleType
+from .models import Enrollment, Program
 
-@receiver(post_save, sender=settings.AUTH_USER_MODEL)
-def create_default_role(sender, instance, created, **kwargs):
-    """Assign default member role to new users."""
-    if not created:
-        return
-    # Assign default "member" role if none exists
-    UserRole.objects.get_or_create(user=instance, role=UserRoleType.MEMBER)
+# Note: Default role assignment removed - roles are now set directly on the User model
 
 @receiver(post_save, sender=Enrollment)
 def bump_enrollment_on_create(sender, instance, created, **kwargs):

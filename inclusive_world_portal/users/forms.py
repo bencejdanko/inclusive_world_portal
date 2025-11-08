@@ -31,6 +31,28 @@ class UserSignupForm(SignupForm):
     Default fields will be added automatically.
     Check UserSocialSignupForm for accounts created from social.
     """
+    
+    role = forms.ChoiceField(
+        choices=User.Role.choices,
+        initial=User.Role.MEMBER,
+        widget=forms.HiddenInput(),
+        required=False,
+    )
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        # Get role from GET parameter if available
+        if 'data' not in kwargs:
+            initial_role = self.initial.get('role', User.Role.MEMBER)
+            self.fields['role'].initial = initial_role
+    
+    def save(self, request):
+        user = super().save(request)
+        # Set the role from the form
+        role = self.cleaned_data.get('role', User.Role.MEMBER)
+        user.role = role
+        user.save()
+        return user
 
 
 class UserSocialSignupForm(SocialSignupForm):

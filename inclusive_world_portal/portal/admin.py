@@ -1,11 +1,10 @@
 from django.contrib import admin
 from .models import (
-    UserRole, Program, Enrollment, AttendanceRecord,
+    Program, Enrollment, AttendanceRecord,
     ProgramVolunteerLead, BuddyAssignment, Payment, EnrollmentSettings
 )
 
 # Basic registrations
-admin.site.register(UserRole)
 admin.site.register(Enrollment)
 admin.site.register(AttendanceRecord)
 admin.site.register(ProgramVolunteerLead)

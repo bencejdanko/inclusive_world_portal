@@ -9,33 +9,7 @@
   <div class="col-12 mb-4">
     <div class="card border-0 shadow-sm">
       <div class="card-body text-center py-5">
-        <h2 class="h4 mb-3">Welcome back, {{ user.name|default:user.username }}! 👋</h2>
-        <p class="text-muted mb-3">Check your enrollment status below</p>
-        
-        <!-- Registration Status -->
-        <div class="mt-4">
-          {% if can_purchase %}
-            <div class="alert alert-success">
-              <i class="bi bi-check-circle-fill me-2"></i>
-              <strong>Registration Open!</strong> You can now enroll in programs.
-              <a href="{% url 'portal:program_catalog' %}" class="btn btn-success btn-sm ms-2">
-                <i class="bi bi-grid-3x3-gap me-1"></i>Browse Programs
-              </a>
-            </div>
-          {% elif not enrollment_open %}
-            <div class="alert alert-info">
-              <i class="bi bi-lock-fill me-2"></i>
-              <strong>Registration Closed</strong>
-              <p class="mb-0">
-                {% if enrollment_closure_reason %}
-                  {{ enrollment_closure_reason }}
-                {% else %}
-                  Registration is currently closed. Please check back later.
-                {% endif %}
-              </p>
-            </div>
-          {% endif %}
-        </div>
+        <h2 class="h4 mb-3">Welcome back, {{ user.name|default:user.username }}! 👋</h2>        
       </div>
     </div>
   </div>

@@ -28,12 +28,8 @@
             
             {% if object == request.user %}
               <a class="btn btn-primary w-100 mb-2" href="{% url 'users:update' %}">Edit Profile</a>
-              <a class="btn btn-success w-100 mb-2" href="{% url 'users:survey_form' %}">
-                {% if object.survey_is_complete %}
-                  ✓ Discovery Questions
-                {% else %}
-                  Complete Discovery Questions
-                {% endif %}
+              <a class="btn btn-success w-100 mb-2" href="/surveys">
+                View Tasks & Surveys
               </a>
               <div class="d-grid gap-2">
                 <a class="btn btn-outline-secondary btn-sm" href="{% url 'account_email' %}">Manage Email</a>

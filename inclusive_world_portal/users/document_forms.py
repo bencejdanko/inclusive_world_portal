@@ -18,8 +18,8 @@ class DocumentForm(forms.Form):
         widget=forms.HiddenInput()
     )
     content = QuillFormField(
-        # Quill configuration to match PDF export styling
-        # The editor will use CSS variables from project.css (Montserrat font)
+        # Quill configuration uses settings.QUILL_CONFIGS['default']
+        # which includes brand colors in the toolbar
     )
     state = forms.ChoiceField(
         choices=DocumentState.choices,

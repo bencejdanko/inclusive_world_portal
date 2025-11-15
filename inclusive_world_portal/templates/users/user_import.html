@@ -1,0 +1,365 @@
+{% extends "base_portal.html" %}
+{% load static i18n %}
+
+{% block page_title %}Import Users{% endblock %}
+
+{% block css %}
+{{ block.super }}
+<link rel="stylesheet" href="https://jsuites.net/v5/jsuites.css" type="text/css" />
+<link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v5/jspreadsheet.css" type="text/css" />
+
+<style>
+  .import-container {
+    max-width: 100%;
+    overflow-x: auto;
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+  }
+  
+  #spreadsheet {
+    min-height: 500px;
+  }
+  
+  .action-buttons {
+    background: white;
+    padding: 20px;
+    border-top: 2px solid #dee2e6;
+    margin-top: 20px;
+  }
+  
+  .btn-import {
+    background: #008B9C;
+    color: white;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 1rem;
+  }
+  
+  .btn-import:hover {
+    background: #006A78;
+  }
+  
+  .btn-import:disabled {
+    background: #6c757d;
+    cursor: not-allowed;
+  }
+  
+  .error-message {
+    background: #f8d7da;
+    color: #721c24;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border: 1px solid #f5c6cb;
+  }
+  
+  .success-message {
+    background: #d4edda;
+    color: #155724;
+    padding: 12px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border: 1px solid #c3e6cb;
+  }
+  
+  .info-box {
+    background: #d1ecf1;
+    color: #0c5460;
+    padding: 16px;
+    border-radius: 4px;
+    margin-bottom: 20px;
+    border: 1px solid #bee5eb;
+  }
+  
+  .info-box h5 {
+    margin-top: 0;
+    font-size: 1rem;
+    font-weight: 600;
+  }
+  
+  .info-box ul {
+    margin-bottom: 0;
+    padding-left: 20px;
+  }
+  
+  .validation-errors {
+    max-height: 300px;
+    overflow-y: auto;
+  }
+  
+  .validation-errors ul {
+    margin: 0;
+    padding-left: 20px;
+  }
+  
+  /* Customize jspreadsheet colors to match theme */
+  .jexcel > thead > tr > td {
+    background-color: #008B9C !important;
+    color: white !important;
+    font-weight: 600;
+  }
+  
+  .jexcel > tbody > tr > td.readonly {
+    background-color: #f8f9fa;
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center">
+        <h1 class="h3 mb-0">Import Users</h1>
+        <a href="{% url 'users:manager_dashboard' %}" class="btn btn-outline-secondary">
+          <i class="fas fa-arrow-left"></i> Back to Dashboard
+        </a>
+      </div>
+    </div>
+  </div>
+  
+  <div id="messageContainer"></div>
+  
+  <!-- Hidden CSRF token -->
+  {% csrf_token %}
+  
+  <div class="row">
+    <div class="col-12">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body">
+          <div class="import-container">
+            <div id="spreadsheet"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="action-buttons">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <button type="button" class="btn btn-success me-2" onclick="addRows()">
+          <i class="fas fa-plus"></i> Add 5 Rows
+        </button>
+        <button type="button" class="btn btn-outline-secondary me-2" onclick="clearSpreadsheet()">
+          <i class="fas fa-trash"></i> Clear All
+        </button>
+      </div>
+      <button type="button" class="btn-import" onclick="submitImport()" id="importBtn">
+        <i class="fas fa-upload"></i> Import Users
+      </button>
+    </div>
+  </div>
+</div>
+{% endblock content %}
+
+{% block inline_javascript %}
+<script src="https://jsuites.net/v5/jsuites.js"></script>
+<script src="https://bossanova.uk/jspreadsheet/v5/jspreadsheet.js"></script>
+
+<script>
+// Field configuration from Django
+const importFields = {{ import_fields_json|safe }};
+const roleChoices = {{ role_choices_json|safe }};
+
+let spreadsheet;
+
+// Initialize jspreadsheet
+document.addEventListener('DOMContentLoaded', function() {
+  // Configure columns based on import fields
+  const columns = importFields.map(field => {
+    // Calculate width based on header text length (minimum 120px, add 8px per character)
+    const headerText = field.label + (field.required ? ' *' : '');
+    const calculatedWidth = Math.max(120, headerText.length * 12);
+    
+    const col = {
+      title: headerText,
+      width: calculatedWidth,
+    };
+    
+    if (field.type === 'select' && field.key === 'role') {
+      col.type = 'dropdown';
+      col.source = roleChoices.map(c => c.label);
+    } else if (field.type === 'number') {
+      col.type = 'numeric';
+    } else if (field.type === 'email') {
+      col.type = 'text';
+    } else {
+      col.type = 'text';
+    }
+    
+    return col;
+  });
+  
+  // Initialize with 10 empty rows
+  const initialData = Array(10).fill(null).map(() => Array(importFields.length).fill(''));
+  
+  spreadsheet = jspreadsheet(document.getElementById('spreadsheet'), {
+    worksheets: [{
+      data: initialData,
+      columns: columns,
+      minDimensions: [importFields.length, 10],
+      allowInsertRow: true,
+      allowInsertColumn: false,
+      allowDeleteRow: true,
+      allowDeleteColumn: false,
+      allowRenameColumn: false,
+      columnSorting: false,
+      tableOverflow: true,
+      tableWidth: '100%',
+      tableHeight: '600px',
+    }]
+  });
+});
+
+function addRows() {
+  // Add 5 empty rows
+  const worksheet = spreadsheet[0];
+  for (let i = 0; i < 5; i++) {
+    worksheet.insertRow();
+  }
+  showMessage('Added 5 new rows', 'success');
+}
+
+function clearSpreadsheet() {
+  if (confirm('Are you sure you want to clear all data?')) {
+    const worksheet = spreadsheet[0];
+    const data = worksheet.getData();
+    
+    // Clear all cells
+    for (let i = 0; i < data.length; i++) {
+      for (let j = 0; j < data[i].length; j++) {
+        worksheet.setValue(jspreadsheet.getColumnNameFromCoords(j, i), '');
+      }
+    }
+    
+    showMessage('Spreadsheet cleared', 'success');
+  }
+}
+
+function collectSpreadsheetData() {
+  const worksheet = spreadsheet[0];
+  const data = worksheet.getData();
+  const users = [];
+  
+  data.forEach((row, rowIndex) => {
+    const userData = {};
+    let hasData = false;
+    
+    row.forEach((cellValue, colIndex) => {
+      if (cellValue && cellValue.trim()) {
+        const field = importFields[colIndex];
+        
+        // Convert role label back to value
+        if (field.key === 'role') {
+          const roleChoice = roleChoices.find(c => c.label === cellValue.trim());
+          userData[field.key] = roleChoice ? roleChoice.value : cellValue.trim();
+        } else {
+          userData[field.key] = cellValue.trim();
+        }
+        
+        hasData = true;
+      }
+    });
+    
+    // Only include rows with at least some data
+    if (hasData) {
+      users.push(userData);
+    }
+  });
+  
+  return users;
+}
+
+async function submitImport() {
+  const users = collectSpreadsheetData();
+  
+  if (users.length === 0) {
+    showMessage('Please add at least one user to import.', 'error');
+    return;
+  }
+  
+  // Disable button
+  const importBtn = document.getElementById('importBtn');
+  importBtn.disabled = true;
+  importBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Importing...';
+  
+  try {
+    // Get CSRF token
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+    
+    const response = await fetch('{% url "users:process_user_import" %}', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': csrfToken
+      },
+      credentials: 'same-origin',
+      body: JSON.stringify({ users: users })
+    });
+    
+    const data = await response.json();
+    
+    if (data.success) {
+      showMessage(data.message, 'success');
+      // Clear spreadsheet after successful import
+      setTimeout(() => {
+        clearSpreadsheet();
+      }, 2000);
+    } else {
+      if (data.validation_errors) {
+        showValidationErrors(data.validation_errors);
+      } else {
+        showMessage(data.error || 'Import failed', 'error');
+      }
+    }
+  } catch (error) {
+    console.error('Import error:', error);
+    showMessage('An error occurred while importing users.', 'error');
+  } finally {
+    importBtn.disabled = false;
+    importBtn.innerHTML = '<i class="fas fa-upload"></i> Import Users';
+  }
+}
+
+function showMessage(message, type) {
+  const container = document.getElementById('messageContainer');
+  const alertClass = type === 'success' ? 'success-message' : 'error-message';
+  const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
+  
+  container.innerHTML = `
+    <div class="${alertClass}">
+      <i class="fas ${icon}"></i> ${message}
+    </div>
+  `;
+  
+  // Auto-hide after 5 seconds
+  setTimeout(() => {
+    container.innerHTML = '';
+  }, 5000);
+  
+  // Scroll to top
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function showValidationErrors(errors) {
+  const container = document.getElementById('messageContainer');
+  const errorList = errors.map(err => `<li>${err}</li>`).join('');
+  
+  container.innerHTML = `
+    <div class="error-message">
+      <h5><i class="fas fa-exclamation-triangle"></i> Validation Errors</h5>
+      <div class="validation-errors">
+        <ul>${errorList}</ul>
+      </div>
+    </div>
+  `;
+  
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+</script>
+{% endblock %}

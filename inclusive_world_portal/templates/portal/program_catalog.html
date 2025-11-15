@@ -3,11 +3,36 @@
 
 {% block title %}Available Programs{% endblock %}
 
-{% block page_title %}Enroll in our available programs!{% endblock page_title %}
+{% block page_title %}
+  <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+    <span>Enroll in our available programs!</span>
+  </div>
+{% endblock page_title %}
 
 {% block css %}
 {{ block.super }}
 <style>
+  .btn-edit-enrollment-settings {
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    font-size: 0.95rem;
+    box-shadow: var(--shadow-sm);
+  }
+
+  .btn-edit-enrollment-settings:hover {
+    background: var(--color-dark-blue-peacock);
+    color: white;
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-md);
+  }
+
   .programs-grid {
     display: flex;
     flex-wrap: wrap;

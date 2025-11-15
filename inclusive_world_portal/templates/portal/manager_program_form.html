@@ -3,7 +3,13 @@
 
 {% block title %}{% if is_create %}Create Program{% else %}Edit Program{% endif %}{% endblock %}
 
-{% block page_title %}{% if is_create %}Create New Program{% else %}Edit Program{% endif %}{% endblock page_title %}
+{% block page_title %}
+  {% if is_create %}
+    Create New Program
+  {% else %}
+    Edit Program
+  {% endif %}
+{% endblock page_title %}
 
 {% block css %}
 {{ block.super }}
@@ -161,6 +167,24 @@
         <small>A detailed description of the program</small>
       </div>
 
+      <div class="form-group">
+        <label for="image">Program Image</label>
+        <input type="file" id="image" name="image" accept="image/*">
+        <small>Upload a program image (optional)</small>
+        
+        {% if program and program.image %}
+          <div style="margin-top: 1rem;">
+            <label class="form-label">Current Image:</label>
+            <div>
+              <img src="{{ program.image.url }}" alt="{{ program.name }}" style="max-width: 300px; max-height: 200px; border-radius: var(--radius-lg);" class="img-thumbnail">
+            </div>
+            <small style="color: var(--color-text-muted);">Leave blank to keep current image, or upload a new one to replace it.</small>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if is_full_manager %}
+      {# Full managers can edit all fields below #}
       <div class="form-row">
         <div class="form-group">
           <label for="fee">Program Fee ($)</label>
@@ -205,32 +229,16 @@
       </div>
 
       <div class="form-group">
-        <label for="image">Program Image</label>
-        <input type="file" id="image" name="image" accept="image/*">
-        <small>Upload a program image (optional)</small>
-        
-        {% if program and program.image %}
-          <div style="margin-top: 1rem;">
-            <label class="form-label">Current Image:</label>
-            <div>
-              <img src="{{ program.image.url }}" alt="{{ program.name }}" style="max-width: 300px; max-height: 200px; border-radius: var(--radius-lg);" class="img-thumbnail">
-            </div>
-            <small style="color: var(--color-text-muted);">Leave blank to keep current image, or upload a new one to replace it.</small>
-          </div>
-        {% endif %}
-      </div>
-
-      <div class="form-group">
         <div class="checkbox-group">
           <input type="checkbox" id="archived" name="archived" 
                  {% if program and program.archived %}checked{% elif form_data and form_data.archived %}checked{% endif %}>
           <label for="archived">Archive this program</label>
         </div>
-        <small>Archived programs are hidden from regular users but visible to managers</small>
       </div>
+      {% endif %}
 
       <div class="form-actions">
-        <a href="{% url 'portal:manager_programs' %}" class="btn-cancel">Cancel</a>
+        <a href="{% url 'portal:programs' %}" class="btn-cancel">Cancel</a>
         <button type="submit" class="btn-submit">
           {% if is_create %}
             <i class="bi bi-plus-circle me-2"></i>Create Program

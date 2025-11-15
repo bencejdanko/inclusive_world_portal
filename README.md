@@ -5,6 +5,27 @@ A management portal for the Inclusive World team.
 [![Built with Cookiecutter Django](https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter)](https://github.com/cookiecutter/cookiecutter-django/)
 [![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
+## 🚀 Quick Start (Docker)
+
+```bash
+# 🔥 Start fresh (destroys all data, rebuilds, migrates)
+make up
+
+# Create superuser
+make superuser
+
+# View logs
+make logs-django
+
+# Stop (keeps data for next 'make start')
+make down
+
+# Restart without destroying data
+make start
+```
+
+**Note:** `Use `make start` for gentle restarts.
+
 ## Settings
 
 Moved to [settings](https://cookiecutter-django.readthedocs.io/en/latest/1-getting-started/settings.html).

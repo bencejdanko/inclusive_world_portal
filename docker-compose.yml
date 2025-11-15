@@ -6,14 +6,12 @@ services:
     container_name: inclusive_world_portal_postgres
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    env_file:
-      - .env.docker
     environment:
-      - POSTGRES_DB=${POSTGRES_DB:-inclusive_world_portal}
-      - POSTGRES_USER=${POSTGRES_USER:-postgres}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-postgres}
+      - POSTGRES_DB=inclusive_world_portal
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=devpassword123
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-postgres}"]
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -89,11 +87,12 @@ services:
     volumes:
       - static_volume:/app/staticfiles
       - media_volume:/app/inclusive_world_portal/media
-    env_file:
-      - .env.docker
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.production
-      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-inclusive_world_portal}
+      - DATABASE_URL=postgres://postgres:devpassword123@postgres:5432/inclusive_world_portal
+      - POSTGRES_DB=inclusive_world_portal
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=devpassword123
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       postgres:
@@ -120,11 +119,9 @@ services:
     container_name: inclusive_world_portal_celeryworker
     volumes:
       - media_volume:/app/inclusive_world_portal/media
-    env_file:
-      - .env.docker
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.production
-      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-inclusive_world_portal}
+      - DATABASE_URL=postgres://postgres:devpassword123@postgres:5432/inclusive_world_portal
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       postgres:
@@ -144,11 +141,9 @@ services:
     container_name: inclusive_world_portal_celerybeat
     volumes:
       - celerybeat_schedule:/app
-    env_file:
-      - .env.docker
     environment:
       - DJANGO_SETTINGS_MODULE=config.settings.production
-      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-inclusive_world_portal}
+      - DATABASE_URL=postgres://postgres:devpassword123@postgres:5432/inclusive_world_portal
       - REDIS_URL=redis://redis:6379/0
     depends_on:
       postgres:

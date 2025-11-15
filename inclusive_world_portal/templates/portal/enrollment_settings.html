@@ -1,0 +1,534 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}Enrollment Settings{% endblock %}
+{% block page_title %}Enrollment Settings{% endblock %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  .settings-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .settings-card {
+    background: white;
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-md);
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+
+  .settings-card h2 {
+    color: var(--color-brand-blue-peacock);
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 2px solid var(--color-muted);
+  }
+
+  .enrollment-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem;
+    background: #f8f9fa;
+    border-radius: var(--radius-lg);
+    margin-bottom: 1.5rem;
+  }
+
+  .enrollment-status {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+  }
+
+  .status-indicator {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  .status-indicator.open {
+    background: #10b981;
+  }
+
+  .status-indicator.closed {
+    background: #ef4444;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+  }
+
+  .toggle-btn {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .toggle-btn.open {
+    background: #10b981;
+    color: white;
+  }
+
+  .toggle-btn.close {
+    background: #ef4444;
+    color: white;
+  }
+
+  .toggle-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+  }
+
+  .closure-reason {
+    margin-top: 1rem;
+    padding: 1rem;
+    background: #fef3c7;
+    border-left: 4px solid #f59e0b;
+    border-radius: var(--radius-md);
+  }
+
+  .requirement-item {
+    padding: 1.5rem;
+    border: 2px solid var(--color-muted);
+    border-radius: var(--radius-lg);
+    margin-bottom: 1rem;
+    transition: all 0.3s ease;
+  }
+
+  .requirement-item:hover {
+    border-color: var(--color-brand-blue-peacock);
+    box-shadow: var(--shadow-md);
+  }
+
+  .requirement-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .requirement-role {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--color-brand-berry);
+  }
+
+  .requirement-active-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .form-group {
+    margin-bottom: 1rem;
+  }
+
+  .form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--color-text);
+  }
+
+  .checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 1rem;
+    background: #f8f9fa;
+    border-radius: var(--radius-md);
+  }
+
+  .checkbox-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .save-btn {
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+
+  .save-btn:hover {
+    background: var(--color-dark-blue-peacock);
+  }
+
+  .info-box {
+    background: #e0f2fe;
+    border-left: 4px solid var(--color-brand-blue-peacock);
+    padding: 1rem;
+    border-radius: var(--radius-md);
+    margin-bottom: 1.5rem;
+  }
+
+  .form-control {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--color-muted);
+    border-radius: var(--radius-md);
+    font-size: 1rem;
+    transition: border-color 0.2s ease;
+  }
+
+  .form-control:focus {
+    outline: none;
+    border-color: var(--color-brand-blue-peacock);
+    box-shadow: 0 0 0 3px rgba(0, 123, 167, 0.1);
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+{% csrf_token %}
+<div class="settings-container">
+  <!-- Enrollment Status Card -->
+  <div class="settings-card">
+    <h2>Enrollment Status</h2>
+    
+    <div class="enrollment-toggle">
+      <div class="enrollment-status">
+        <div class="status-indicator {% if settings.enrollment_open %}open{% else %}closed{% endif %}"></div>
+        <div>
+          <h3 style="margin: 0;">
+            {% if settings.enrollment_open %}
+              Enrollment is OPEN
+            {% else %}
+              Enrollment is CLOSED
+            {% endif %}
+          </h3>
+          <p style="margin: 0.5rem 0 0 0; color: var(--color-text-muted);">
+            Last updated {{ settings.updated_at|date:"F j, Y \a\t g:i A" }}
+            {% if settings.updated_by %}by {{ settings.updated_by.name|default:settings.updated_by.username }}{% endif %}
+          </p>
+        </div>
+      </div>
+      
+      <button type="button" 
+              id="toggleEnrollmentBtn" 
+              class="toggle-btn {% if settings.enrollment_open %}close{% else %}open{% endif %}">
+        {% if settings.enrollment_open %}
+          <i class="bi bi-lock-fill"></i> Close Enrollment
+        {% else %}
+          <i class="bi bi-unlock-fill"></i> Open Enrollment
+        {% endif %}
+      </button>
+    </div>
+    
+    {% if not settings.enrollment_open and settings.closure_reason %}
+      <div class="closure-reason">
+        <strong>Closure Reason:</strong>
+        <p style="margin: 0.5rem 0 0 0;">{{ settings.closure_reason }}</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Role Requirements Card -->
+  <div class="settings-card">
+    <h2>Role Enrollment Requirements</h2>
+    
+    <div class="info-box">
+      <i class="bi bi-info-circle"></i>
+      <strong>Configure requirements per role:</strong>
+      Define which surveys must be completed and whether profile completion is required before users can register for programs.
+    </div>
+
+    {% if role_requirements %}
+      {% for requirement in role_requirements %}
+        <div class="requirement-item" data-requirement-id="{{ requirement.requirement_id }}">
+          <div class="requirement-header">
+            <h3 class="requirement-role">{{ requirement.get_role_display }}</h3>
+            <div class="requirement-active-toggle">
+              <label>
+                <input type="checkbox" 
+                       class="requirement-active-checkbox"
+                       {% if requirement.is_active %}checked{% endif %}>
+                Active
+              </label>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" 
+                     class="requirement-profile-checkbox"
+                     {% if requirement.require_profile_completion %}checked{% endif %}>
+              Require Profile Completion
+            </label>
+          </div>
+
+          <div class="form-group">
+            <label>Required Tasks:</label>
+            <div class="checkbox-group">
+              {% for survey in available_surveys %}
+                <label class="checkbox-item">
+                  <input type="checkbox" 
+                         class="requirement-survey-checkbox"
+                         value="{{ survey.id }}"
+                         {% if survey in requirement.required_surveys.all %}checked{% endif %}>
+                  {{ survey.name }}
+                </label>
+              {% empty %}
+                <p style="margin: 0; color: var(--color-text-muted);">No published surveys available</p>
+              {% endfor %}
+            </div>
+          </div>
+
+          <button type="button" class="save-btn save-requirement-btn">
+            <i class="bi bi-check-circle"></i> Save Requirements
+          </button>
+        </div>
+      {% endfor %}
+    {% endif %}
+
+    <!-- Add New Role Requirement Section -->
+    <div class="requirement-item" style="border: 2px dashed var(--color-brand-blue-peacock);">
+      <div class="requirement-header">
+        <h3 class="requirement-role" style="color: var(--color-brand-blue-peacock);">
+          <i class="bi bi-plus-circle"></i> Add New Role Requirement
+        </h3>
+      </div>
+
+      <div class="form-group">
+        <label for="newRoleSelect">Select Role:</label>
+        <select id="newRoleSelect" class="form-control" style="max-width: 300px;">
+          <option value="">-- Choose a role --</option>
+          <option value="member">Member</option>
+          <option value="volunteer">Volunteer</option>
+          <option value="manager">Manager</option>
+          <option value="person_centered_manager">Person-Centered Manager</option>
+        </select>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="newRequireProfile" checked>
+          Require Profile Completion
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>
+          <input type="checkbox" id="newIsActive" checked>
+          Active
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>Required Tasks:</label>
+        <div class="checkbox-group" id="newSurveysGroup">
+          {% for survey in available_surveys %}
+            <label class="checkbox-item">
+              <input type="checkbox" 
+                     class="new-survey-checkbox"
+                     value="{{ survey.id }}">
+              {{ survey.name }}
+            </label>
+          {% empty %}
+            <p style="margin: 0; color: var(--color-text-muted);">No published surveys available</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <button type="button" class="save-btn" id="createRequirementBtn">
+        <i class="bi bi-plus-circle"></i> Create Requirement
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Closure Reason Modal -->
+<div class="modal fade" id="closureReasonModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Close Enrollment</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <label for="closureReasonInput" class="form-label">Closure Reason (Optional):</label>
+        <textarea id="closureReasonInput" 
+                  class="form-control" 
+                  rows="3"
+                  placeholder="e.g., Registration closed for the season"></textarea>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-danger" id="confirmCloseBtn">Close Enrollment</button>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const csrfTokenElement = document.querySelector('[name=csrfmiddlewaretoken]');
+    if (!csrfTokenElement) {
+        console.error('CSRF token not found');
+        return;
+    }
+    const csrfToken = csrfTokenElement.value;
+    
+    // Toggle enrollment status
+    const toggleBtn = document.getElementById('toggleEnrollmentBtn');
+    const closureModal = new bootstrap.Modal(document.getElementById('closureReasonModal'));
+    
+    toggleBtn.addEventListener('click', function() {
+        const isOpen = this.classList.contains('close');
+        
+        if (isOpen) {
+            // Show modal to get closure reason
+            closureModal.show();
+        } else {
+            // Open enrollment directly
+            toggleEnrollment('');
+        }
+    });
+    
+    // Confirm close with reason
+    document.getElementById('confirmCloseBtn').addEventListener('click', function() {
+        const reason = document.getElementById('closureReasonInput').value;
+        closureModal.hide();
+        toggleEnrollment(reason);
+    });
+    
+    function toggleEnrollment(closureReason) {
+        const formData = new FormData();
+        formData.append('closure_reason', closureReason);
+        
+        fetch('{% url "portal:toggle_enrollment_status" %}', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            },
+            body: formData,
+            credentials: 'same-origin'
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert(data.message);
+                window.location.reload();
+            } else {
+                alert(data.error || 'Failed to update enrollment status.');
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('An error occurred. Please try again.');
+        });
+    }
+    
+    // Save requirement changes
+    document.querySelectorAll('.save-requirement-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const requirementItem = this.closest('.requirement-item');
+            const requirementId = requirementItem.dataset.requirementId;
+            
+            const isActive = requirementItem.querySelector('.requirement-active-checkbox').checked;
+            const requireProfile = requirementItem.querySelector('.requirement-profile-checkbox').checked;
+            const surveyCheckboxes = requirementItem.querySelectorAll('.requirement-survey-checkbox:checked');
+            const surveyIds = Array.from(surveyCheckboxes).map(cb => cb.value);
+            
+            const formData = new FormData();
+            formData.append('is_active', isActive);
+            formData.append('require_profile_completion', requireProfile);
+            surveyIds.forEach(id => formData.append('required_surveys', id));
+            
+            fetch(`/portal/enrollment-settings/requirement/${requirementId}/update/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                } else {
+                    alert(data.error || 'Failed to update requirements.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        });
+    });
+    
+    // Create new requirement
+    const createBtn = document.getElementById('createRequirementBtn');
+    if (createBtn) {
+        createBtn.addEventListener('click', function() {
+            console.log('Create button clicked');
+            const role = document.getElementById('newRoleSelect').value;
+            
+            if (!role) {
+                alert('Please select a role.');
+                return;
+            }
+            
+            const requireProfile = document.getElementById('newRequireProfile').checked;
+            const isActive = document.getElementById('newIsActive').checked;
+            const surveyCheckboxes = document.querySelectorAll('.new-survey-checkbox:checked');
+            const surveyIds = Array.from(surveyCheckboxes).map(cb => cb.value);
+            
+            console.log('Creating requirement:', { role, requireProfile, isActive, surveyIds });
+            
+            const formData = new FormData();
+            formData.append('role', role);
+            formData.append('require_profile_completion', requireProfile);
+            formData.append('is_active', isActive);
+            surveyIds.forEach(id => formData.append('required_surveys', id));
+            
+            fetch('{% url "portal:create_role_requirement" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                body: formData,
+                credentials: 'same-origin'
+            })
+            .then(response => {
+                console.log('Response status:', response.status);
+                return response.json();
+            })
+            .then(data => {
+                console.log('Response data:', data);
+                if (data.success) {
+                    alert(data.message);
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Failed to create requirement.');
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+            });
+        });
+    } else {
+        console.error('Create button not found');
+    }
+});
+</script>
+{% endblock %}

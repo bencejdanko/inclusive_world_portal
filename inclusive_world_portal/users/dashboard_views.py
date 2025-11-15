@@ -45,11 +45,14 @@ class MemberDashboardView(LoginRequiredMixin, TemplateView):
         from inclusive_world_portal.portal.models import EnrollmentSettings
         enrollment_settings = EnrollmentSettings.get_settings()
         
+        # Check enrollment requirements
+        meets_requirements, missing_items = user.enrollment_requirements_status
+        
         # Add member-specific data
         context.update({
             'profile_complete': user.profile_is_complete,
-            'survey_complete': user.survey_is_complete,
-            'forms_complete': user.forms_are_complete,
+            'meets_enrollment_requirements': meets_requirements,
+            'missing_enrollment_items': missing_items,
             'can_purchase': user.can_purchase_programs,
             'enrollment_open': enrollment_settings.enrollment_open,
             'enrollment_closure_reason': enrollment_settings.closure_reason,

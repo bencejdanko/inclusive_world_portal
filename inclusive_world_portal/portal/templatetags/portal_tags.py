@@ -54,3 +54,17 @@ def buddy_lookup(buddy_map, enrollment):
     # Create tuple key: (program_id_str, member_user_id)
     key = (str(enrollment.program.program_id), enrollment.user.id)
     return buddy_map.get(key)
+
+
+@register.simple_tag
+def get_buddy_for_member(buddy_map, program_id, member_id):
+    """
+    Look up buddy for a specific program and member combination.
+    Usage: {% get_buddy_for_member buddy_map program_id member_id %}
+    Returns the volunteer_id if found, None otherwise.
+    """
+    if not buddy_map:
+        return None
+    # Create tuple key: (program_id_str, member_user_id)
+    key = (str(program_id), member_id)
+    return buddy_map.get(key)

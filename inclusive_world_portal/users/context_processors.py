@@ -11,31 +11,40 @@ def allauth_settings(request):
 def user_alerts(request):
     """
     Provide user-specific alert data for display in top banner.
-    This includes form completion status and other important notifications.
+    This includes enrollment requirements status and other important notifications.
     """
     context = {}
     
     if request.user.is_authenticated:
         from inclusive_world_portal.users.models import User
         
-        # Check form completion status
-        profile_complete = request.user.profile_is_complete
-        survey_complete = request.user.survey_is_complete
-        forms_complete = request.user.forms_are_complete
+        # Check enrollment requirements
+        meets_requirements, missing_items = request.user.enrollment_requirements_status
         
         # Import here to avoid circular dependency
-        from inclusive_world_portal.portal.models import EnrollmentSettings
+        from inclusive_world_portal.portal.models import EnrollmentSettings, RoleEnrollmentRequirement
         enrollment_settings = EnrollmentSettings.get_settings()
         enrollment_open = enrollment_settings.enrollment_open
         
-        show_form_alert = not forms_complete
+        show_requirements_alert = not meets_requirements
+        
+        # Get required surveys for the user's role
+        required_survey_ids = []
+        try:
+            requirement = RoleEnrollmentRequirement.objects.get(
+                role=request.user.role,
+                is_active=True
+            )
+            required_survey_ids = list(requirement.required_surveys.values_list('id', flat=True))
+        except RoleEnrollmentRequirement.DoesNotExist:
+            pass
         
         context.update({
-            'show_form_completion_alert': show_form_alert,
-            'profile_complete': profile_complete,
-            'survey_complete': survey_complete,
-            'forms_complete': forms_complete,
+            'show_form_completion_alert': show_requirements_alert,
+            'meets_enrollment_requirements': meets_requirements,
+            'missing_enrollment_items': missing_items,
             'enrollment_open': enrollment_open,
+            'required_survey_ids': required_survey_ids,
         })
     
     return context

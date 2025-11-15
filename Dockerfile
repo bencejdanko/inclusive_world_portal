@@ -41,8 +41,8 @@ COPY --from=ghcr.io/astral-sh/uv:latest /uv /uvx /bin/
 # Copy dependency files
 COPY pyproject.toml uv.lock ./
 
-# Install Python dependencies (production only)
-RUN uv sync --frozen --no-install-project --no-dev
+# Install Python dependencies (including dev dependencies for testing/linting)
+RUN uv sync --frozen --no-install-project
 
 # Development stage: Python dependencies with dev packages
 FROM python:3.13-alpine AS development
@@ -95,6 +95,7 @@ RUN apk add --no-cache \
     ttf-dejavu \
     ttf-liberation \
     font-noto \
+    poppler-utils \
     bash \
     curl \
     git
@@ -158,6 +159,8 @@ RUN apk add --no-cache \
     ttf-dejavu \
     ttf-liberation \
     font-noto \
+    # PDF thumbnail generation
+    poppler-utils \
     # Additional utilities
     bash \
     curl
@@ -188,6 +191,22 @@ USER django
 ENV PATH="/app/.venv/bin:$PATH" \
     PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1
+
+# Set build-time environment variables with defaults for collectstatic
+# These can be overridden at build time with --build-arg
+ARG AWS_ACCESS_KEY_ID=minioadmin
+ARG AWS_SECRET_ACCESS_KEY=minioadmin
+ARG AWS_STORAGE_BUCKET_NAME=inclusive-world-media
+ARG AWS_S3_ENDPOINT_URL=http://minio:9000
+ARG AWS_S3_REGION_NAME=us-east-1
+ARG DJANGO_SECRET_KEY=build-time-secret-key-only-for-collectstatic
+
+ENV AWS_ACCESS_KEY_ID=${AWS_ACCESS_KEY_ID} \
+    AWS_SECRET_ACCESS_KEY=${AWS_SECRET_ACCESS_KEY} \
+    AWS_STORAGE_BUCKET_NAME=${AWS_STORAGE_BUCKET_NAME} \
+    AWS_S3_ENDPOINT_URL=${AWS_S3_ENDPOINT_URL} \
+    AWS_S3_REGION_NAME=${AWS_S3_REGION_NAME} \
+    DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY}
 
 # Collect static files
 RUN python manage.py collectstatic --noinput --clear

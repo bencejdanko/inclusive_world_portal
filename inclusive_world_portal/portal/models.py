@@ -174,12 +174,27 @@ class Document(models.Model):
     """
     User documents created with the Quill editor.
     Each user can have multiple documents (e.g., One Page Description, notes, etc.)
+    Managers can create documents for other users.
+    
+    Publishing:
+    - When published, a PDF is generated and saved to S3/MinIO storage
+    - The PDF can be viewed in a framed view (not public, requires login)
+    - Only one PDF per document - regenerated each time you publish
     """
     document_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
     user = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.CASCADE,
-        related_name="documents"
+        related_name="documents",
+        help_text="The user this document belongs to"
+    )
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="documents_created",
+        help_text="Manager/PCM who created this document (null if user created it themselves)"
     )
     title = models.CharField(max_length=255, default="Untitled Document")
     content = models.TextField(blank=True, help_text="HTML content from Quill editor")
@@ -189,6 +204,35 @@ class Document(models.Model):
         default=DocumentState.DRAFT,
         help_text="Current state of the document"
     )
+    source_survey = models.ForeignKey(
+        'survey.Survey',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="generated_documents",
+        help_text="Survey used to auto-generate this document (if applicable)"
+    )
+    published = models.BooleanField(
+        default=False,
+        help_text="Whether this document has a published PDF"
+    )
+    published_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="When the PDF was last generated"
+    )
+    pdf_file = models.FileField(
+        upload_to='documents/pdfs/',
+        null=True,
+        blank=True,
+        help_text="Generated PDF file stored in S3/MinIO"
+    )
+    thumbnail = models.ImageField(
+        upload_to='documents/thumbnails/',
+        null=True,
+        blank=True,
+        help_text="Low-res thumbnail of the document generated during publish"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -196,73 +240,19 @@ class Document(models.Model):
         ordering = ['-updated_at']
         indexes = [
             models.Index(fields=['user', '-updated_at']),
+            models.Index(fields=['created_by']),
+            models.Index(fields=['published']),
         ]
 
     def __str__(self):
         return f"{self.title} - {self.user.username}"
+    
+    def get_pdf_filename(self):
+        """Generate filename for PDF"""
+        from django.utils.text import slugify
+        safe_title = slugify(self.title)
+        return f"{safe_title}_{self.user.username}_{self.document_id}.pdf"
 
-
-class DocumentExport(models.Model):
-    """
-    Tracks PDF exports of documents.
-    Stores the exported PDF file and metadata.
-    Users can have multiple exports and toggle which one is "active".
-    
-    Storage Configuration:
-    - By default, uses Django's default file storage (STORAGES["default"])
-    - For production with S3/MinIO, configure in settings:
-        STORAGES = {
-            "default": {
-                "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
-                "OPTIONS": {
-                    "access_key": env("AWS_ACCESS_KEY_ID"),
-                    "secret_key": env("AWS_SECRET_ACCESS_KEY"),
-                    "bucket_name": env("AWS_STORAGE_BUCKET_NAME"),
-                    "endpoint_url": env("AWS_S3_ENDPOINT_URL"),  # For MinIO
-                    "region_name": env("AWS_S3_REGION_NAME", default="us-east-1"),
-                },
-            },
-        }
-    - Install: pip install django-storages boto3
-    """
-    export_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    user = models.ForeignKey(
-        settings.AUTH_USER_MODEL,
-        on_delete=models.CASCADE,
-        related_name="document_exports"
-    )
-    document = models.ForeignKey(
-        Document,
-        on_delete=models.CASCADE,
-        related_name="exports"
-    )
-    # File stored in media/document_exports/<user_id>/<filename>
-    file = models.FileField(
-        upload_to='document_exports/%Y/%m/%d/',
-        help_text="PDF file of the document export"
-    )
-    is_active = models.BooleanField(
-        default=False,
-        help_text="Whether this is the currently active OPD for the user"
-    )
-    created_at = models.DateTimeField(auto_now_add=True)
-    
-    class Meta:
-        ordering = ['-created_at']
-        indexes = [
-            models.Index(fields=['user', '-created_at']),
-            models.Index(fields=['user', 'is_active']),
-            models.Index(fields=['document', '-created_at']),
-        ]
-    
-    def __str__(self):
-        active_status = " (Active)" if self.is_active else ""
-        return f"{self.document.title} - {self.user.username} - {self.created_at.strftime('%Y-%m-%d %H:%M')}{active_status}"
-    
-    def get_filename(self):
-        """Return a user-friendly filename for download."""
-        import os
-        return os.path.basename(self.file.name)
 
 
 # -------------------------
@@ -316,3 +306,69 @@ class EnrollmentSettings(models.Model):
     def __str__(self):
         status = "OPEN" if self.enrollment_open else "CLOSED"
         return f"Enrollment Settings - {status}"
+
+
+class RoleEnrollmentRequirement(models.Model):
+    """
+    Defines enrollment requirements for specific user roles.
+    Allows managers to configure which surveys and profile completion
+    are required before users of a specific role can register for programs.
+    """
+    requirement_id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    role = models.CharField(
+        max_length=50,
+        choices=UserRoleType.choices,
+        unique=True,
+        help_text="User role this requirement applies to"
+    )
+    required_surveys = models.ManyToManyField(
+        'survey.Survey',
+        blank=True,
+        related_name="enrollment_requirements",
+        help_text="Surveys that must be completed before registration"
+    )
+    require_profile_completion = models.BooleanField(
+        default=True,
+        help_text="Whether profile completion is required for registration"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Whether this requirement is currently enforced"
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+    
+    class Meta:
+        verbose_name = "Role Enrollment Requirement"
+        verbose_name_plural = "Role Enrollment Requirements"
+        ordering = ['role']
+    
+    def __str__(self):
+        return f"Requirements for {self.get_role_display()}"
+    
+    def check_user_meets_requirements(self, user):
+        """
+        Check if a user meets all requirements for their role.
+        Returns (meets_requirements: bool, missing_items: list)
+        """
+        if not self.is_active:
+            return True, []
+        
+        missing = []
+        
+        # Check profile completion
+        if self.require_profile_completion and not user.profile_is_complete:
+            missing.append("Complete your profile")
+        
+        # Check required surveys
+        from survey.models import Response
+        for survey in self.required_surveys.all():
+            # Check if user has completed this survey
+            user_responses = Response.objects.filter(
+                user=user,
+                survey=survey
+            )
+            if not user_responses.exists():
+                missing.append(f"Complete task: {survey.name}")
+        
+        return len(missing) == 0, missing

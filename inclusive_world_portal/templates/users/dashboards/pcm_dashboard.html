@@ -9,7 +9,37 @@
     <div class="card border-0 shadow-sm">
       <div class="card-body">
         <h2 class="h4 mb-3">Person Centered Manager Dashboard</h2>
-        <p class="text-muted mb-0">Your caseload and member progress will appear here.</p>
+        <p class="text-muted mb-3">Your caseload and member progress will appear here.</p>
+        
+        <div class="row mt-4">
+          <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <h5 class="card-title">
+                  <i class="fas fa-users text-primary"></i> User Management
+                </h5>
+                <p class="card-text text-muted">Import multiple users at once from spreadsheets.</p>
+                <a href="{% url 'users:user_import' %}" class="btn btn-primary">
+                  <i class="fas fa-file-import"></i> Import Users
+                </a>
+              </div>
+            </div>
+          </div>
+          
+          <div class="col-md-6 col-lg-4 mb-3">
+            <div class="card border-0 shadow-sm h-100">
+              <div class="card-body">
+                <h5 class="card-title">
+                  <i class="fas fa-file-alt text-success"></i> Documents
+                </h5>
+                <p class="card-text text-muted">Manage user documents and reports.</p>
+                <a href="{% url 'users:document_list' %}" class="btn btn-success">
+                  <i class="fas fa-folder-open"></i> View Documents
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   </div>

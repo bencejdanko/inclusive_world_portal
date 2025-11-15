@@ -1,14 +1,12 @@
 {% extends 'base_portal.html' %}
 {% load i18n %}
 
-{% block title %}Surveys{% endblock %}
+{% block title %}Tasks{% endblock %}
+
+{% block page_title %}Tasks{% endblock page_title %}
 
 {% block content %}
-<div class="">
-  <div class="mb-4">
-    <h2 class="h4 mb-2" style="color: var(--color-brand-black-olive);">Surveys</h2>
-  </div>
-
+<div class="tasks-container">
   {% if messages %}
     {% for message in messages %}
       <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show" role="alert">
@@ -18,89 +16,360 @@
     {% endfor %}
   {% endif %}
 
-  {% if surveys %}
-    <div class="d-flex flex-column gap-2">
-      {% for survey in surveys %}
-        <a href="{{ survey.get_absolute_url }}" class="text-decoration-none">
-          <div class="card survey-card" style="border: 1px solid var(--color-border); transition: all 0.2s ease;">
-            <div class="card-body py-2 px-3">
-              <div class="d-flex align-items-center justify-content-between">
-                <div class="flex-grow-1 me-3">
-                  <h3 class="mb-0 h6 fw-semibold" style="line-height: 1.2; color: var(--color-brand-black-olive);">
-                    {{ survey.name }}
-                  </h3>
-                </div>
-                <div class="d-flex align-items-center gap-2 flex-shrink-0 small">
-                  {% if user.is_authenticated %}
-                    {% with user_responses=survey.responses.all %}
-                      {% if user_responses %}
-                        {% for response in user_responses %}
-                          {% if response.user.id == user.id %}
-                            <span class="badge survey-badge-submitted" title="In Progress - Last updated {{ response.updated|date:'M j, Y' }}">
-                              <i class="bi bi-check-circle-fill"></i>
-                              <span class="d-none d-sm-inline ms-1">{% trans "Submitted" %}</span>
-                            </span>
-                          {% endif %}
-                        {% endfor %}
-                      {% endif %}
-                    {% endwith %}
-                  {% endif %}
-                  {% if survey.expire_date %}
-                    <span class="badge survey-badge-deadline" title="Deadline: {{ survey.expire_date|date:'F j, Y' }}">
-                      <i class="bi bi-calendar-event"></i>
-                      <span class="d-none d-sm-inline ms-1">{{ survey.expire_date|date:"M j" }}</span>
-                    </span>
-                  {% endif %}
-                  {% if survey.need_logged_user %}
-                    <span class="badge survey-badge-auth" title="Login Required">
-                      <i class="bi bi-person-lock"></i>
-                    </span>
-                  {% endif %}
-                  <i class="bi bi-chevron-right" style="color: var(--color-brand-berry);"></i>
-                </div>
-              </div>
+  {% if survey_items %}
+    <!-- Tasks Table with Collapsible Rows -->
+    <div class="tasks-table">
+      <div class="tasks-table-header">
+        <div></div>
+        <div>Task Name</div>
+        <div>Deadline</div>
+        <div>Status</div>
+        <div></div>
+      </div>
+      {% for item in survey_items %}
+        <div class="survey-item">
+          <div class="survey-row" onclick="toggleSurveyDetails(this)">
+            <div class="chevron-icon">
+              <i class="bi bi-chevron-down"></i>
+            </div>
+            <div class="survey-name">
+              {% if item.is_required %}
+                <i class="bi bi-exclamation-circle-fill required-alert-icon"></i>
+              {% endif %}
+              {{ item.name }}
+            </div>
+            <div class="survey-deadline">
+              {% if item.expire_date %}
+                <span class="">
+                  {{ item.expire_date|date:"M j, Y" }}
+                </span>
+              {% else %}
+                <span class="text-muted">No deadline</span>
+              {% endif %}
+            </div>
+            <div class="survey-status">
+              <span class="status-badge {{ item.status_badge_class }}">
+                <i class="bi {{ item.status_badge_icon }} me-1"></i>
+                {% trans item.status_badge_text %}
+              </span>
+            </div>
+            <div class="survey-action">
+              <a href="{{ item.action_url }}" class="btn-take-survey" onclick="event.stopPropagation()">
+                {% trans item.action_text %}
+              </a>
             </div>
           </div>
-        </a>
+          <div class="survey-details">
+            {% if item.description %}
+              <div class="survey-description-section">
+                <h4><i class="bi bi-info-circle"></i> Description</h4>
+                <div class="survey-description-content">
+                  {{ item.description|safe }}
+                </div>
+              </div>
+            {% endif %}
+            <div class="survey-meta">
+              {% if item.need_logged_user %}
+                <div class="meta-item">
+                  <i class="bi bi-person-lock text-info"></i>
+                  <span>Login Required</span>
+                </div>
+              {% endif %}
+              {% if item.last_updated %}
+                <div class="meta-item">
+                  <i class="bi bi-clock-history text-muted"></i>
+                  <span>Last updated: {{ item.last_updated|date:"M j, Y g:i A" }}</span>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+        </div>
       {% endfor %}
     </div>
   {% else %}
-    <div class="alert alert-info" role="alert" style="background: rgba(0, 139, 156, 0.1); border-left: 4px solid var(--color-brand-splashy-aqua); border-color: var(--color-brand-splashy-aqua);">
-      <i class="bi bi-info-circle me-2" style="color: var(--color-brand-splashy-aqua);"></i>
-      <span style="color: var(--color-brand-black-olive);">{% trans "No surveys are currently available for your role." %}</span>
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <i class="bi bi-clipboard-data"></i>
+      </div>
+      <h3 class="empty-state-title">No Tasks Available</h3>
+      <p class="empty-state-text">
+        {% trans "No tasks are currently available for your role." %}
+      </p>
     </div>
   {% endif %}
 </div>
 
 <style>
-  .survey-card {
-    background: var(--color-card-bg);
-    transition: all 0.2s ease;
+  /* Tasks Container */
+  .tasks-container {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  /* Tasks Table */
+  .tasks-table {
+    background: white;
+    border-radius: var(--radius-lg);
     box-shadow: var(--shadow-sm);
+    overflow: hidden;
+    margin-bottom: var(--space-xl);
   }
-  
-  .survey-card:hover {
-    transform: translateY(-2px);
-    box-shadow: var(--shadow-md);
-    border-color: var(--color-brand-berry) !important;
+
+  /* Required Alert Icon */
+  .required-alert-icon {
+    color: #dc2626;
+    margin-right: 0.5rem;
+    font-size: 0.95rem;
   }
-  
-  .survey-badge-submitted {
+
+  .tasks-table-header {
+    display: grid;
+    grid-template-columns: 30px 2fr 180px 150px 140px;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    background: var(--color-brand-blue-peacock);
+    color: white;
+    font-size: 0.85rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+  }
+
+  .survey-item {
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .survey-item:last-child {
+    border-bottom: none;
+  }
+
+  .survey-row {
+    display: grid;
+    grid-template-columns: 30px 2fr 180px 150px 140px;
+    gap: var(--space-md);
+    padding: var(--space-md) var(--space-lg);
+    align-items: center;
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .survey-row:hover {
+    background-color: #f8f9fa;
+  }
+
+  .chevron-icon {
+    color: var(--color-brand-blue-peacock);
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: transform 0.3s ease;
+  }
+
+  .survey-item.expanded .chevron-icon {
+    transform: rotate(180deg);
+  }
+
+  .survey-name {
+    font-weight: 600;
+    color: var(--color-brand-black-olive);
+    font-size: 1rem;
+  }
+
+  .survey-deadline {
+    font-size: 0.9rem;
+  }
+
+
+  .survey-status {
+    font-size: 0.9rem;
+  }
+
+  .status-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.35rem 0.75rem;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    font-size: 0.8rem;
+  }
+
+  .status-badge.completed {
     background: var(--color-badge-light-green);
     color: var(--color-badge-dark-green);
     border: 1px solid var(--color-badge-dark-green);
   }
-  
-  .survey-badge-deadline {
-    background: var(--color-brand-afterglow-yellow);
-    color: var(--color-badge-dark-yellow);
-    border: 1px solid var(--color-badge-dark-yellow);
+
+  .status-badge.incomplete {
+    background: #e2e3e5;
+    color: #6c757d;
+    border: 1px solid #6c757d;
   }
-  
-  .survey-badge-auth {
-    background: var(--color-brand-splashy-aqua);
+
+  .survey-action {
+    text-align: right;
+  }
+
+  .btn-take-survey {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    background: var(--color-brand-berry);
     color: white;
-    border: 1px solid var(--color-brand-blue-peacock);
+    border: none;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    font-size: 0.85rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    cursor: pointer;
+  }
+
+  .btn-take-survey:hover {
+    background: var(--color-dark-berry);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+  }
+
+  /* Expandable survey details section */
+  .survey-details {
+    display: none;
+    padding: var(--space-lg);
+    background-color: #f8f9fa;
+    border-top: 1px solid var(--color-border);
+    animation: slideDown 0.3s ease-out;
+  }
+
+  .survey-details.expanded {
+    display: block;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .survey-description-section {
+    margin-bottom: var(--space-md);
+    padding-bottom: var(--space-md);
+    border-bottom: 1px solid var(--color-border);
+  }
+
+  .survey-description-section h4 {
+    margin-top: 0;
+    margin-bottom: var(--space-sm);
+    color: var(--color-brand-blue-peacock);
+    font-size: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  .survey-description-content {
+    color: var(--color-brand-black-olive);
+    line-height: 1.6;
+    font-size: 0.95rem;
+  }
+
+  .survey-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-md);
+    font-size: 0.85rem;
+    color: var(--color-muted-foreground);
+  }
+
+  .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  /* Empty State */
+  .empty-state {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    text-align: center;
+    box-shadow: var(--shadow-md);
+  }
+
+  .empty-state-icon {
+    font-size: 4rem;
+    color: var(--color-muted);
+    margin-bottom: var(--space-lg);
+  }
+
+  .empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    margin-bottom: var(--space-sm);
+  }
+
+  .empty-state-text {
+    color: var(--color-muted-foreground);
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .tasks-table-header,
+    .survey-row {
+      grid-template-columns: 24px 1fr 100px;
+      gap: var(--space-sm);
+      padding: var(--space-sm) var(--space-md);
+    }
+
+    .tasks-table-header div:nth-child(3),
+    .tasks-table-header div:nth-child(4),
+    .survey-row .survey-deadline,
+    .survey-row .survey-status {
+      display: none;
+    }
+
+    .survey-action {
+      grid-column: 3;
+    }
+
+    .survey-details {
+      padding: var(--space-md);
+    }
   }
 </style>
+
+<script>
+function toggleSurveyDetails(rowElement) {
+  const surveyItem = rowElement.parentElement;
+  const detailsElement = surveyItem.querySelector('.survey-details');
+  
+  // Toggle expansion
+  const isExpanded = surveyItem.classList.contains('expanded');
+  
+  // Close all other open details
+  document.querySelectorAll('.survey-item.expanded').forEach(item => {
+    if (item !== surveyItem) {
+      item.classList.remove('expanded');
+      item.querySelector('.survey-details').classList.remove('expanded');
+    }
+  });
+  
+  // Toggle current survey
+  if (!isExpanded) {
+    surveyItem.classList.add('expanded');
+    detailsElement.classList.add('expanded');
+  } else {
+    surveyItem.classList.remove('expanded');
+    detailsElement.classList.remove('expanded');
+  }
+}
+</script>
 {% endblock %}

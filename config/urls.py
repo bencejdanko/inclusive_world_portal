@@ -6,6 +6,7 @@ from django.urls import path
 from django.views import defaults as default_views
 from django.views.generic import RedirectView
 from inclusive_world_portal.payments import views as pay
+from inclusive_world_portal.portal import survey_views
 
 urlpatterns = [
     path("", RedirectView.as_view(pattern_name='users:dashboard', permanent=False), name="home"),
@@ -19,7 +20,10 @@ urlpatterns = [
     # Portal - Programs and Enrollment
     path("portal/", include("inclusive_world_portal.portal.urls", namespace="portal")),
     
-    # Django Survey - Survey creation and taking
+    # Custom survey list view (overrides django-survey default)
+    path("surveys/", survey_views.survey_list_view, name="survey-list"),
+    
+    # Django Survey - Survey creation and taking (other URLs)
     path("surveys/", include("survey.urls")),
     
     # Your stuff: custom urls includes go here

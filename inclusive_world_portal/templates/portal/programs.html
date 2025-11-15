@@ -1,0 +1,140 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}Programs{% endblock %}
+
+{% block page_title %}Programs{% endblock page_title %}
+
+{% block css %}
+{{ block.super }}
+<style>
+  /* Page-specific container */
+  .programs-container {
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: var(--space-md);
+  }
+
+  /* Empty State */
+  .empty-state {
+    background: white;
+    border-radius: var(--radius-xl);
+    padding: var(--space-xl);
+    text-align: center;
+    box-shadow: var(--shadow-md);
+    margin-bottom: var(--space-xl);
+  }
+
+  .empty-state-icon {
+    font-size: 4rem;
+    color: var(--color-muted);
+    margin-bottom: var(--space-lg);
+  }
+
+  .empty-state-title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    margin-bottom: var(--space-sm);
+  }
+
+  .empty-state-text {
+    color: var(--color-muted-foreground);
+    margin-bottom: var(--space-lg);
+  }
+
+  .btn-primary-action {
+    background: var(--color-brand-berry);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-lg);
+    border: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-sm);
+    text-decoration: none;
+  }
+
+  .btn-primary-action:hover {
+    background: var(--color-dark-berry);
+    transform: translateY(-2px);
+    color: white;
+  }
+
+  /* Responsive adjustments */
+  @media (max-width: 768px) {
+    .programs-container {
+      padding: var(--space-sm);
+    }
+  }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="programs-container">
+  {% if has_management_access %}
+    {# Management View: Show programs with management capabilities #}
+    {% if has_programs %}
+      {% if not is_full_manager %}
+        <h2 style="color: var(--color-brand-blue-peacock); margin-bottom: var(--space-lg); font-size: 1.25rem; font-weight: 700;">⭐ Lead</h2>
+      {% endif %}
+      {% include "portal/_programs_management_table.html" with program_data=program_data users_with_active_opd=users_with_active_opd is_manager=is_manager %}
+    {% else %}
+      <!-- Empty State -->
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <i class="bi bi-inbox"></i>
+        </div>
+        <h3 class="empty-state-title">No Programs Yet</h3>
+        <p class="empty-state-text">
+          {% if is_full_manager %}
+            No programs exist yet. Click the Add Program button to create your first program.
+          {% else %}
+            You are not leading any programs yet.
+          {% endif %}
+        </p>
+      </div>
+
+      {% if is_manager %}
+      <!-- Floating Add Button -->
+      <div class="add-button-container">
+        <a href="{% url 'portal:program_create' %}" class="btn-add">
+          <i class="bi bi-plus-circle"></i>
+          <span>Add Program</span>
+        </a>
+      </div>
+      {% endif %}
+    {% endif %}
+
+    {# For volunteer program leads (non-full-managers), also show their regular enrollments #}
+    {% if not is_full_manager and has_regular_enrollments %}
+      <hr />
+      {% include "portal/_programs_table.html" with enrollments=regular_enrollments enrollment_statuses=enrollment_statuses %}
+    {% endif %}
+
+  {% else %}
+    {# Regular User View: Show only their enrollments #}
+    {% if has_enrollments %}
+      {% include "portal/_programs_table.html" with enrollments=enrollments enrollment_statuses=enrollment_statuses %}
+    {% else %}
+      <!-- Empty State -->
+      <div class="empty-state">
+        <div class="empty-state-icon">
+          <i class="bi bi-inbox"></i>
+        </div>
+        <h3 class="empty-state-title">No Programs Yet</h3>
+        <p class="empty-state-text">
+          You haven't enrolled in any programs yet. Browse our available programs to get started!
+        </p>
+        <a href="{% url 'portal:program_catalog' %}" class="btn-primary-action">
+          <i class="bi bi-grid-3x3-gap"></i>
+          Browse Programs
+        </a>
+      </div>
+    {% endif %}
+  {% endif %}
+</div>
+{% endblock %}

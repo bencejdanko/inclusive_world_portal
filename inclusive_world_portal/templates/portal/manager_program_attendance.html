@@ -500,7 +500,7 @@
 
 {% block content %}
 <div class="attendance-container">
-  <a href="{% url 'portal:manager_program_attendance' program.program_id %}" class="back-button">
+  <a href="{% url 'portal:program_attendance' program.program_id %}" class="back-button">
     <i class="bi bi-arrow-left"></i>
     <span>Back to Attendance List</span>
   </a>
@@ -673,7 +673,7 @@
     <!-- Action Buttons -->
     {% if participants %}
       <div class="action-buttons">
-        <a href="{% url 'portal:manager_program_attendance' program.program_id %}" class="btn-cancel">Cancel</a>
+        <a href="{% url 'portal:program_attendance' program.program_id %}" class="btn-cancel">Cancel</a>
         <button type="submit" class="btn-save">
           <i class="bi bi-check-circle"></i>
           Save Attendance

@@ -2,9 +2,9 @@
 {% load static %}
 {% load portal_tags %}
 
-{% block title %}All Members{% endblock %}
+{% block title %}Members{% endblock %}
 
-{% block page_title %}All Members{% endblock page_title %}
+{% block page_title %}Members{% endblock page_title %}
 
 {% block css %}
 {{ block.super }}
@@ -170,6 +170,10 @@
     letter-spacing: 0.5px;
   }
 
+  .members-table-header.with-buddy {
+    grid-template-columns: 30px 2fr 120px 150px 120px;
+  }
+
   .member-item {
     border-bottom: 1px solid var(--color-border);
   }
@@ -213,6 +217,10 @@
     transition: background-color 0.2s ease;
     cursor: pointer;
     user-select: none;
+  }
+
+  .member-row.with-buddy {
+    grid-template-columns: 30px 2fr 120px 150px 120px;
   }
 
   .member-row:hover {
@@ -321,6 +329,28 @@
     background: #e2e3e5;
     color: #383d41;
     border-color: #6c757d;
+  }
+
+  .buddy-select-inline {
+    padding: 0.3rem 0.6rem;
+    border: 2px solid var(--color-muted);
+    border-radius: var(--radius-lg);
+    font-size: 0.75rem;
+    font-weight: 600;
+    cursor: pointer;
+    background: white;
+    transition: all 0.2s ease;
+    width: 100%;
+  }
+
+  .buddy-select-inline:focus {
+    outline: none;
+    border-color: var(--color-brand-blue-peacock);
+  }
+
+  .buddy-select-inline:disabled {
+    cursor: not-allowed;
+    opacity: 0.9;
   }
 
   /* OPD Badge */
@@ -508,6 +538,11 @@
       padding: var(--space-sm) var(--space-md);
     }
 
+    .members-table-header.with-buddy,
+    .member-row.with-buddy {
+      grid-template-columns: 24px 2fr 90px 120px 90px;
+    }
+
     .member-details {
       padding: var(--space-md);
     }
@@ -553,15 +588,18 @@
   {% if members %}
     <!-- Members Table with Collapsible Rows -->
     <div class="members-table">
-      <div class="members-table-header">
+      <div class="members-table-header {% if course_filter and can_edit_buddy %}with-buddy{% endif %}">
         <div></div>
         <div>Member Name</div>
         <div>{% if course_filter %}Enrollment Status{% else %}Member Since{% endif %}</div>
+        {% if course_filter and can_edit_buddy %}
+          <div>Buddy</div>
+        {% endif %}
         <div>Status</div>
       </div>
       {% for member in members %}
         <div class="member-item">
-          <div class="member-row" onclick="toggleMemberDetails(this)">
+          <div class="member-row {% if course_filter and can_edit_buddy %}with-buddy{% endif %}" onclick="toggleMemberDetails(this)">
             <div class="chevron-icon">
               <i class="bi bi-chevron-down"></i>
             </div>
@@ -573,11 +611,7 @@
                   @{{ member.username }}
                 {% endif %}
               </a>
-              {% if member.id in users_with_active_opd %}
-                <a href="{% url 'users:view_active_opd_for_user' member.username %}" class="opd-badge active" onclick="event.stopPropagation()">OPD</a>
-              {% else %}
-                <a href="{% url 'users:view_active_opd_for_user' member.username %}" class="opd-badge inactive" onclick="event.stopPropagation()">OPD</a>
-              {% endif %}
+              <a href="{% url 'users:document_list' %}?user={{ member.username }}" class="opd-badge" onclick="event.stopPropagation()" title="View documents">Docs</a>
             </div>
             <div class="member-date">
               {% if course_filter %}
@@ -608,6 +642,33 @@
                 {{ member.date_joined|date:"M d, Y" }}
               {% endif %}
             </div>
+            {% if course_filter and can_edit_buddy %}
+              <div onclick="event.stopPropagation()">
+                {% with enrollment=course_enrollments|get_item:member.id %}
+                  {% if enrollment %}
+                    <form method="post" onchange="this.submit()">
+                      {% csrf_token %}
+                      <input type="hidden" name="action" value="assign_buddy">
+                      <input type="hidden" name="member_id" value="{{ member.id }}">
+                      <input type="hidden" name="enrollment_id" value="{{ enrollment.enrollment_id }}">
+                      <input type="hidden" name="course_filter" value="{{ course_filter }}">
+                      <select name="volunteer_id" class="buddy-select-inline">
+                        <option value="">No Buddy</option>
+                        {% get_buddy_for_member buddy_map course_filter member.id as assigned_buddy_id %}
+                        {% with program_id_str=course_filter|stringformat:"s" %}
+                          {% for volunteer in program_volunteers|get_item:program_id_str %}
+                            <option value="{{ volunteer.id }}" 
+                                    {% if assigned_buddy_id == volunteer.id %}selected{% endif %}>
+                              {{ volunteer.name|default:volunteer.username }}
+                            </option>
+                          {% endfor %}
+                        {% endwith %}
+                      </select>
+                    </form>
+                  {% endif %}
+                {% endwith %}
+              </div>
+            {% endif %}
             <div>
               {% if can_edit %}
                 <form method="post" onchange="this.submit()" onclick="event.stopPropagation()">
@@ -634,7 +695,7 @@
             <!-- Support Needs Section -->
             <div class="support-needs-section">
               <h4><i class="bi bi-heart-pulse"></i> Support Needs</h4>
-              {% if can_edit %}
+              {% if can_edit_support_needs %}
                 <form method="post" class="support-needs-form">
                   {% csrf_token %}
                   <input type="hidden" name="action" value="update_support_needs">
@@ -670,7 +731,7 @@
 
             <!-- Program Enrollments Section -->
             <h4><i class="bi bi-grid-3x3-gap"></i> Program Enrollments</h4>
-            {% include "portal/_programs_table.html" with enrollments=member.enrollments.all can_edit=can_edit enrollment_statuses=enrollment_statuses program_volunteers=program_volunteers buddy_map=buddy_map enrollment_user_role=enrollment_user_role %}
+            {% include "portal/_programs_table.html" with enrollments=member.enrollments.all can_edit=can_edit can_edit_buddy=can_edit_buddy enrollment_statuses=enrollment_statuses program_volunteers=program_volunteers buddy_map=buddy_map enrollment_user_role=enrollment_user_role %}
           </div>
         </div>
       {% endfor %}
@@ -678,7 +739,7 @@
       <!-- Add Member Row (only shown when filtering and user is manager) -->
       {% if course_filter and can_edit %}
         <div class="member-item add-member-row">
-          <a href="{% url 'portal:manager_program_add_user' course_filter %}?next=all_members">
+          <a href="{% url 'portal:program_add_user' course_filter %}?next=all_members">
             <i class="bi bi-plus-circle"></i> Add Member
           </a>
         </div>

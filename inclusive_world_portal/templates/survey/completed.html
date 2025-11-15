@@ -1,0 +1,36 @@
+{% extends 'survey/base.html' %}
+{% load i18n %}
+
+{% block title %}{% trans "Task completed" %}{% endblock title %}
+
+{% block page_title %}{% trans "Task Completed" %}{% endblock page_title %}
+
+{% block content %}
+<div class="survey-container">
+  <div class="text-center py-4">
+    <div class="mb-4">
+      <i class="bi bi-clipboard-check-fill" style="font-size: 4rem; color: var(--color-brand-splashy-aqua);"></i>
+    </div>
+    
+    <h2 class="mb-3" style="color: var(--color-brand-black-olive);">{% trans "Task Already Completed" %}</h2>
+    
+    <div class="alert alert-info mb-4" style="background: rgba(0, 139, 156, 0.1); border-left: 4px solid var(--color-brand-splashy-aqua); border-color: var(--color-brand-splashy-aqua);">
+      <i class="bi bi-info-circle me-2" style="color: var(--color-brand-splashy-aqua);"></i>
+      <span style="color: var(--color-brand-black-olive);">
+        {% trans "You have already completed" %} <strong>"{{ survey.name }}"</strong>.
+      </span>
+    </div>
+    
+    <a href="{% url 'survey-list' %}" class="btn btn-lg" style="background-color: var(--color-brand-berry); color: white; border: none; padding: 12px 32px; border-radius: 8px; font-weight: 500; text-decoration: none; display: inline-block;">
+      <i class="bi bi-arrow-left-circle me-2"></i>{% trans "Back to Tasks" %}
+    </a>
+  </div>
+</div>
+
+<style>
+  .survey-container {
+    max-width: 700px;
+    margin: 0 auto;
+  }
+</style>
+{% endblock %}

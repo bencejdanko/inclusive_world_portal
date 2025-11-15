@@ -410,11 +410,7 @@
                     <a href="{% url 'users:detail' lead.volunteer.username %}" class="lead-link">
                       {{ lead.volunteer.name|default:lead.volunteer.username }}
                     </a>
-                    {% if lead.volunteer.id in users_with_active_opd %}
-                      <a href="{% url 'users:view_active_opd_for_user' lead.volunteer.username %}" class="opd-badge active">OPD</a>
-                    {% else %}
-                      <a href="{% url 'users:view_active_opd_for_user' lead.volunteer.username %}" class="opd-badge inactive">OPD</a>
-                    {% endif %}{% if not forloop.last %},{% endif %}
+                    <a href="{% url 'users:document_list' %}?user={{ lead.volunteer.username }}" class="opd-badge" title="View documents">Docs</a>{% if not forloop.last %},{% endif %}
                   </span>
                 {% endfor %}
               {% else %}
@@ -484,13 +480,13 @@
               {% endif %}
             </div>
             <div class="program-actions">
-              <a href="{% url 'portal:manager_program_edit' program.program_id %}" class="btn-edit-program">
+              <a href="{% url 'portal:program_edit' program.program_id %}" class="btn-edit-program">
                 <i class="bi bi-pencil-fill"></i>Edit
               </a>
               <a href="{% url 'portal:all_members' %}?course={{ program.program_id }}" class="btn-people-program">
                 <i class="bi bi-people-fill"></i>People
               </a>
-              <a href="{% url 'portal:manager_program_attendance' program.program_id %}" class="btn-attendance-program">
+              <a href="{% url 'portal:program_attendance' program.program_id %}" class="btn-attendance-program">
                 <i class="bi bi-calendar-check"></i>Attendance
               </a>
             </div>
@@ -515,7 +511,7 @@
 
 <!-- Floating Add Button -->
 <div class="add-button-container">
-  <a href="{% url 'portal:manager_program_create' %}" class="btn-add">
+  <a href="{% url 'portal:program_create' %}" class="btn-add">
     <i class="bi bi-plus-circle"></i>
     <span>Add Program</span>
   </a>

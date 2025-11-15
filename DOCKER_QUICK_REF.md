@@ -3,25 +3,30 @@
 ## 🚀 Quick Start
 
 ```bash
-# Start development environment
-docker-compose up -d
+# 🔥 NUCLEAR START: Fresh environment, clean DB, auto-migrate
+make up
+
+# Create your superuser
+make superuser
 
 # View logs
-docker-compose logs -f django
+make logs-django
 
-# Stop services
-docker-compose down
+# Stop services (keeps data)
+make down
 ```
 
 ## 📋 Common Commands
 
 ### Service Management
 ```bash
-make up              # Start all services
-make down            # Stop all services
+make up              # 🔥 NUCLEAR: Destroy all data, rebuild, start fresh, migrate
+make start           # Start services (keeps existing data)
+make down            # Stop all services (keeps volumes)
 make restart         # Restart all services
 make logs            # View all logs
 make logs-django     # View Django logs only
+make logs-postgres   # View Postgres logs only
 make ps              # Show running containers
 ```
 
@@ -46,18 +51,6 @@ make migrate         # Apply migrations
 make rebuild         # Rebuild and restart
 make clean           # Stop and remove containers
 make clean-volumes   # ⚠️ Remove containers AND data
-```
-
-## 🏭 Production
-
-```bash
-# Start production
-docker-compose -f docker-compose.prod.yml up -d
-
-# Or use makefile
-make prod-up
-make prod-logs
-make prod-down
 ```
 
 ## 🔧 Management Commands
@@ -127,7 +120,6 @@ docker-compose exec -u root django bash
 ├── Dockerfile                      # Multi-stage build
 ├── docker-compose.yml              # Base configuration
 ├── docker-compose.override.yml     # Dev overrides
-├── docker-compose.prod.yml         # Production config
 ├── .dockerignore                   # Build exclusions
 ├── .env.docker                     # Environment vars
 ├── .env.docker.example             # Template
@@ -136,7 +128,6 @@ docker-compose exec -u root django bash
 │       └── django/
 │           └── entrypoint          # Startup script
 ├── Makefile                        # Convenience commands
-└── DOCKER.md                       # Full documentation
 ```
 
 ## 🔐 Security Checklist
@@ -152,9 +143,12 @@ docker-compose exec -u root django bash
 
 ## 🌐 Access URLs
 
-- **Django**: http://localhost:8000
-- **Admin**: http://localhost:8000/admin/
-- **Flower** (if enabled): http://localhost:5555
+- **Nginx Proxy**: http://localhost:8080 (unified entry point)
+  - Django app: http://localhost:8080/
+  - Admin: http://localhost:8080/admin/
+  - Media files: http://localhost:8080/media/
+- **Django (direct)**: http://localhost:8000
+- **MinIO Console**: http://localhost:9001
 
 ## 📦 Volumes
 
@@ -174,6 +168,3 @@ Persistent data stored in:
 5. **Backups**: Regular database backups essential
 6. **Resources**: Monitor with `docker stats`
 
-## 📚 More Info
-
-See `DOCKER.md` for comprehensive documentation.

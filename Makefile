@@ -9,17 +9,47 @@ help: ## Show this help message
 build: ## Build Docker images
 	docker-compose build
 
-up: ## Start all services in detached mode
+up:
+	docker-compose down --remove-orphans
+	docker volume rm inclusive_world_portal_postgres_data || true
+	docker volume rm inclusive_world_portal_redis_data || true
+	docker volume rm inclusive_world_portal_minio_data || true
+	docker volume rm inclusive_world_portal_static_volume || true
+	docker volume rm inclusive_world_portal_media_volume || true
+	docker volume rm inclusive_world_portal_celerybeat_schedule || true
+	@echo "🗑️  Deleting old migrations..."
+	rm -f inclusive_world_portal/portal/migrations/0*.py
+	rm -f inclusive_world_portal/users/migrations/0*.py
+	rm -f inclusive_world_portal/payments/migrations/0*.py
+	@echo "All volumes and migrations removed"
+	docker-compose build
+	docker-compose up -d postgres redis minio
+	@echo "⏳ Waiting for postgres to be ready..."
+	@sleep 10
+	docker-compose up -d django
+	@echo "⏳ Waiting for Django to be ready..."
+	@sleep 10
+	@echo "🔄 Generating fresh migrations..."
+	docker-compose exec -u root django python manage.py makemigrations || (echo "❌ Failed to generate migrations" && exit 1)
+	@echo "🔄 Running migrations..."
+	docker-compose exec django python manage.py migrate --noinput || (echo "❌ Failed to run migrations" && exit 1)
 	docker-compose up -d
+	@echo "✅ Fresh environment ready! Create superuser with: make superuser"
 
-down: ## Stop all services
+down: ## Stop all services (keeps volumes)
 	docker-compose down
+
+start: ## Start services without destroying data (use when 'up' already run once)
+	docker-compose up -d
 
 logs: ## View logs from all services
 	docker-compose logs -f
 
 logs-django: ## View Django logs only
 	docker-compose logs -f django
+
+logs-postgres: ## View Postgres logs only
+	docker-compose logs -f postgres
 
 restart: ## Restart all services
 	docker-compose restart
@@ -40,7 +70,7 @@ migrate: ## Run database migrations
 	docker-compose exec django python manage.py migrate
 
 makemigrations: ## Create new migrations
-	docker-compose exec django python manage.py makemigrations
+	docker-compose exec -u root django python manage.py makemigrations
 
 makemigrations-root: ## Create new migrations as root (for packages that need write access)
 	docker-compose exec -u root django python manage.py makemigrations
@@ -74,19 +104,14 @@ prune: ## Remove all unused Docker resources
 ps: ## Show running containers
 	docker-compose ps
 
-rebuild: down build up ## Rebuild and restart all services
+debug-env: ## Show environment variables being used
+	@echo "=== Environment from .env.docker ==="
+	@grep -E "POSTGRES_|DATABASE_URL" .env.docker || echo "No postgres vars in .env.docker"
+	@echo ""
+	@echo "=== Postgres container environment ==="
+	@docker-compose exec postgres env | grep POSTGRES || echo "Postgres not running"
+	@echo ""
+	@echo "=== Django container environment ==="
+	@docker-compose exec django env | grep -E "POSTGRES_|DATABASE_URL" || echo "Django not running"
 
-prod-up: ## Start services in production mode
-	docker-compose -f docker-compose.yml up -d
-
-prod-logs: ## View production logs
-	docker-compose -f docker-compose.yml logs -f
-
-prod-down: ## Stop production services
-	docker-compose -f docker-compose.yml down
-
-dev-up: up ## Alias for up (development mode)
-
-dev-logs: logs ## Alias for logs (development mode)
-
-dev-down: down ## Alias for down (development mode)
+rebuild: up ## Alias for 'up' (nuclear rebuild)

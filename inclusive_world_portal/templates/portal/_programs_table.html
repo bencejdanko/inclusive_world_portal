@@ -1,11 +1,12 @@
 {% load portal_tags %}
 {% comment %}
 Reusable Programs Table Partial
-Usage: {% include "portal/_programs_table.html" with enrollments=user.enrollments.all can_edit=can_edit %}
+Usage: {% include "portal/_programs_table.html" with enrollments=user.enrollments.all can_edit=can_edit can_edit_buddy=can_edit_buddy %}
 Parameters:
   - enrollments: queryset of Enrollment objects with prefetched program data
   - empty_message: (optional) custom message when no enrollments exist
-  - can_edit: (optional) boolean - whether current user can edit (managers only)
+  - can_edit: (optional) boolean - whether current user can edit enrollment status (managers only)
+  - can_edit_buddy: (optional) boolean - whether current user can edit buddy assignments (managers, PCMs, volunteer leads)
   - program_volunteers: (optional) dict mapping program_id to list of volunteers
   - buddy_map: (optional) dict mapping member_id to volunteer_id for buddy assignments
 {% endcomment %}
@@ -268,18 +269,19 @@ Parameters:
 
 {% if enrollments %}
   <div class="program-table">
-    <div class="program-table-header {% if can_edit and enrollment_user_role == 'member' %}with-buddy{% endif %}">
+    {# Use can_edit_buddy if available, otherwise fall back to can_edit for backward compatibility #}
+    <div class="program-table-header {% if can_edit_buddy|default:can_edit and enrollment_user_role == 'member' %}with-buddy{% endif %}">
       <div></div>
       <div>Program Name</div>
       <div>Status</div>
-      {% if can_edit and enrollment_user_role == 'member' %}
+      {% if can_edit_buddy|default:can_edit and enrollment_user_role == 'member' %}
         <div>Buddy</div>
       {% endif %}
       <div></div>
     </div>
     {% for enrollment in enrollments %}
       <div class="program-item">
-        <div class="program-row {% if can_edit and enrollment.user.role == 'member' %}with-buddy{% endif %}" onclick="toggleProgramDetails(this)">
+        <div class="program-row {% if can_edit_buddy|default:can_edit and enrollment.user.role == 'member' %}with-buddy{% endif %}" onclick="toggleProgramDetails(this)">
           <div class="chevron-icon">
             <i class="bi bi-chevron-down"></i>
           </div>
@@ -308,7 +310,7 @@ Parameters:
               </select>
             {% endif %}
           </div>
-          {% if can_edit and enrollment.user.role == 'member' %}
+          {% if can_edit_buddy|default:can_edit and enrollment.user.role == 'member' %}
             <div onclick="event.stopPropagation()">
               <form method="post" style="display: inline;" onchange="this.submit()">
                 {% csrf_token %}

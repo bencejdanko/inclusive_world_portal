@@ -4,18 +4,13 @@ from .views import user_detail_view
 from .views import user_redirect_view
 from .views import user_update_view
 from .document_views import (
-    document_editor_view, 
-    export_document_pdf, 
+    document_list_view,
+    document_editor_view,
     autogenerate_document_from_survey,
-    preview_document_export,
-    preview_document_export_pdf,
-    download_document_export,
-    delete_document_export,
-    toggle_active_export,
-    view_active_opd,
-)
-from .survey_views import (
-    SurveyFormView,
+    toggle_document_publish,
+    view_published_document,
+    serve_document_pdf,
+    delete_document,
 )
 from .dashboard_views import (
     dashboard_view,
@@ -23,6 +18,10 @@ from .dashboard_views import (
     volunteer_dashboard_view,
     pcm_dashboard_view,
     manager_dashboard_view,
+)
+from .import_views import (
+    user_import_view,
+    process_user_import,
 )
 from .notification_views import (
     notification_list_view,
@@ -64,25 +63,21 @@ urlpatterns = [
     path("api/notifications/unread-count/", notification_api_unread_count, name="api_notification_unread_count"),
     path("api/notifications/unread-list/", notification_api_unread_list, name="api_notification_unread_list"),
     
-    # Document Editor
+    # Document Management
+    path("documents/", view=document_list_view, name="document_list"),
     path("documents/editor/", view=document_editor_view, name="document_editor"),
-    path("documents/export-pdf/", view=export_document_pdf, name="export_document_pdf"),
     path("documents/autogenerate/", view=autogenerate_document_from_survey, name="autogenerate_document"),
+    path("documents/delete/<uuid:document_id>/", view=delete_document, name="delete_document"),
+    path("documents/toggle-publish/<uuid:document_id>/", view=toggle_document_publish, name="toggle_document_publish"),
     
-    # Document Export Management
-    path("documents/exports/<uuid:export_id>/preview/", view=preview_document_export, name="preview_document_export"),
-    path("documents/exports/<uuid:export_id>/preview/pdf/", view=preview_document_export_pdf, name="preview_document_export_pdf"),
-    path("documents/exports/<uuid:export_id>/download/", view=download_document_export, name="download_document_export"),
-    path("documents/exports/<uuid:export_id>/delete/", view=delete_document_export, name="delete_document_export"),
-    path("documents/exports/<uuid:export_id>/toggle-active/", view=toggle_active_export, name="toggle_active_export"),
+    # Document Viewing (requires login)
+    path("documents/view/<uuid:document_id>/", view=view_published_document, name="view_published_document"),
+    path("documents/pdf/<uuid:document_id>/", view=serve_document_pdf, name="serve_document_pdf"),
     
-    # View Active OPD
-    path("documents/opd/", view=view_active_opd, name="view_active_opd"),
-    path("documents/opd/<str:username>/", view=view_active_opd, name="view_active_opd_for_user"),
-    
-    # Discovery Survey URL
-    path("survey/form/", SurveyFormView.as_view(), name="survey_form"),
-    
+    # User Import (manager only)
+    path("import/", view=user_import_view, name="user_import"),
+    path("import/process/", view=process_user_import, name="process_user_import"),
+        
     # User detail (must be last as it's a catch-all pattern)
     path("<str:username>/", view=user_detail_view, name="detail"),
 ]

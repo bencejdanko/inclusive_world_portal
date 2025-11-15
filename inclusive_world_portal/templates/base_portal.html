@@ -127,6 +127,10 @@
 
         <!-- Logout at Bottom -->
         <div class="sidebar-footer">
+          <a href="{% url 'portal:howto_index' %}" class="nav-link">
+            <i class="bi bi-book"></i>
+            <span>{% translate "How To" %}</span>
+          </a>
           <a href="{% url 'account_logout' %}" class="logout-link">
             <i class="bi bi-box-arrow-right"></i>
             <span>{% translate "Logout" %}</span>
@@ -144,25 +148,27 @@
           <div class="top-banner-alerts">
             <div class="top-banner-alert top-banner-alert-warning">
               <div class="top-banner-alert-content">
-                <i class="bi bi-exclamation-triangle-fill top-banner-alert-icon"></i>
                 <div class="top-banner-alert-text">
-                  <strong>Action Required:</strong>
-                  <span>Complete your profile and discovery questions to register for programs.</span>
+                  <div class="">
+                    <strong>Registration Requirements Incomplete</strong>
+                    <p>You must complete the following before registering for programs:</p>
+                  </div>
+                  <ul>
+                    {% for item in missing_enrollment_items %}
+                      <li>{{ item }}</li>
+                    {% endfor %}
+                  </ul>
                 </div>
               </div>
               <div class="top-banner-alert-actions">
-                {% if not profile_complete %}
-                  <a href="{% url 'users:detail' user.username %}" class="top-banner-btn top-banner-btn-warning">
-                    <i class="bi bi-person-circle"></i>
-                    Complete Profile
-                  </a>
-                {% endif %}
-                {% if not survey_complete %}
-                  <a href="{% url 'users:survey_form' %}" class="top-banner-btn top-banner-btn-warning">
-                    <i class="bi bi-clipboard-check"></i>
-                    Complete Survey
-                  </a>
-                {% endif %}
+                <a href="{% url 'users:detail' user.username %}" class="top-banner-btn top-banner-btn-warning">
+                  <i class="bi bi-person-circle"></i>
+                  View Profile
+                </a>
+                <a href="/surveys" class="top-banner-btn top-banner-btn-warning">
+                  <i class="bi bi-clipboard-check"></i>
+                  View Tasks
+                </a>
               </div>
             </div>
           </div>

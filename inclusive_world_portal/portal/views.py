@@ -20,17 +20,18 @@ stripe.api_key = settings.STRIPE_SECRET_KEY if hasattr(settings, 'STRIPE_SECRET_
 def program_catalog_view(request):
     """
     Display catalog of available programs for enrollment.
-    Only accessible to users with complete profile and survey, and when enrollment is open.
+    Only accessible to users who meet enrollment requirements and when enrollment is open.
     """
     enrollment_settings = EnrollmentSettings.get_settings()
     
-    # Check if forms are complete
-    if not request.user.forms_are_complete:
+    # Check if user meets enrollment requirements
+    meets_requirements, missing_items = request.user.enrollment_requirements_status
+    if not meets_requirements:
         messages.warning(
             request,
-            "Please complete your profile and discovery questions before browsing programs."
+            f"Please complete the following before browsing programs: {', '.join(missing_items)}"
         )
-        return redirect('users:survey_form')
+        return redirect('users:detail', username=request.user.username)
     
     # Check if enrollment is open
     if not enrollment_settings.enrollment_open:
@@ -98,13 +99,14 @@ def program_selection_view(request):
     """
     enrollment_settings = EnrollmentSettings.get_settings()
     
-    # Check forms completion
-    if not request.user.forms_are_complete:
+    # Check if user meets enrollment requirements
+    meets_requirements, missing_items = request.user.enrollment_requirements_status
+    if not meets_requirements:
         messages.warning(
             request,
-            "Please complete your profile and discovery questions before enrolling in programs."
+            f"Please complete the following before enrolling: {', '.join(missing_items)}"
         )
-        return redirect('users:survey_form')
+        return redirect('users:detail', username=request.user.username)
     
     # Check if enrollment is open
     if not enrollment_settings.enrollment_open:
@@ -183,10 +185,13 @@ def checkout_view(request):
     """
     enrollment_settings = EnrollmentSettings.get_settings()
     
-    # Check forms completion
-    if not request.user.forms_are_complete:
-        messages.warning(request, "Please complete your profile and discovery questions first.")
-        return redirect('users:survey_form')
+    # Check enrollment requirements
+    meets_requirements, missing_items = request.user.enrollment_requirements_status
+    if not meets_requirements:
+        missing_text = ", ".join(missing_items)
+        messages.warning(request, f"Please complete the following before registration: {missing_text}")
+        return redirect('users:detail', username=request.user.username)
+
     
     # Check if enrollment is open
     if not enrollment_settings.enrollment_open:
@@ -334,7 +339,7 @@ def volunteer_program_catalog_view(request):
     """
     Display catalog of available programs for volunteer enrollment.
     Same as regular catalog but for volunteers (no payment required).
-    Only accessible to volunteers, managers, and person-centered managers with complete profile and survey, and when enrollment is open.
+    Only accessible to volunteers, managers, and person-centered managers who meet enrollment requirements and when enrollment is open.
     """
     # Check if user is a volunteer, manager, or person-centered manager
     if request.user.role not in ['volunteer', 'manager', 'person_centered_manager']:
@@ -343,13 +348,14 @@ def volunteer_program_catalog_view(request):
     
     enrollment_settings = EnrollmentSettings.get_settings()
     
-    # Check if forms are complete
-    if not request.user.forms_are_complete:
+    # Check if user meets enrollment requirements
+    meets_requirements, missing_items = request.user.enrollment_requirements_status
+    if not meets_requirements:
         messages.warning(
             request,
-            "Please complete your profile and discovery questions before browsing programs."
+            f"Please complete the following before browsing programs: {', '.join(missing_items)}"
         )
-        return redirect('users:survey_form')
+        return redirect('users:detail', username=request.user.username)
     
     # Check if enrollment is open
     if not enrollment_settings.enrollment_open:
@@ -395,13 +401,14 @@ def volunteer_program_selection_view(request):
     
     enrollment_settings = EnrollmentSettings.get_settings()
     
-    # Check forms completion
-    if not request.user.forms_are_complete:
+    # Check if user meets enrollment requirements
+    meets_requirements, missing_items = request.user.enrollment_requirements_status
+    if not meets_requirements:
         messages.warning(
             request,
-            "Please complete your profile and discovery questions before enrolling in programs."
+            f"Please complete the following before enrolling: {', '.join(missing_items)}"
         )
-        return redirect('users:survey_form')
+        return redirect('users:detail', username=request.user.username)
     
     # Check if enrollment is open
     if not enrollment_settings.enrollment_open:
@@ -512,39 +519,8 @@ def volunteer_program_selection_view(request):
 # -------------------------
 # Manager Program Management Views
 # -------------------------
-
-@login_required
-def manager_programs_view(request):
-    """
-    Display all programs (including archived) for manager to manage.
-    Only accessible to managers.
-    Styled like the catalog view but with edit buttons instead of select buttons.
-    """
-    # Check if user is a manager
-    if request.user.role != 'manager':
-        messages.error(request, "This page is only accessible to managers.")
-        return redirect('home')
-    
-    # Get all programs (including archived), ordered by name
-    # Prefetch volunteer leads for efficient display
-    programs = Program.objects.prefetch_related('volunteer_leads__volunteer').all().order_by('name')
-    
-    # Get users with active OPDs for all volunteer leads
-    from inclusive_world_portal.portal.models import ProgramVolunteerLead, DocumentExport
-    lead_user_ids = ProgramVolunteerLead.objects.values_list('volunteer_id', flat=True).distinct()
-    active_exports = DocumentExport.objects.filter(
-        is_active=True,
-        user_id__in=lead_user_ids
-    ).values_list('user_id', flat=True)
-    users_with_active_opd = set(active_exports)
-    
-    context = {
-        'programs': programs,
-        'users_with_active_opd': users_with_active_opd,
-    }
-    
-    return render(request, 'portal/manager_programs_list.html', context)
-
+# Note: manager_programs_view has been replaced by the unified programs_view
+# in programs_views.py which handles both regular users and managers
 
 @login_required
 @require_http_methods(["GET", "POST"])
@@ -593,7 +569,7 @@ def manager_program_create_view(request):
             )
             
             messages.success(request, f"Program '{program.name}' created successfully!")
-            return redirect('portal:manager_programs')
+            return redirect('portal:programs')
             
         except Exception as e:
             messages.error(request, f"Error creating program: {str(e)}")
@@ -615,14 +591,28 @@ def manager_program_create_view(request):
 def manager_program_edit_view(request, program_id):
     """
     Edit an existing program.
-    Only accessible to managers.
+    Accessible to managers, PCMs, and volunteer leads of the program.
+    Volunteer leads have limited editing capabilities (name, description, photo only).
     """
-    # Check if user is a manager
-    if request.user.role != 'manager':
-        messages.error(request, "This page is only accessible to managers.")
-        return redirect('home')
+    from .models import ProgramVolunteerLead
     
     program = get_object_or_404(Program, program_id=program_id)
+    
+    # Check permissions
+    is_manager = request.user.role == 'manager'
+    is_pcm = request.user.role == 'person_centered_manager'
+    is_full_manager = is_manager or is_pcm
+    
+    # Check if user is a volunteer lead for this specific program
+    is_volunteer_lead = ProgramVolunteerLead.objects.filter(
+        program=program,
+        volunteer=request.user
+    ).exists()
+    
+    # Deny access if user has no permissions
+    if not (is_full_manager or is_volunteer_lead):
+        messages.error(request, "You don't have permission to edit this program.")
+        return redirect('portal:programs')
     
     if request.method == 'POST':
         # Extract form data
@@ -642,44 +632,51 @@ def manager_program_edit_view(request, program_id):
             return render(request, 'portal/manager_program_form.html', {
                 'program': program,
                 'is_create': False,
+                'is_full_manager': is_full_manager,
+                'is_volunteer_lead': is_volunteer_lead,
             })
         
         try:
-            # Update the program
+            # Update the program - volunteer leads can only edit name, description, and image
             program.name = name
             program.description = description
-            program.fee = fee if fee else '0.00'
-            program.capacity = int(capacity) if capacity else None
+            
             # Only update image if a new one was uploaded
             if image:
                 program.image = image
-            program.start_date = start_date if start_date else None
-            program.end_date = end_date if end_date else None
-            program.enrollment_status = enrollment_status
-            program.archived = archived
+            
+            # Full managers can edit all fields
+            if is_full_manager:
+                program.fee = fee if fee else '0.00'
+                program.capacity = int(capacity) if capacity else None
+                program.start_date = start_date if start_date else None
+                program.end_date = end_date if end_date else None
+                program.enrollment_status = enrollment_status
+                program.archived = archived
+            
             program.save()
             
             messages.success(request, f"Program '{program.name}' updated successfully!")
-            return redirect('portal:manager_programs')
+            return redirect('portal:programs')
             
         except Exception as e:
             messages.error(request, f"Error updating program: {str(e)}")
             return render(request, 'portal/manager_program_form.html', {
                 'program': program,
                 'is_create': False,
+                'is_full_manager': is_full_manager,
+                'is_volunteer_lead': is_volunteer_lead,
             })
     
     # GET request
     context = {
         'program': program,
         'is_create': False,
+        'is_full_manager': is_full_manager,
+        'is_volunteer_lead': is_volunteer_lead,
     }
     
     return render(request, 'portal/manager_program_form.html', context)
-
-
-@login_required
-@require_http_methods(["GET", "POST"])
 
 
 @login_required
@@ -733,7 +730,7 @@ def manager_program_add_user_view(request, program_id):
                 return redirect(reverse('portal:all_members') + f'?course={program_id}')
         except Exception as e:
             messages.error(request, f"Error adding user: {str(e)}")
-            return redirect('portal:manager_program_add_user', program_id=program_id)
+            return redirect('portal:program_add_user', program_id=program_id)
     
     # GET request - search users
     query = request.GET.get('q', '').strip()
@@ -824,7 +821,7 @@ def manager_program_attendance_delete_view(request, program_id):
     attendance_date_str = request.POST.get('date')
     if not attendance_date_str:
         messages.error(request, "No date specified.")
-        return redirect('portal:manager_program_attendance', program_id=program_id)
+        return redirect('portal:program_attendance', program_id=program_id)
     
     try:
         attendance_date = datetime.strptime(attendance_date_str, '%Y-%m-%d').date()
@@ -845,7 +842,7 @@ def manager_program_attendance_delete_view(request, program_id):
     except Exception as e:
         messages.error(request, f"Error deleting attendance: {str(e)}")
     
-    return redirect('portal:manager_program_attendance', program_id=program_id)
+    return redirect('portal:program_attendance', program_id=program_id)
 
 
 @login_required
@@ -928,7 +925,7 @@ def manager_program_attendance_view(request, program_id):
                     )
             
             messages.success(request, f"Attendance saved for {attendance_date.strftime('%B %d, %Y')}.")
-            return redirect('portal:manager_program_attendance', program_id=program_id)
+            return redirect('portal:program_attendance', program_id=program_id)
             
         except Exception as e:
             messages.error(request, f"Error saving attendance: {str(e)}")
@@ -1023,12 +1020,21 @@ def all_members_view(request):
     """
     Display all members across all programs.
     Shows Name (with profile link), Status (changeable dropdown), and Role (read-only).
-    Accessible to managers and person-centered managers.
+    Accessible to managers, person-centered managers, and volunteer program leads.
+    Volunteer leads can only view members enrolled in programs they lead.
     Note: Member roles cannot be changed from this view.
     """
-    # Check if user is a manager or person-centered manager
-    if request.user.role not in ['manager', 'person_centered_manager']:
-        messages.error(request, "This page is only accessible to managers and person-centered managers.")
+    from inclusive_world_portal.portal.models import ProgramVolunteerLead
+    
+    # Check if user is a manager, person-centered manager, or volunteer lead
+    is_manager_or_pcm = request.user.role in ['manager', 'person_centered_manager']
+    user_led_program_ids = set(
+        ProgramVolunteerLead.objects.filter(volunteer=request.user).values_list('program_id', flat=True)
+    )
+    is_volunteer_lead = bool(user_led_program_ids)
+    
+    if not (is_manager_or_pcm or is_volunteer_lead):
+        messages.error(request, "This page is only accessible to managers, person-centered managers, and program leads.")
         return redirect('home')
     
     from inclusive_world_portal.users.models import User
@@ -1171,6 +1177,93 @@ def all_members_view(request):
                 return redirect(redirect_url)
             return redirect('portal:all_members')
     
+    # Handle buddy assignment and support needs POST requests for PCMs and volunteer leads
+    elif request.method == 'POST' and (is_manager_or_pcm or is_volunteer_lead):
+        action = request.POST.get('action')
+        
+        if action == 'assign_buddy':
+            from .models import BuddyAssignment
+            member_id = request.POST.get('member_id')
+            volunteer_id = request.POST.get('volunteer_id', '').strip()
+            enrollment_id = request.POST.get('enrollment_id')
+            
+            try:
+                enrollment = get_object_or_404(Enrollment, enrollment_id=enrollment_id)
+                member = enrollment.user
+                program = enrollment.program
+                
+                # For volunteer leads, verify they lead this program
+                if is_volunteer_lead and not is_manager_or_pcm:
+                    if program.program_id not in user_led_program_ids:
+                        messages.error(request, "You can only manage buddy assignments for programs you lead.")
+                        return redirect('portal:all_members')
+                
+                # If volunteer_id is empty, remove the buddy assignment
+                if not volunteer_id:
+                    deleted_count, _ = BuddyAssignment.objects.filter(
+                        program=program,
+                        member_user=member
+                    ).delete()
+                    if deleted_count > 0:
+                        messages.success(request, f"Removed buddy assignment for {member.name}.")
+                else:
+                    volunteer = get_object_or_404(User, id=volunteer_id)
+                    
+                    # Create or update buddy assignment
+                    assignment, created = BuddyAssignment.objects.update_or_create(
+                        program=program,
+                        member_user=member,
+                        defaults={'volunteer_user': volunteer}
+                    )
+                    
+                    if created:
+                        messages.success(request, f"Assigned {volunteer.name} as buddy for {member.name}.")
+                    else:
+                        messages.success(request, f"Updated buddy assignment for {member.name} to {volunteer.name}.")
+            except Exception as e:
+                messages.error(request, f"Error managing buddy assignment: {str(e)}")
+            
+            # Preserve course filter when redirecting
+            course_filter = request.POST.get('course_filter', '')
+            redirect_url = 'portal:all_members'
+            if course_filter:
+                from django.urls import reverse
+                redirect_url = reverse('portal:all_members') + f'?course={course_filter}'
+                return redirect(redirect_url)
+            return redirect('portal:all_members')
+        
+        elif action == 'update_support_needs':
+            user_id = request.POST.get('user_id')
+            support_needs = request.POST.get('support_needs', '').strip()
+            
+            try:
+                member = get_object_or_404(User, id=user_id)
+                
+                # For volunteer leads, verify the member is in a program they lead
+                if is_volunteer_lead and not is_manager_or_pcm:
+                    # Check if member is enrolled in any program the volunteer leads
+                    member_program_ids = set(
+                        member.enrollments.values_list('program_id', flat=True)
+                    )
+                    if not member_program_ids.intersection(user_led_program_ids):
+                        messages.error(request, "You can only edit support needs for members in programs you lead.")
+                        return redirect('portal:all_members')
+                
+                member.support_needs = support_needs
+                member.save()
+                messages.success(request, f"Support needs updated for {member.name or member.username}.")
+            except Exception as e:
+                messages.error(request, f"Error updating support needs: {str(e)}")
+            
+            # Preserve course filter when redirecting
+            course_filter = request.POST.get('course_filter', '')
+            redirect_url = 'portal:all_members'
+            if course_filter:
+                from django.urls import reverse
+                redirect_url = reverse('portal:all_members') + f'?course={course_filter}'
+                return redirect(redirect_url)
+            return redirect('portal:all_members')
+    
     # Get course filter from query params
     course_filter = request.GET.get('course', '').strip()
     
@@ -1179,9 +1272,21 @@ def all_members_view(request):
         'enrollments__program'
     )
     
+    # For volunteer leads, restrict to members in programs they lead
+    if is_volunteer_lead and not is_manager_or_pcm:
+        members_query = members_query.filter(
+            enrollments__program__program_id__in=user_led_program_ids
+        ).distinct()
+    
     # Apply course filter if provided
     filtered_program = None
     if course_filter:
+        # For volunteer leads, ensure they can only filter by programs they lead
+        if is_volunteer_lead and not is_manager_or_pcm:
+            if course_filter not in [str(pid) for pid in user_led_program_ids]:
+                messages.error(request, "You can only view members from programs you lead.")
+                return redirect('portal:all_members')
+        
         members_query = members_query.filter(
             enrollments__program__program_id=course_filter
         ).distinct()
@@ -1203,28 +1308,33 @@ def all_members_view(request):
         for enrollment in enrollments:
             course_enrollments[enrollment.user.id] = enrollment
     
-    # Check if user can edit (managers can, PCMs cannot)
-    can_edit = request.user.role == 'manager'
+    # Check if user can edit status/role fields (only managers can)
+    can_edit_status = request.user.role == 'manager'
     
-    # Get users with active OPDs (for all managers and PCMs to see status indicator)
-    users_with_active_opd = set()
-    from inclusive_world_portal.portal.models import DocumentExport
-    active_exports = DocumentExport.objects.filter(
-        is_active=True,
-        user__in=members
-    ).values_list('user_id', flat=True)
-    users_with_active_opd = set(active_exports)
+    # Check if user can edit buddy assignments (managers, PCMs, and volunteer leads can)
+    can_edit_buddy = is_manager_or_pcm or is_volunteer_lead
+    
+    # Check if user can edit support needs (managers, PCMs, and volunteer leads can)
+    can_edit_support_needs = is_manager_or_pcm or is_volunteer_lead
+    
+    # Note: users_with_active_opd removed - legacy OPD system replaced with Document model
+    users_with_active_opd = set()  # Keep for template compatibility
     
     # Build program volunteers mapping and buddy assignments for the enrollments partial
     program_volunteers = {}
     buddy_map = {}
     
-    if can_edit:
+    # Build buddy assignment data if user can view/edit buddies
+    if can_edit_buddy:
         # Get all unique programs that members are enrolled in
         program_ids = set()
         for member in members:
             for enrollment in member.enrollments.all():
                 program_ids.add(enrollment.program.program_id)
+        
+        # For volunteer leads, restrict to programs they lead
+        if is_volunteer_lead and not is_manager_or_pcm:
+            program_ids = program_ids.intersection(user_led_program_ids)
         
         # For each program, get approved volunteers
         for program_id in program_ids:
@@ -1241,17 +1351,32 @@ def all_members_view(request):
             member_user__in=members
         ).select_related('volunteer_user', 'program')
         
+        # For volunteer leads, only show buddy assignments for their programs
+        if is_volunteer_lead and not is_manager_or_pcm:
+            buddy_assignments = buddy_assignments.filter(
+                program__program_id__in=user_led_program_ids
+            )
+        
         # Build buddy_map keyed by (program_id, member_id) tuple
         for assignment in buddy_assignments:
             key = (str(assignment.program.program_id), assignment.member_user_id)
             buddy_map[key] = assignment.volunteer_user_id
     
     # Get all available programs for filter dropdown
-    all_programs = Program.objects.filter(archived=False).order_by('name')
+    # For volunteer leads, only show programs they lead
+    if is_volunteer_lead and not is_manager_or_pcm:
+        all_programs = Program.objects.filter(
+            archived=False,
+            program_id__in=user_led_program_ids
+        ).order_by('name')
+    else:
+        all_programs = Program.objects.filter(archived=False).order_by('name')
     
     context = {
         'members': members,
-        'can_edit': can_edit,
+        'can_edit': can_edit_status,  # For status/role editing (managers only)
+        'can_edit_buddy': can_edit_buddy,  # For buddy assignments (managers, PCMs, volunteer leads)
+        'can_edit_support_needs': can_edit_support_needs,  # For support needs (managers, PCMs, volunteer leads)
         'status_choices': User.Status.choices,
         'users_with_active_opd': users_with_active_opd,
         'enrollment_statuses': EnrollmentStatus.choices,
@@ -1272,12 +1397,21 @@ def all_volunteers_view(request):
     """
     Display all volunteers (including managers and PCMs) across all programs.
     Shows Name (with profile link), Status (changeable dropdown), and Role (assignable by managers).
-    Accessible to managers and person-centered managers.
+    Accessible to managers, person-centered managers, and volunteer program leads.
+    Volunteer leads can only view volunteers enrolled in programs they lead.
     Note: Volunteers cannot be changed to members from this view.
     """
-    # Check if user is a manager or person-centered manager
-    if request.user.role not in ['manager', 'person_centered_manager']:
-        messages.error(request, "This page is only accessible to managers and person-centered managers.")
+    from inclusive_world_portal.portal.models import ProgramVolunteerLead
+    
+    # Check if user is a manager, person-centered manager, or volunteer lead
+    is_manager_or_pcm = request.user.role in ['manager', 'person_centered_manager']
+    user_led_program_ids = set(
+        ProgramVolunteerLead.objects.filter(volunteer=request.user).values_list('program_id', flat=True)
+    )
+    is_volunteer_lead = bool(user_led_program_ids)
+    
+    if not (is_manager_or_pcm or is_volunteer_lead):
+        messages.error(request, "This page is only accessible to managers, person-centered managers, and program leads.")
         return redirect('home')
     
     from inclusive_world_portal.users.models import User
@@ -1427,9 +1561,21 @@ def all_volunteers_view(request):
         'enrollments__program'
     )
     
+    # For volunteer leads, restrict to volunteers in programs they lead
+    if is_volunteer_lead and not is_manager_or_pcm:
+        volunteers_query = volunteers_query.filter(
+            enrollments__program__program_id__in=user_led_program_ids
+        ).distinct()
+    
     # Apply course filter if provided
     filtered_program = None
     if course_filter:
+        # For volunteer leads, ensure they can only filter by programs they lead
+        if is_volunteer_lead and not is_manager_or_pcm:
+            if course_filter not in [str(pid) for pid in user_led_program_ids]:
+                messages.error(request, "You can only view volunteers from programs you lead.")
+                return redirect('portal:all_volunteers')
+        
         volunteers_query = volunteers_query.filter(
             enrollments__program__program_id=course_filter
         ).distinct()
@@ -1461,22 +1607,22 @@ def all_volunteers_view(request):
         ('manager', 'Manager'),
     ]
     
-    # Get users with active OPDs (for all managers and PCMs to see status indicator)
-    users_with_active_opd = set()
-    from inclusive_world_portal.portal.models import DocumentExport
-    active_exports = DocumentExport.objects.filter(
-        is_active=True,
-        user__in=volunteers
-    ).values_list('user_id', flat=True)
-    users_with_active_opd = set(active_exports)
+    # Note: users_with_active_opd removed - legacy OPD system replaced with Document model
+    users_with_active_opd = set()  # Keep for template compatibility
     
     # Get all available programs for filter dropdown
-    all_programs = Program.objects.filter(archived=False).order_by('name')
+    # For volunteer leads, only show programs they lead
+    if is_volunteer_lead and not is_manager_or_pcm:
+        all_programs = Program.objects.filter(
+            archived=False,
+            program_id__in=user_led_program_ids
+        ).order_by('name')
+    else:
+        all_programs = Program.objects.filter(archived=False).order_by('name')
     
     # Get volunteer leads for the filtered program if applicable
     volunteer_leads = set()
     if course_filter and filtered_program:
-        from inclusive_world_portal.portal.models import ProgramVolunteerLead
         lead_user_ids = ProgramVolunteerLead.objects.filter(
             program=filtered_program
         ).values_list('volunteer_id', flat=True)

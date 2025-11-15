@@ -24,23 +24,24 @@ def get_navigation_items(user):
         from inclusive_world_portal.portal.models import EnrollmentSettings
         
         enrollment_settings = EnrollmentSettings.get_settings()
-        forms_complete = user.forms_are_complete
         enrollment_open = enrollment_settings.enrollment_open
         can_register = user.can_purchase_programs
         
         # Determine registration status and message
+        meets_requirements, missing_items = user.enrollment_requirements_status
+        
         if can_register:
-            # Forms complete and enrollment open
+            # Requirements met and enrollment open
             registration_status = 'open'
             registration_url = reverse('portal:program_catalog')
             registration_tooltip = _('Registration is open')
-        elif not forms_complete:
-            # Forms incomplete
+        elif not meets_requirements:
+            # Requirements not met
             registration_status = 'closed_forms'
-            registration_url = reverse('users:survey_form')
-            registration_tooltip = _('Complete your profile and discovery questions to register')
+            registration_url = reverse('users:detail', kwargs={'username': user.username})
+            registration_tooltip = _(f'Complete requirements: {", ".join(missing_items)}')
         else:
-            # Forms complete but enrollment closed
+            # Requirements met but enrollment closed
             registration_status = 'closed_season'
             registration_url = '#'
             registration_tooltip = enrollment_settings.closure_reason or _('Registration is currently closed')
@@ -58,8 +59,8 @@ def get_navigation_items(user):
                 'show_notification_badge': True,
             },
             {
-                'label': _('One Page Description'),
-                'url': reverse('users:view_active_opd'),
+                'label': _('Documents'),
+                'url': reverse('users:document_list'),
                 'icon_class': 'bi bi-file-earmark-text',
             },
             {
@@ -70,13 +71,6 @@ def get_navigation_items(user):
                 'is_complete': user.profile_is_complete,
             },
             {
-                'label': _('Discovery Questions'),
-                'url': reverse('users:survey_form'),
-                'icon_class': 'bi bi-clipboard-check',
-                'show_completion': True,
-                'is_complete': user.survey_is_complete,
-            },
-            {
                 'label': _('Registration'),
                 'url': registration_url,
                 'icon_class': 'bi bi-grid-3x3-gap',
@@ -85,8 +79,8 @@ def get_navigation_items(user):
                 'show_status_indicator': True,
             },
             {
-                'label': _('My Programs'),
-                'url': reverse('portal:my_programs'),
+                'label': _('Programs'),
+                'url': reverse('portal:programs'),
                 'icon_class': 'bi bi-layers',
             },
             {
@@ -95,7 +89,7 @@ def get_navigation_items(user):
                 'icon_class': 'bi bi-calendar-check',
             },
             {
-                'label': _('Surveys'),
+                'label': _('Tasks'),
                 'url': '/surveys',
                 'icon_class': 'bi bi-file-earmark-bar-graph',
             },
@@ -105,31 +99,34 @@ def get_navigation_items(user):
     # Volunteer navigation - Same as member but without payment requirements
     elif role == 'volunteer':
         # Determine registration status for better UI feedback
-        from inclusive_world_portal.portal.models import EnrollmentSettings
+        from inclusive_world_portal.portal.models import EnrollmentSettings, ProgramVolunteerLead
         
         enrollment_settings = EnrollmentSettings.get_settings()
-        forms_complete = user.forms_are_complete
         enrollment_open = enrollment_settings.enrollment_open
+        meets_requirements, missing_items = user.enrollment_requirements_status
         
-        # Volunteers can register if forms are complete and enrollment is open (no payment needed)
-        can_register = forms_complete and enrollment_open
+        # Volunteers can register if requirements are met and enrollment is open (no payment needed)
+        can_register = meets_requirements and enrollment_open
         
         # Determine registration status and message
         if can_register:
-            # Forms complete and enrollment open
+            # Requirements met and enrollment open
             registration_status = 'open'
             registration_url = reverse('portal:volunteer_program_catalog')
             registration_tooltip = _('Registration is open')
-        elif not forms_complete:
-            # Forms incomplete
+        elif not meets_requirements:
+            # Requirements not met
             registration_status = 'closed_forms'
-            registration_url = reverse('users:survey_form')
-            registration_tooltip = _('Complete your profile and discovery questions to register')
+            registration_url = reverse('users:detail', kwargs={'username': user.username})
+            registration_tooltip = _(f'Complete requirements: {", ".join(missing_items)}')
         else:
-            # Forms complete but enrollment closed
+            # Requirements met but enrollment closed
             registration_status = 'closed_season'
             registration_url = '#'
             registration_tooltip = enrollment_settings.closure_reason or _('Registration is currently closed')
+        
+        # Check if volunteer is a program lead
+        is_program_lead = ProgramVolunteerLead.objects.filter(volunteer=user).exists()
         
         nav_items = [
             {
@@ -144,8 +141,8 @@ def get_navigation_items(user):
                 'show_notification_badge': True,
             },
             {
-                'label': _('One Page Description'),
-                'url': reverse('users:view_active_opd'),
+                'label': _('Documents'),
+                'url': reverse('users:document_list'),
                 'icon_class': 'bi bi-file-earmark-text',
             },
             {
@@ -156,13 +153,6 @@ def get_navigation_items(user):
                 'is_complete': user.profile_is_complete,
             },
             {
-                'label': _('Discovery Questions'),
-                'url': reverse('users:survey_form'),
-                'icon_class': 'bi bi-clipboard-check',
-                'show_completion': True,
-                'is_complete': user.survey_is_complete,
-            },
-            {
                 'label': _('Registration'),
                 'url': registration_url,
                 'icon_class': 'bi bi-grid-3x3-gap',
@@ -171,8 +161,8 @@ def get_navigation_items(user):
                 'show_status_indicator': True,
             },
             {
-                'label': _('My Programs'),
-                'url': reverse('portal:my_programs'),
+                'label': _('Programs'),
+                'url': reverse('portal:programs'),
                 'icon_class': 'bi bi-layers',
             },
             {
@@ -180,12 +170,29 @@ def get_navigation_items(user):
                 'url': reverse('portal:my_attendance'),
                 'icon_class': 'bi bi-calendar-check',
             },
-            {
-                'label': _('Surveys'),
-                'url': '/surveys',
-                'icon_class': 'bi bi-file-earmark-bar-graph',
-            },
         ]
+        
+        # Add Members and Volunteers navigation for program leads
+        if is_program_lead:
+            nav_items.extend([
+                {
+                    'label': _('Members'),
+                    'url': reverse('portal:all_members'),
+                    'icon_class': 'bi bi-people',
+                },
+                {
+                    'label': _('Volunteers'),
+                    'url': reverse('portal:all_volunteers'),
+                    'icon_class': 'bi bi-people-fill',
+                },
+            ])
+        
+        nav_items.append({
+            'label': _('Tasks'),
+            'url': '/surveys',
+            'icon_class': 'bi bi-file-earmark-bar-graph',
+        })
+        
         return nav_items
     
     # Person Centered Manager navigation - Same as manager with program registration capability
@@ -194,25 +201,25 @@ def get_navigation_items(user):
         from inclusive_world_portal.portal.models import EnrollmentSettings
         
         enrollment_settings = EnrollmentSettings.get_settings()
-        forms_complete = user.forms_are_complete
         enrollment_open = enrollment_settings.enrollment_open
+        meets_requirements, missing_items = user.enrollment_requirements_status
         
-        # Person-centered managers can register if forms are complete and enrollment is open (no payment needed)
-        can_register = forms_complete and enrollment_open
+        # Person-centered managers can register if requirements are met and enrollment is open (no payment needed)
+        can_register = meets_requirements and enrollment_open
         
         # Determine registration status and message
         if can_register:
-            # Forms complete and enrollment open
+            # Requirements met and enrollment open
             registration_status = 'open'
             registration_url = reverse('portal:volunteer_program_catalog')
             registration_tooltip = _('Registration is open')
-        elif not forms_complete:
-            # Forms incomplete
+        elif not meets_requirements:
+            # Requirements not met
             registration_status = 'closed_forms'
-            registration_url = reverse('users:survey_form')
-            registration_tooltip = _('Complete your profile and discovery questions to register')
+            registration_url = reverse('users:detail', kwargs={'username': user.username})
+            registration_tooltip = _(f'Complete requirements: {", ".join(missing_items)}')
         else:
-            # Forms complete but enrollment closed
+            # Requirements met but enrollment closed
             registration_status = 'closed_season'
             registration_url = '#'
             registration_tooltip = enrollment_settings.closure_reason or _('Registration is currently closed')
@@ -230,8 +237,8 @@ def get_navigation_items(user):
                 'show_notification_badge': True,
             },
             {
-                'label': _('One Page Description'),
-                'url': reverse('users:view_active_opd'),
+                'label': _('Documents'),
+                'url': reverse('users:document_list'),
                 'icon_class': 'bi bi-file-earmark-text',
             },
             {
@@ -242,13 +249,6 @@ def get_navigation_items(user):
                 'is_complete': user.profile_is_complete,
             },
             {
-                'label': _('Discovery Questions'),
-                'url': reverse('users:survey_form'),
-                'icon_class': 'bi bi-clipboard-check',
-                'show_completion': True,
-                'is_complete': user.survey_is_complete,
-            },
-            {
                 'label': _('Registration'),
                 'url': registration_url,
                 'icon_class': 'bi bi-grid-3x3-gap',
@@ -257,8 +257,8 @@ def get_navigation_items(user):
                 'show_status_indicator': True,
             },
             {
-                'label': _('My Programs'),
-                'url': reverse('portal:my_programs'),
+                'label': _('Programs'),
+                'url': reverse('portal:programs'),
                 'icon_class': 'bi bi-layers',
             },
             {
@@ -267,17 +267,17 @@ def get_navigation_items(user):
                 'icon_class': 'bi bi-calendar-check',
             },
             {
-                'label': _('All Members'),
+                'label': _('Members'),
                 'url': reverse('portal:all_members'),
                 'icon_class': 'bi bi-people',
             },
             {
-                'label': _('All Volunteers'),
+                'label': _('Volunteers'),
                 'url': reverse('portal:all_volunteers'),
                 'icon_class': 'bi bi-people-fill',
             },
             {
-                'label': _('Surveys'),
+                'label': _('Tasks'),
                 'url': '/surveys',
                 'icon_class': 'bi bi-file-earmark-bar-graph',
             },
@@ -289,25 +289,25 @@ def get_navigation_items(user):
         from inclusive_world_portal.portal.models import EnrollmentSettings
         
         enrollment_settings = EnrollmentSettings.get_settings()
-        forms_complete = user.forms_are_complete
         enrollment_open = enrollment_settings.enrollment_open
+        meets_requirements, missing_items = user.enrollment_requirements_status
         
-        # Managers can register if forms are complete and enrollment is open (no payment needed)
-        can_register = forms_complete and enrollment_open
+        # Managers can register if requirements are met and enrollment is open (no payment needed)
+        can_register = meets_requirements and enrollment_open
         
         # Determine registration status and message
         if can_register:
-            # Forms complete and enrollment open
+            # Requirements met and enrollment open
             registration_status = 'open'
             registration_url = reverse('portal:volunteer_program_catalog')
             registration_tooltip = _('Registration is open')
-        elif not forms_complete:
-            # Forms incomplete
+        elif not meets_requirements:
+            # Requirements not met
             registration_status = 'closed_forms'
-            registration_url = reverse('users:survey_form')
-            registration_tooltip = _('Complete your profile and discovery questions to register')
+            registration_url = reverse('users:detail', kwargs={'username': user.username})
+            registration_tooltip = _(f'Complete requirements: {", ".join(missing_items)}')
         else:
-            # Forms complete but enrollment closed
+            # Requirements met but enrollment closed
             registration_status = 'closed_season'
             registration_url = '#'
             registration_tooltip = enrollment_settings.closure_reason or _('Registration is currently closed')
@@ -325,8 +325,8 @@ def get_navigation_items(user):
                 'show_notification_badge': True,
             },
             {
-                'label': _('One Page Description'),
-                'url': reverse('users:view_active_opd'),
+                'label': _('Documents'),
+                'url': reverse('users:document_list'),
                 'icon_class': 'bi bi-file-earmark-text',
             },
             {
@@ -337,13 +337,6 @@ def get_navigation_items(user):
                 'is_complete': user.profile_is_complete,
             },
             {
-                'label': _('Discovery Questions'),
-                'url': reverse('users:survey_form'),
-                'icon_class': 'bi bi-clipboard-check',
-                'show_completion': True,
-                'is_complete': user.survey_is_complete,
-            },
-            {
                 'label': _('Registration'),
                 'url': registration_url,
                 'icon_class': 'bi bi-grid-3x3-gap',
@@ -352,8 +345,8 @@ def get_navigation_items(user):
                 'show_status_indicator': True,
             },
             {
-                'label': _('My Programs'),
-                'url': reverse('portal:my_programs'),
+                'label': _('Programs'),
+                'url': reverse('portal:programs'),
                 'icon_class': 'bi bi-layers',
             },
             {
@@ -362,22 +355,22 @@ def get_navigation_items(user):
                 'icon_class': 'bi bi-calendar-check',
             },
             {
-                'label': _('All Members'),
+                'label': _('Members'),
                 'url': reverse('portal:all_members'),
                 'icon_class': 'bi bi-people',
             },
             {
-                'label': _('All Volunteers'),
+                'label': _('Volunteers'),
                 'url': reverse('portal:all_volunteers'),
                 'icon_class': 'bi bi-people-fill',
             },
             {
-                'label': _('Manage Programs'),
-                'url': reverse('portal:manager_programs'),
-                'icon_class': 'bi bi-gear-wide-connected',
+                'label': _('Enrollment Settings'),
+                'url': reverse('portal:enrollment_settings'),
+                'icon_class': 'bi bi-gear',
             },
             {
-                'label': _('Surveys'),
+                'label': _('Tasks'),
                 'url': '/surveys',
                 'icon_class': 'bi bi-file-earmark-bar-graph',
             },

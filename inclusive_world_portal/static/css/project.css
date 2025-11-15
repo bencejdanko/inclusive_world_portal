@@ -202,6 +202,30 @@ body {
   box-shadow: var(--shadow-md);
 }
 
+.btn-berry {
+  background-color: var(--color-brand-berry);
+  color: white;
+}
+
+.btn-berry:hover {
+  background-color: var(--color-dark-berry);
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.btn-olive {
+  background-color: var(--color-brand-black-olive);
+  color: white;
+}
+
+.btn-olive:hover {
+  background-color: #2d2d2d;
+  color: white;
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
 .btn-outline {
   background-color: transparent;
   border: 2px solid var(--color-brand-blue-peacock);

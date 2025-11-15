@@ -1,0 +1,644 @@
+{% extends "base_portal.html" %}
+{% load static %}
+
+{% block title %}
+  {% if viewing_own_documents %}
+    My Documents
+  {% else %}
+    Documents for {{ target_user.name|default:target_user.username }}
+  {% endif %}
+{% endblock %}
+
+{% block page_title %}
+  {% if viewing_own_documents %}
+    My Documents
+  {% else %}
+    Documents for {{ target_user.name|default:target_user.username }}
+  {% endif %}
+{% endblock %}
+
+{% block css %}
+{{ block.super }}
+<style>
+    .document-list-container {
+        max-width: 1400px;
+        margin: 0 auto;
+        padding: 1rem;
+    }
+    
+    .documents-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+        gap: 1.5rem;
+        margin-top: 1.5rem;
+    }
+    
+    .document-card {
+        background-color: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+        cursor: pointer;
+        position: relative;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .document-card:hover {
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        border-color: #d0d0d0;
+    }
+    
+    .document-preview {
+        width: 100%;
+        height: 240px;
+        background: linear-gradient(135deg, #f5f5f5 0%, #e8e8e8 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .document-preview::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0);
+        transition: background 0.2s ease;
+        pointer-events: none;
+    }
+    
+    .document-card:hover .document-preview::after {
+        background: rgba(0, 0, 0, 0.03);
+    }
+    
+    .document-preview img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        object-position: top center;
+    }
+    
+    .document-preview-placeholder {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        color: #999;
+        padding: 2rem;
+        text-align: center;
+    }
+    
+    .document-preview-placeholder i {
+        font-size: 3rem;
+        margin-bottom: 0.5rem;
+        color: #7F4857;
+        opacity: 0.7;
+    }
+    
+    .document-preview-placeholder .preview-text {
+        font-size: 0.875rem;
+        color: #666;
+    }
+    
+    .document-info {
+        padding: 1rem;
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+    }
+    
+    .document-title {
+        font-size: 0.875rem;
+        font-weight: 400;
+        color: #202124;
+        margin-bottom: 0.25rem;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .document-meta {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        color: #5f6368;
+        margin-bottom: 0.5rem;
+        flex-wrap: wrap;
+    }
+    
+    .document-meta-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+    
+    .document-meta-item i {
+        font-size: 0.875rem;
+    }
+    
+    .state-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 0.125rem 0.5rem;
+        border-radius: 12px;
+        font-size: 0.6875rem;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+    }
+    
+    .state-badge.draft {
+        background-color: #fef7e0;
+        color: #b06000;
+    }
+    
+    .state-badge.review {
+        background-color: #e8f0fe;
+        color: #1967d2;
+    }
+    
+    .state-badge.final {
+        background-color: #e6f4ea;
+        color: #137333;
+    }
+    
+    .document-footer {
+        padding: 0.75rem 1rem;
+        border-top: 1px solid #f0f0f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background-color: #fafafa;
+    }
+    
+    .document-icon {
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .document-icon i {
+        color: #7F4857;
+        font-size: 1.25rem;
+    }
+    
+    .document-date {
+        font-size: 0.75rem;
+        color: #5f6368;
+    }
+    
+    .document-menu {
+        position: relative;
+    }
+    
+    .document-menu-btn {
+        background: none;
+        border: none;
+        padding: 0.25rem;
+        cursor: pointer;
+        color: #5f6368;
+        border-radius: 50%;
+        width: 32px;
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        transition: background-color 0.2s;
+    }
+    
+    .document-menu-btn:hover {
+        background-color: #f1f3f4;
+    }
+    
+    .document-menu-dropdown {
+        position: absolute;
+        right: 0;
+        bottom: 100%;
+        margin-bottom: 0.25rem;
+        background: white;
+        border: 1px solid #dadce0;
+        border-radius: 8px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        min-width: 180px;
+        z-index: 1000;
+        display: none;
+    }
+    
+    .document-menu-dropdown.show {
+        display: block;
+    }
+    
+    .document-menu-item {
+        padding: 0.75rem 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.75rem;
+        color: #202124;
+        text-decoration: none;
+        font-size: 0.875rem;
+        transition: background-color 0.2s;
+        cursor: pointer;
+        border: none;
+        background: none;
+        width: 100%;
+        text-align: left;
+    }
+    
+    .document-menu-item:hover {
+        background-color: #f1f3f4;
+    }
+    
+    .document-menu-item i {
+        width: 20px;
+        text-align: center;
+    }
+    
+    .document-menu-item.delete-btn {
+        color: #dc3545;
+    }
+    
+    .document-menu-item.delete-btn:hover {
+        background-color: #fff5f5;
+        color: #c82333;
+    }
+    
+    .empty-state {
+        text-align: center;
+        padding: 4rem 2rem;
+        background-color: #fff;
+        border-radius: 8px;
+        border: 1px solid #e0e0e0;
+    }
+    
+    .empty-state-icon {
+        font-size: 4rem;
+        color: #7F4857;
+        margin-bottom: 1rem;
+    }
+    
+    .create-document-btn {
+        margin-bottom: 1rem;
+    }
+    
+    @media (max-width: 768px) {
+        .documents-grid {
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 1rem;
+        }
+        
+        .document-preview {
+            height: 180px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="document-list-container">
+  <!-- Hidden form for CSRF token -->
+  <form style="display:none;">
+    {% csrf_token %}
+  </form>
+  
+  <!-- Header with Create Button (only for managers/PCMs) -->
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    {% if request.user.role == 'manager' or request.user.role == 'person_centered_manager' %}
+      <a href="{% url 'users:document_editor' %}{% if not viewing_own_documents %}?user={{ target_user.username }}{% endif %}" 
+         class="btn btn-primary create-document-btn">
+        <i class="bi bi-plus-circle me-2"></i> Create New Document
+      </a>
+    {% endif %}
+  </div>
+
+  <!-- Documents List -->
+  {% if documents %}
+    <div class="documents-grid">
+      {% for document in documents %}
+        <div class="document-card" data-document-id="{{ document.document_id }}">
+          <!-- Preview Area -->
+          <div class="document-preview">
+            {% if document.thumbnail %}
+              <!-- Show thumbnail image -->
+              <img src="{{ document.thumbnail.url }}" alt="{{ document.title }} preview">
+            {% else %}
+              <!-- Placeholder for unpublished documents or documents without thumbnails -->
+              <div class="document-preview-placeholder">
+                <i class="bi bi-file-earmark-text"></i>
+                <div class="preview-text">{% if document.published %}No preview{% else %}Not published{% endif %}</div>
+              </div>
+            {% endif %}
+          </div>
+          
+          <!-- Document Info -->
+          <div class="document-info">
+            <div class="document-title" title="{{ document.title }}">
+              {{ document.title }}
+            </div>
+            
+            <div class="document-meta">
+              <span class="state-badge {{ document.state }}">{{ document.get_state_display }}</span>
+              {% if document.source_survey %}
+                <div class="document-meta-item" title="Generated from survey">
+                  <i class="bi bi-file-earmark-bar-graph"></i>
+                </div>
+              {% endif %}
+            </div>
+          </div>
+          
+          <!-- Document Footer -->
+          <div class="document-footer">
+            <div class="document-icon">
+              <i class="bi bi-file-earmark-text"></i>
+            </div>
+            <div class="document-date">
+              Opened {{ document.updated_at|date:"M d, Y" }}
+            </div>
+            <div class="document-menu">
+              <button class="document-menu-btn" type="button" onclick="toggleMenu(event, '{{ document.document_id }}')">
+                <i class="bi bi-three-dots-vertical"></i>
+              </button>
+              <div class="document-menu-dropdown" id="menu-{{ document.document_id }}">
+                <!-- Only managers and PCMs can edit documents -->
+                {% if request.user.role == 'manager' or request.user.role == 'person_centered_manager' %}
+                  <a href="{% url 'users:document_editor' %}?document_id={{ document.document_id }}{% if not viewing_own_documents %}&user={{ target_user.username }}{% endif %}" 
+                     class="document-menu-item">
+                    <i class="bi bi-pencil"></i>
+                    <span>Edit</span>
+                  </a>
+                {% endif %}
+                
+                <!-- Anyone can view published documents -->
+                {% if document.published %}
+                  <a href="{% url 'users:view_published_document' document.document_id %}" 
+                     class="document-menu-item">
+                    <i class="bi bi-eye"></i>
+                    <span>View PDF</span>
+                  </a>
+                  
+                  <!-- Only managers and PCMs can unpublish -->
+                  {% if request.user.role == 'manager' or request.user.role == 'person_centered_manager' %}
+                    <button type="button" 
+                            class="document-menu-item publish-toggle-btn" 
+                            data-document-id="{{ document.document_id }}"
+                            data-action="unpublish">
+                      <i class="bi bi-eye-slash"></i>
+                      <span>Unpublish</span>
+                    </button>
+                  {% endif %}
+                {% else %}
+                  <!-- Only managers and PCMs can publish -->
+                  {% if request.user.role == 'manager' or request.user.role == 'person_centered_manager' %}
+                    <button type="button" 
+                            class="document-menu-item publish-toggle-btn" 
+                            data-document-id="{{ document.document_id }}"
+                            data-action="publish">
+                      <i class="bi bi-file-earmark-pdf"></i>
+                      <span>Publish PDF</span>
+                    </button>
+                  {% endif %}
+                {% endif %}
+                
+                <!-- Delete option (only for managers/PCMs) -->
+                {% if request.user.role == 'manager' or request.user.role == 'person_centered_manager' %}
+                  <button type="button" 
+                          class="document-menu-item delete-btn" 
+                          data-document-id="{{ document.document_id }}"
+                          data-document-title="{{ document.title }}">
+                    <i class="bi bi-trash"></i>
+                    <span>Delete</span>
+                  </button>
+                {% endif %}
+              </div>
+            </div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+    
+    <!-- Pagination -->
+    {% if is_paginated %}
+      <nav aria-label="Document pagination" class="mt-4">
+        <ul class="pagination justify-content-center">
+          {% if page_obj.has_previous %}
+            <li class="page-item">
+              <a class="page-link" href="?page=1{% if not viewing_own_documents %}&user={{ target_user.username }}{% endif %}">First</a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if not viewing_own_documents %}&user={{ target_user.username }}{% endif %}">Previous</a>
+            </li>
+          {% endif %}
+          
+          <li class="page-item active">
+            <span class="page-link">
+              Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </span>
+          </li>
+          
+          {% if page_obj.has_next %}
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if not viewing_own_documents %}&user={{ target_user.username }}{% endif %}">Next</a>
+            </li>
+            <li class="page-item">
+              <a class="page-link" href="?page={{ page_obj.paginator.num_pages }}{% if not viewing_own_documents %}&user={{ target_user.username }}{% endif %}">Last</a>
+            </li>
+          {% endif %}
+        </ul>
+      </nav>
+    {% endif %}
+    
+  {% else %}
+    <!-- Empty State -->
+    <div class="empty-state">
+      <div class="empty-state-icon">
+        <i class="bi bi-file-earmark-text"></i>
+      </div>
+      <h3 class="mb-3">No Documents Yet</h3>
+      <p class="text-muted mb-4">
+        {% if viewing_own_documents %}
+          You don't have any documents yet.
+        {% else %}
+          {{ target_user.name|default:target_user.username }} doesn't have any documents yet.
+        {% endif %}
+      </p>
+      {% if request.user.role == 'manager' or request.user.role == 'person_centered_manager' %}
+        <a href="{% url 'users:document_editor' %}{% if not viewing_own_documents %}?user={{ target_user.username }}{% endif %}" 
+           class="btn btn-primary">
+          <i class="bi bi-plus-circle me-2"></i> Create First Document
+        </a>
+      {% endif %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}
+
+{% block javascript %}
+{{ block.super }}
+<script>
+// Toggle dropdown menu
+function toggleMenu(event, documentId) {
+    event.stopPropagation();
+    const menu = document.getElementById(`menu-${documentId}`);
+    const allMenus = document.querySelectorAll('.document-menu-dropdown');
+    
+    // Close all other menus
+    allMenus.forEach(m => {
+        if (m !== menu) {
+            m.classList.remove('show');
+        }
+    });
+    
+    // Toggle current menu
+    menu.classList.toggle('show');
+}
+
+// Close menus when clicking outside
+document.addEventListener('click', function(event) {
+    if (!event.target.closest('.document-menu')) {
+        const allMenus = document.querySelectorAll('.document-menu-dropdown');
+        allMenus.forEach(menu => menu.classList.remove('show'));
+    }
+});
+
+document.addEventListener('DOMContentLoaded', function() {
+    // Make document cards clickable (open editor or view)
+    const documentCards = document.querySelectorAll('.document-card');
+    documentCards.forEach(card => {
+        card.addEventListener('click', function(event) {
+            // Don't trigger if clicking on menu or buttons
+            if (event.target.closest('.document-menu') || 
+                event.target.closest('.publish-toggle-btn') ||
+                event.target.closest('.delete-btn') ||
+                event.target.closest('.document-menu-item')) {
+                return;
+            }
+            
+            const documentId = this.dataset.documentId;
+            {% if request.user.role == 'manager' or request.user.role == 'person_centered_manager' %}
+                // Managers/PCMs go to editor
+                window.location.href = `{% url 'users:document_editor' %}?document_id=${documentId}{% if not viewing_own_documents %}&user={{ target_user.username }}{% endif %}`;
+            {% else %}
+                // Others view published PDF if available
+                const isPublished = this.querySelector('.document-preview img') !== null;
+                if (isPublished) {
+                    window.location.href = `/users/documents/${documentId}/view/`;
+                }
+            {% endif %}
+        });
+    });
+    
+    // Handle publish/unpublish buttons
+    const publishButtons = document.querySelectorAll('.publish-toggle-btn');
+    
+    publishButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.stopPropagation();
+            const btn = this;
+            const documentId = btn.dataset.documentId;
+            const action = btn.dataset.action;
+            
+            // Confirm action
+            if (!confirm(`Are you sure you want to ${action} this document?`)) {
+                return;
+            }
+            
+            // Disable button
+            btn.disabled = true;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Processing...';
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            // Make AJAX request
+            fetch(`/users/documents/toggle-publish/${documentId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    // Reload page to update UI
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Failed to update publish status.');
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            });
+        });
+    });
+    
+    // Handle delete buttons
+    const deleteButtons = document.querySelectorAll('.delete-btn');
+    
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function(event) {
+            event.stopPropagation();
+            const btn = this;
+            const documentId = btn.dataset.documentId;
+            const documentTitle = btn.dataset.documentTitle;
+            
+            // Confirm deletion
+            if (!confirm(`Are you sure you want to delete "${documentTitle}"? This action cannot be undone.`)) {
+                return;
+            }
+            
+            // Disable button
+            btn.disabled = true;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> Deleting...';
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            // Make AJAX request
+            fetch(`/users/documents/delete/${documentId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    // Reload page to update UI
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Failed to delete document.');
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            });
+        });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,15 @@
+{% extends 'base_portal.html' %}
+{% load i18n %}
+
+{% block title %}Tasks{% endblock %}
+
+{% block page_title %}Tasks{% endblock page_title %}
+
+{# Override these blocks to prevent the survey package from loading its own Bootstrap/CSS #}
+{% block extracss %}
+  {# Empty - base_portal.html already provides Bootstrap CSS #}
+{% endblock %}
+
+{% block extrajs %}
+  {# Empty - base_portal.html already provides Bootstrap JS #}
+{% endblock %}

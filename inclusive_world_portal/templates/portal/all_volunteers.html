@@ -2,9 +2,9 @@
 {% load static %}
 {% load portal_tags %}
 
-{% block title %}All Volunteers{% endblock %}
+{% block title %}Volunteers{% endblock %}
 
-{% block page_title %}All Volunteers{% endblock page_title %}
+{% block page_title %}Volunteers{% endblock page_title %}
 
 {% block css %}
 {{ block.super }}
@@ -652,11 +652,7 @@
                   @{{ volunteer.username }}
                 {% endif %}
               </a>
-              {% if volunteer.id in users_with_active_opd %}
-                <a href="{% url 'users:view_active_opd_for_user' volunteer.username %}" class="opd-badge active" onclick="event.stopPropagation()">OPD</a>
-              {% else %}
-                <a href="{% url 'users:view_active_opd_for_user' volunteer.username %}" class="opd-badge inactive" onclick="event.stopPropagation()">OPD</a>
-              {% endif %}
+              <a href="{% url 'users:document_list' %}?user={{ volunteer.username }}" class="opd-badge" onclick="event.stopPropagation()" title="View documents">Docs</a>
             </div>
             <div class="volunteer-date">
               {% if course_filter %}
@@ -767,7 +763,7 @@
       <!-- Add Volunteer Row (only shown when filtering and user is manager) -->
       {% if course_filter and can_edit %}
         <div class="volunteer-item add-volunteer-row">
-          <a href="{% url 'portal:manager_program_add_user' course_filter %}?next=all_volunteers">
+          <a href="{% url 'portal:program_add_user' course_filter %}?next=all_volunteers">
             <i class="bi bi-plus-circle"></i> Add Volunteer
           </a>
         </div>

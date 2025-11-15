@@ -1,7 +1,8 @@
 from django.contrib import admin
 from .models import (
     Program, Enrollment, AttendanceRecord,
-    ProgramVolunteerLead, BuddyAssignment, Payment, EnrollmentSettings
+    ProgramVolunteerLead, BuddyAssignment, Payment, EnrollmentSettings,
+    RoleEnrollmentRequirement, Document
 )
 
 # Basic registrations
@@ -48,3 +49,51 @@ class EnrollmentSettingsAdmin(admin.ModelAdmin):
         # Track who made the change
         obj.updated_by = request.user
         super().save_model(request, obj, form, change)
+
+
+@admin.register(RoleEnrollmentRequirement)
+class RoleEnrollmentRequirementAdmin(admin.ModelAdmin):
+    list_display = ("role", "require_profile_completion", "is_active", "updated_at")
+    list_filter = ("role", "is_active", "require_profile_completion")
+    filter_horizontal = ("required_surveys",)
+    readonly_fields = ("created_at", "updated_at")
+    fieldsets = (
+        ("Role Configuration", {
+            "fields": ("role", "is_active"),
+        }),
+        ("Requirements", {
+            "fields": ("require_profile_completion", "required_surveys"),
+            "description": "Configure what users must complete before registering for programs."
+        }),
+        ("Metadata", {
+            "fields": ("created_at", "updated_at"),
+            "classes": ("collapse",)
+        }),
+    )
+
+
+@admin.register(Document)
+class DocumentAdmin(admin.ModelAdmin):
+    list_display = ("title", "user", "created_by", "state", "published", "published_at", "source_survey", "updated_at")
+    list_filter = ("state", "published", "created_at", "updated_at")
+    search_fields = ("title", "user__username", "user__name", "created_by__username")
+    readonly_fields = ("document_id", "created_at", "updated_at", "published_at")
+    autocomplete_fields = ["user", "created_by"]
+    raw_id_fields = ["source_survey"]  # Use raw_id instead of autocomplete for Survey
+    fieldsets = (
+        ("Document Info", {
+            "fields": ("document_id", "title", "state", "published", "published_at"),
+        }),
+        ("Ownership", {
+            "fields": ("user", "created_by", "source_survey"),
+        }),
+        ("Content", {
+            "fields": ("content",),
+        }),
+        ("Metadata", {
+            "fields": ("created_at", "updated_at"),
+            "classes": ("collapse",)
+        }),
+    )
+
+

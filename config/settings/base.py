@@ -428,28 +428,19 @@ QUILL_CONFIGS = {
                     '#CCE6FF',  # Light Blue
                     '#8A3800',  # Dark Yellow
                     '#FFF1C2',  # Light Yellow
+                    # Standard Colors
+                    '#000000',  # Black
+                    '#FFFFFF',  # White
                 ]}, {'background': [
-                    # Brand Colors - Primary Palette
-                    '#7F4857',  # Berry
-                    '#00494F',  # Blue Peacock
-                    '#404040',  # Black Olive
-                    '#595959',  # Davys Grey
+                    # Light background colors suitable for text
                     '#F2F2F2',  # Anti-Flash White
-                    # Brand Colors - Secondary Palette (Accent)
-                    '#E97568',  # Ardent Coral
-                    '#008B9C',  # Splashy Aqua
-                    '#F6D18B',  # Afterglow Yellow
-                    '#F2ACA4',  # Mauvelous Pink
-                    '#D5BBC2',  # Pale Silver Pink
-                    # Badge Colors
-                    '#005025',  # Dark Green
-                    '#B8E9B2',  # Light Green
-                    '#8F0200',  # Dark Red
-                    '#FDD2CF',  # Light Red
-                    '#00488F',  # Dark Blue
-                    '#CCE6FF',  # Light Blue
-                    '#8A3800',  # Dark Yellow
                     '#FFF1C2',  # Light Yellow
+                    '#FDD2CF',  # Light Red
+                    '#CCE6FF',  # Light Blue
+                    '#B8E9B2',  # Light Green
+                    '#D5BBC2',  # Pale Silver Pink
+                    '#F2ACA4',  # Mauvelous Pink
+                    '#F6D18B',  # Afterglow Yellow
                 ]}],
                 ['link'],
                 ['clean']

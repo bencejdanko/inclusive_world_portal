@@ -2,18 +2,22 @@
 {% load static %}
 
 {% block title %}
-  {% if editing_own_document %}
-    One Page Description
+  {% if is_new_document %}
+    Create New Document
+  {% elif editing_own_document %}
+    {{ document_title }}
   {% else %}
-    Editing OPD for {{ target_user.name|default:target_user.username }}
+    Editing {{ document_title }} for {{ target_user.name|default:target_user.username }}
   {% endif %}
 {% endblock %}
 
 {% block page_title %}
-  {% if editing_own_document %}
-    One Page Description
+  {% if is_new_document %}
+    Create New Document
+  {% elif editing_own_document %}
+    {{ document_title }}
   {% else %}
-    Editing OPD for {{ target_user.name|default:target_user.username }}
+    Editing {{ document_title }} for {{ target_user.name|default:target_user.username }}
   {% endif %}
 {% endblock %}
 
@@ -503,9 +507,20 @@
         transform: translateY(3px);
     }
     
-    /* Hidden title field (kept for form submission) */
+    /* Title field styling */
     #id_title {
-        display: none;
+        font-size: 1.125rem;
+        font-weight: 600;
+        padding: 0.75rem;
+        border: 2px solid var(--color-input-border);
+        border-radius: var(--radius-lg);
+        transition: border-color 0.2s ease;
+    }
+    
+    #id_title:focus {
+        outline: none;
+        border-color: var(--color-brand-blue-peacock);
+        box-shadow: 0 0 0 3px rgba(0, 73, 79, 0.1);
     }
     
     /* Responsive adjustments */
@@ -577,18 +592,42 @@
             
             <!-- Header section with title and controls -->
             <div class="document-header">
-    
                 <div class="document-controls">
                     {{ form.state }}
-                    <button type="button" id="autogenerateBtn" class="autogenerate-button" title="Generate from Discovery Questions">
-                        <i class="bi bi-magic"></i>
-                        <span>Auto-Generate</span>
-                    </button>
-                    <a href="{% url 'users:export_document_pdf' %}{% if not editing_own_document %}?user={{ target_user.username }}{% endif %}" class="export-button" title="Create New Export">
-                        <i class="bi bi-file-earmark-plus-fill"></i>
-                        <span>Create Export</span>
-                    </a>
+                    
+                    {% if available_surveys %}
+                    <select id="surveySelect" class="form-select" style="min-width: 200px;">
+                        <option value="">Generate from</option>
+                        {% for survey in available_surveys %}
+                            <option value="{{ survey.id }}">{{ survey.name }}</option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                    
+                    {% if not is_new_document %}
+                        {% if document.published %}
+                            <a href="{% url 'users:view_published_document' document.document_id %}" class="btn btn-berry" title="View published PDF">
+                                <i class="bi bi-eye-fill me-2"></i>
+                                <span>View PDF</span>
+                            </a>
+                            <button type="button" id="publishBtn" class="btn btn-olive" data-document-id="{{ document.document_id }}" title="Unpublish this document">
+                                <i class="bi bi-eye-slash-fill me-2"></i>
+                                <span>Unpublish</span>
+                            </button>
+                        {% else %}
+                            <button type="button" id="publishBtn" class="btn btn-berry" data-document-id="{{ document.document_id }}" title="Generate and publish PDF">
+                                <i class="bi bi-file-earmark-pdf-fill me-2"></i>
+                                <span>Publish PDF</span>
+                            </button>
+                        {% endif %}
+                    {% endif %}
                 </div>
+            </div>
+            
+            <!-- Document Title Input (visible for editing) -->
+            <div class="mb-3">
+                <label for="id_title" class="form-label fw-bold">Document Title</label>
+                <input type="text" name="title" id="id_title" class="form-control" value="{{ form.title.value|default:'Untitled Document' }}" required style="display: block !important;">
             </div>
             
             <!-- Rich text editor -->
@@ -610,79 +649,6 @@
         </form>
     </div>
 
-    <!-- Document Exports Section -->
-    {% if document_exports %}
-    <div class="editor-card">
-        <h2 style="margin-top: 0; color: var(--color-brand-blue-peacock); font-size: 1.5rem; margin-bottom: var(--space-lg);">
-            <i class="bi bi-file-earmark-arrow-down"></i> Document Exports
-        </h2>
-        
-        {% if active_export %}
-        <div style="background: linear-gradient(135deg, #008B9C15 0%, #00494F15 100%); padding: var(--space-md); border-radius: var(--radius-md); margin-bottom: var(--space-lg); border: 2px solid #008B9C;">
-            <div style="display: flex; align-items: center; gap: var(--space-sm); color: var(--color-brand-blue-peacock); font-weight: 600;">
-                <i class="bi bi-check-circle-fill" style="font-size: 1.25rem;"></i>
-                <span>Active OPD: {{ active_export.created_at|date:"F j, Y g:i A" }}</span>
-            </div>
-        </div>
-        {% else %}
-        <div style="background: linear-gradient(135deg, #FFF1C215 0%, #F6D18B15 100%); padding: var(--space-md); border-radius: var(--radius-md); margin-bottom: var(--space-lg); border: 2px solid #F6D18B;">
-            <div style="display: flex; align-items: center; gap: var(--space-sm); color: var(--color-brand-black-olive); font-weight: 600;">
-                <i class="bi bi-info-circle-fill" style="font-size: 1.25rem;"></i>
-                <span>No active OPD selected. Please select one below.</span>
-            </div>
-        </div>
-        {% endif %}
-        
-        <div style="display: grid; gap: var(--space-md);">
-            {% for export in document_exports %}
-            <div class="export-item" style="display: flex; justify-content: space-between; align-items: center; padding: var(--space-md); background: var(--color-background); border: 2px solid {% if export.is_active %}var(--color-brand-splashy-aqua){% else %}var(--color-border){% endif %}; border-radius: var(--radius-lg); transition: all 0.2s ease;">
-                <div style="display: flex; align-items: center; gap: var(--space-md); flex: 1;">
-                    <!-- Radio button for active selection -->
-                    <label style="display: flex; align-items: center; cursor: pointer; margin: 0;">
-                        <input type="radio" 
-                               name="active_export" 
-                               value="{{ export.export_id }}"
-                               class="active-radio"
-                               data-export-id="{{ export.export_id }}"
-                               {% if export.is_active %}checked{% endif %}
-                               style="width: 20px; height: 20px; cursor: pointer; margin: 0;">
-                        <span style="position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0;">Set as active OPD</span>
-                    </label>
-                    
-                    <div style="flex: 1;">
-                        <div style="font-weight: 600; color: var(--color-foreground); margin-bottom: var(--space-xs);">
-                            {{ export.get_filename }}
-                        </div>
-                        <div style="font-size: 0.875rem; color: var(--color-muted-foreground);">
-                            Created: {{ export.created_at|date:"F j, Y g:i A" }}
-                            {% if export.is_active %}
-                            <span style="color: var(--color-brand-splashy-aqua); font-weight: 600; margin-left: var(--space-sm);">
-                                <i class="bi bi-check-circle-fill"></i> Active
-                            </span>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-                <div style="display: flex; gap: var(--space-sm); align-items: center;">
-                    <a href="{% url 'users:preview_document_export' export.export_id %}" 
-                       class="btn-icon" 
-                       title="Preview PDF"
-                       style="padding: 0.5rem; background: var(--color-brand-blue-peacock); color: white; border-radius: var(--radius-md); text-decoration: none; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
-                        <i class="bi bi-eye-fill" style="font-size: 1.125rem;"></i>
-                    </a>
-                    <button type="button" 
-                            class="btn-icon delete-export-btn" 
-                            data-export-id="{{ export.export_id }}"
-                            title="Delete Export"
-                            style="padding: 0.5rem; background: var(--color-destructive, #dc2626); color: white; border: none; border-radius: var(--radius-md); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s ease;">
-                        <i class="bi bi-trash" style="font-size: 1.125rem;"></i>
-                    </button>
-                </div>
-            </div>
-            {% endfor %}
-        </div>
-    </div>
-    {% endif %}
 </div>
 
 <!-- Scroll helper buttons -->
@@ -750,75 +716,87 @@
         saveButton.innerHTML = '<i class="bi bi-hourglass-split"></i> <span>Saving...</span>';
     });
     
-    // Auto-generate document from survey data
-    document.getElementById('autogenerateBtn').addEventListener('click', function() {
-        const btn = this;
-        const originalHTML = btn.innerHTML;
-        
-        // Get the Quill instance
-        const quillInstance = getQuillInstance();
-        
-        if (!quillInstance) {
-            alert('Editor not ready. Please wait a moment and try again.');
-            return;
-        }
-        
-        // Confirm before overwriting
-        const currentContent = quillInstance.root.innerHTML.trim();
-        if (currentContent && currentContent !== '<p><br></p>' && currentContent !== '') {
-            if (!confirm('This will replace your current document content with a template generated from your Discovery Questions. Do you want to continue?')) {
+    // Auto-generate document from survey data when survey is selected
+    const surveySelect = document.getElementById('surveySelect');
+    
+    if (surveySelect) {
+        surveySelect.addEventListener('change', function() {
+            // Get selected survey ID
+            const surveyId = this.value;
+            if (!surveyId) {
                 return;
             }
-        }
-        
-        // Disable button and show loading state
-        btn.disabled = true;
-        btn.innerHTML = '<i class="bi bi-hourglass-split"></i> <span>Generating...</span>';
-        
-        // Get CSRF token
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        
-        // Build URL with user parameter if editing another user's document
-        let autogenerateUrl = '{% url "users:autogenerate_document" %}';
-        {% if not editing_own_document %}
-        autogenerateUrl += '?user={{ target_user.username }}';
-        {% endif %}
-        
-        // Make AJAX request to autogenerate endpoint
-        fetch(autogenerateUrl, {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRFToken': csrfToken
-            },
-            credentials: 'same-origin'
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                // Update Quill editor with generated content
-                quillInstance.root.innerHTML = data.html;
-                
-                // Show success message
-                alert(data.message || 'Document generated successfully! Please review and save.');
-                
-                // Re-enable button
-                btn.disabled = false;
-                btn.innerHTML = originalHTML;
-            } else {
-                // Show error message
-                alert(data.error || 'Failed to generate document. Please try again.');
-                btn.disabled = false;
-                btn.innerHTML = originalHTML;
+            
+            // Get the Quill instance
+            const quillInstance = getQuillInstance();
+            
+            if (!quillInstance) {
+                alert('Editor not ready. Please wait a moment and try again.');
+                surveySelect.value = '';
+                return;
             }
-        })
-        .catch(error => {
-            console.error('Error:', error);
-            alert('An error occurred while generating the document. Please try again.');
-            btn.disabled = false;
-            btn.innerHTML = originalHTML;
+            
+            // Confirm before overwriting
+            const currentContent = quillInstance.root.innerHTML.trim();
+            if (currentContent && currentContent !== '<p><br></p>' && currentContent !== '') {
+                const surveyName = surveySelect.options[surveySelect.selectedIndex].text;
+                if (!confirm(`This will replace your current document content with a template generated from "${surveyName}". Do you want to continue?`)) {
+                    surveySelect.value = '';
+                    return;
+                }
+            }
+            
+            // Disable dropdown during generation
+            surveySelect.disabled = true;
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            // Build URL with user parameter if editing another user's document
+            let autogenerateUrl = '{% url "users:autogenerate_document" %}';
+            {% if not editing_own_document %}
+            autogenerateUrl += '?user={{ target_user.username }}';
+            {% endif %}
+            
+            // Make AJAX request to autogenerate endpoint
+            fetch(autogenerateUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify({
+                    survey_id: surveyId
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    // Update Quill editor with generated content
+                    quillInstance.root.innerHTML = data.html;
+                    
+                    // Show success message
+                    alert(data.message || 'Document generated successfully! Please review and save.');
+                    
+                    // Reset dropdown and re-enable
+                    surveySelect.value = '';
+                    surveySelect.disabled = false;
+                } else {
+                    // Show error message
+                    alert(data.error || 'Failed to generate document. Please try again.');
+                    surveySelect.value = '';
+                    surveySelect.disabled = false;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred while generating the document. Please try again.');
+                surveySelect.value = '';
+                surveySelect.disabled = false;
+            });
         });
-    });
+    }
     
     // Function to get Quill editor instance
     function getQuillInstance() {
@@ -858,257 +836,68 @@
         return null;
     }
     
-    // Store quill instance globally and customize color palette when initialized
+    // Handle publish/unpublish button
+    const publishBtn = document.getElementById('publishBtn');
+    if (publishBtn) {
+        publishBtn.addEventListener('click', function() {
+            const btn = this;
+            const documentId = btn.dataset.documentId;
+            const isPublished = btn.classList.contains('btn-warning');
+            const action = isPublished ? 'unpublish' : 'publish';
+            
+            // Confirm action
+            if (!confirm(`Are you sure you want to ${action} this document?`)) {
+                return;
+            }
+            
+            // Disable button
+            btn.disabled = true;
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = '<i class="bi bi-hourglass-split"></i> <span>Processing...</span>';
+            
+            // Get CSRF token
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            
+            // Make AJAX request
+            fetch(`/users/documents/toggle-publish/${documentId}/`, {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': csrfToken
+                },
+                credentials: 'same-origin'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    alert(data.message);
+                    
+                    // Reload page to update UI
+                    window.location.reload();
+                } else {
+                    alert(data.error || 'Failed to update publish status.');
+                    btn.disabled = false;
+                    btn.innerHTML = originalHTML;
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                alert('An error occurred. Please try again.');
+                btn.disabled = false;
+                btn.innerHTML = originalHTML;
+            });
+        });
+    }
+    
+    // Store quill instance globally for survey auto-generation
     document.addEventListener('DOMContentLoaded', function() {
         // Wait for Quill to be initialized by django-quill-editor
         setTimeout(function() {
             const quillInstance = getQuillInstance();
             if (quillInstance) {
                 window.quill = quillInstance;
-                
-                // Customize Quill color palette with brand colors
-                customizeQuillColorPalette();
             }
         }, 500);
     });
     
-    // Function to customize Quill's color palette with brand colors
-    function customizeQuillColorPalette() {
-        // Define custom color palette with Inclusive World brand colors
-        const brandColors = [
-            // Primary Brand Colors
-            '#7F4857',  // Berry (primary headers)
-            '#00494F',  // Blue Peacock (secondary headers)
-            '#008B9C',  // Splashy Aqua (links, accents)
-            '#404040',  // Black Olive (body text)
-            '#595959',  // Davys Grey (muted text)
-            
-            // Accent Colors
-            '#E97568',  // Ardent Coral
-            '#F6D18B',  // Afterglow Yellow
-            '#F2ACA4',  // Mauvelous Pink
-            '#D5BBC2',  // Pale Silver Pink
-            
-            // Additional Standard Colors
-            '#000000',  // Black
-            '#FFFFFF',  // White
-            '#F2F2F2',  // Anti-flash White
-        ];
-        
-        // Inject custom color palette into Quill toolbar
-        const style = document.createElement('style');
-        style.innerHTML = `
-            /* Custom color picker with brand colors */
-            .ql-snow .ql-color-picker .ql-picker-options [data-value]:not([data-value=""]) {
-                display: none;
-            }
-            .ql-snow .ql-background-picker .ql-picker-options [data-value]:not([data-value=""]) {
-                display: none;
-            }
-        `;
-        document.head.appendChild(style);
-        
-        // Add brand color swatches to color and background pickers
-        setTimeout(function() {
-            const colorPicker = document.querySelector('.ql-color .ql-picker-options');
-            const backgroundPicker = document.querySelector('.ql-background .ql-picker-options');
-            
-            if (colorPicker) {
-                // Clear existing colors
-                colorPicker.innerHTML = '<span class="ql-picker-item" data-value="" aria-label="Default"></span>';
-                
-                // Add brand colors
-                brandColors.forEach(color => {
-                    const item = document.createElement('span');
-                    item.classList.add('ql-picker-item');
-                    item.setAttribute('data-value', color);
-                    item.style.backgroundColor = color;
-                    item.setAttribute('aria-label', color);
-                    colorPicker.appendChild(item);
-                });
-            }
-            
-            if (backgroundPicker) {
-                // Clear existing colors
-                backgroundPicker.innerHTML = '<span class="ql-picker-item" data-value="" aria-label="No background"></span>';
-                
-                // Add brand colors (lighter variants work better for backgrounds)
-                const backgroundColors = [
-                    '#F2F2F2',  // Anti-flash White
-                    '#FFF1C2',  // Light Yellow
-                    '#FDD2CF',  // Light Red
-                    '#CCE6FF',  // Light Blue
-                    '#B8E9B2',  // Light Green
-                    '#D5BBC2',  // Pale Silver Pink
-                    '#F2ACA4',  // Mauvelous Pink
-                    '#F6D18B',  // Afterglow Yellow
-                ];
-                
-                backgroundColors.forEach(color => {
-                    const item = document.createElement('span');
-                    item.classList.add('ql-picker-item');
-                    item.setAttribute('data-value', color);
-                    item.style.backgroundColor = color;
-                    item.setAttribute('aria-label', color);
-                    backgroundPicker.appendChild(item);
-                });
-            }
-        }, 600);
-    }
-    
-    // Export management functions
-    document.addEventListener('DOMContentLoaded', function() {
-        // Get CSRF token
-        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
-        
-        // Track the previously selected radio button to allow deselection
-        let previouslySelected = null;
-        
-        // Find initially selected radio
-        document.querySelectorAll('.active-radio').forEach(radio => {
-            if (radio.checked) {
-                previouslySelected = radio;
-            }
-        });
-        
-        // Handle radio button clicks for active export selection
-        // Using 'click' instead of 'change' to detect clicks on already-selected radios
-        document.querySelectorAll('.active-radio').forEach(radio => {
-            radio.addEventListener('click', function(e) {
-                const exportId = this.getAttribute('data-export-id');
-                
-                // Check if clicking the already-selected radio (to deselect)
-                if (previouslySelected === this && this.checked) {
-                    // Prevent default to manually handle the state
-                    e.preventDefault();
-                    
-                    // Uncheck the radio
-                    this.checked = false;
-                    previouslySelected = null;
-                    
-                    // Disable all radios during the request
-                    document.querySelectorAll('.active-radio').forEach(r => r.disabled = true);
-                    
-                    // Call backend to deactivate
-                    fetch(`/users/documents/exports/${exportId}/toggle-active/`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': csrfToken
-                        },
-                        credentials: 'same-origin'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Reload page to show updated status
-                            location.reload();
-                        } else {
-                            alert(data.error || 'Failed to update active status.');
-                            document.querySelectorAll('.active-radio').forEach(r => r.disabled = false);
-                            location.reload();
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
-                        document.querySelectorAll('.active-radio').forEach(r => r.disabled = false);
-                        location.reload();
-                    });
-                } else if (this.checked) {
-                    // Selecting a new radio (or re-selecting after deselect)
-                    previouslySelected = this;
-                    
-                    // Disable all radios during the request
-                    document.querySelectorAll('.active-radio').forEach(r => r.disabled = true);
-                    
-                    fetch(`/users/documents/exports/${exportId}/toggle-active/`, {
-                        method: 'POST',
-                        headers: {
-                            'X-CSRFToken': csrfToken
-                        },
-                        credentials: 'same-origin'
-                    })
-                    .then(response => response.json())
-                    .then(data => {
-                        if (data.success) {
-                            // Reload page to show updated active status
-                            location.reload();
-                        } else {
-                            alert(data.error || 'Failed to update active status.');
-                            // Re-enable radios and revert selection
-                            document.querySelectorAll('.active-radio').forEach(r => r.disabled = false);
-                            location.reload();
-                        }
-                    })
-                    .catch(error => {
-                        console.error('Error:', error);
-                        alert('An error occurred. Please try again.');
-                        // Re-enable radios and revert selection
-                        document.querySelectorAll('.active-radio').forEach(r => r.disabled = false);
-                        location.reload();
-                    });
-                }
-            });
-        });
-        
-        // Handle delete export buttons
-        document.querySelectorAll('.delete-export-btn').forEach(btn => {
-            btn.addEventListener('click', function() {
-                const exportId = this.getAttribute('data-export-id');
-                
-                if (!confirm('Are you sure you want to delete this export? This action cannot be undone.')) {
-                    return;
-                }
-                
-                const originalHTML = this.innerHTML;
-                this.disabled = true;
-                this.innerHTML = '<i class="bi bi-hourglass-split"></i>';
-                
-                fetch(`/users/documents/exports/${exportId}/delete/`, {
-                    method: 'POST',
-                    headers: {
-                        'X-CSRFToken': csrfToken
-                    },
-                    credentials: 'same-origin'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        // Remove the export item from DOM
-                        this.closest('.export-item').remove();
-                        
-                        // Check if no exports left
-                        const exportItems = document.querySelectorAll('.export-item');
-                        if (exportItems.length === 0) {
-                            // Reload page to show empty state
-                            location.reload();
-                        }
-                    } else {
-                        alert(data.error || 'Failed to delete export.');
-                        this.disabled = false;
-                        this.innerHTML = originalHTML;
-                    }
-                })
-                .catch(error => {
-                    console.error('Error:', error);
-                    alert('An error occurred. Please try again.');
-                    this.disabled = false;
-                    this.innerHTML = originalHTML;
-                });
-            });
-        });
-        
-        // Add hover effects to icon buttons
-        document.querySelectorAll('.btn-icon').forEach(btn => {
-            btn.addEventListener('mouseenter', function() {
-                this.style.transform = 'scale(1.1)';
-                this.style.boxShadow = 'var(--shadow-md)';
-            });
-            btn.addEventListener('mouseleave', function() {
-                this.style.transform = 'scale(1)';
-                this.style.boxShadow = 'none';
-            });
-        });
-    });
 </script>
 {% endblock %}

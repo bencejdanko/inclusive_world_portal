@@ -274,7 +274,3 @@ set -a; [ -f .env ] && . .env; set +a
 
 uv run python manage.py runserver 0.0.0.0:8000
 ```
-
-## Deployment
-
-The following details how to deploy this application.

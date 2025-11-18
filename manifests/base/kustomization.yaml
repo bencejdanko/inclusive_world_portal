@@ -48,6 +48,6 @@ commonLabels:
   app.kubernetes.io/managed-by: argocd
 
 images:
-  - name: your-registry/inclusive-world-portal
-    newName: your-registry/inclusive-world-portal
+  - name: bencejdanko/inclusive-world-portal
+    newName: bencejdanko/inclusive-world-portal
     newTag: latest

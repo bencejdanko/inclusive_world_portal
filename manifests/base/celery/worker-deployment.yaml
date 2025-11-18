@@ -47,7 +47,7 @@ spec:
           echo "PostgreSQL is ready!"
       containers:
       - name: celeryworker
-        image: your-registry/inclusive-world-portal:latest  # REPLACE WITH YOUR IMAGE
+        image: bencejdanko/inclusive-world-portal:latest  # REPLACE WITH YOUR IMAGE
         command:
         - celery
         - -A

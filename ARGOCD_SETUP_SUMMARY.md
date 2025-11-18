@@ -143,18 +143,17 @@ chmod +x scripts/build-and-push.sh
 
 ```bash
 # Generate Django secret key
-python3 -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+export DJANGO_KEY=$(openssl rand -base64 50)
 
-# Create namespace and secrets
-kubectl create namespace inclusive-world-portal-dev
 kubectl create secret generic inclusive-world-secrets \
   --namespace=inclusive-world-portal-dev \
-  --from-literal=DJANGO_SECRET_KEY='<generated-key>' \
+  --from-literal=DJANGO_SECRET_KEY="${DJANGO_KEY}" \
   --from-literal=POSTGRES_PASSWORD='dev-password-123' \
   --from-literal=MINIO_ROOT_USER='minioadmin' \
   --from-literal=MINIO_ROOT_PASSWORD='minioadmin123' \
   --from-literal=AWS_ACCESS_KEY_ID='minioadmin' \
   --from-literal=AWS_SECRET_ACCESS_KEY='minioadmin123'
+
 ```
 
 ### 4. Deploy with ArgoCD

@@ -8,7 +8,7 @@ resources:
   - namespace.yaml
   
   # Configuration
-  - configmap.yaml
+  # Note: ConfigMap is now generated below via configMapGenerator
   # Note: secrets.yaml should be created manually or with external-secrets
   
   # PostgreSQL
@@ -47,6 +47,27 @@ labels:
   - pairs:
       app.kubernetes.io/name: inclusive-world-portal
       app.kubernetes.io/managed-by: argocd
+
+configMapGenerator:
+  - name: inclusive-world-config
+    literals:
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - DJANGO_ALLOWED_HOSTS=*
+      - POSTGRES_DB=inclusive_world_portal
+      - POSTGRES_USER=postgres
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_URL=redis://redis:6379/0
+      - AWS_STORAGE_BUCKET_NAME=inclusive-world-media
+      - AWS_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_S3_REGION_NAME=us-east-1
+      - AWS_S3_CUSTOM_DOMAIN=
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - USE_DOCKER=yes
+      - IPYTHONDIR=/app/.ipython
 
 images:
   - name: bencejdanko/inclusive-world-portal

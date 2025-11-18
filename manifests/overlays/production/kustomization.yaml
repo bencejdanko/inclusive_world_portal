@@ -24,7 +24,7 @@ replicas:
 # ConfigMap patch for production environment
 configMapGenerator:
   - name: inclusive-world-config
-    behavior: replace
+    behavior: merge
     literals:
       - DJANGO_DEBUG=False
       - DJANGO_ALLOWED_HOSTS=inclusive-world-portal.com,www.inclusive-world-portal.com
@@ -35,22 +35,6 @@ configMapGenerator:
       - DJANGO_SECURE_HSTS_PRELOAD=True
       - DJANGO_SESSION_COOKIE_SECURE=True
       - DJANGO_CSRF_COOKIE_SECURE=True
-      - DJANGO_SETTINGS_MODULE=config.settings.production
-      - POSTGRES_DB=inclusive_world_portal
-      - POSTGRES_USER=postgres
-      - POSTGRES_HOST=postgres
-      - POSTGRES_PORT=5432
-      - REDIS_HOST=redis
-      - REDIS_PORT=6379
-      - REDIS_URL=redis://redis:6379/0
-      - AWS_STORAGE_BUCKET_NAME=inclusive-world-media
-      - AWS_S3_ENDPOINT_URL=http://minio:9000
-      - AWS_S3_REGION_NAME=us-east-1
-      - AWS_S3_CUSTOM_DOMAIN=
-      - CELERY_BROKER_URL=redis://redis:6379/0
-      - CELERY_RESULT_BACKEND=redis://redis:6379/0
-      - USE_DOCKER=yes
-      - IPYTHONDIR=/app/.ipython
 
 # Image tag override (use specific version in production, not 'latest')
 images:

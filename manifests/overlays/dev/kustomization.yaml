@@ -18,8 +18,6 @@ replicas:
     count: 1
   - name: celeryworker
     count: 1
-  - name: nginx
-    count: 1
 
 # Resource adjustments for dev (lower limits)
 patches:

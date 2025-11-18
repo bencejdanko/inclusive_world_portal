@@ -18,8 +18,6 @@ replicas:
     count: 3
   - name: celeryworker
     count: 3
-  - name: nginx
-    count: 3
 
 # ConfigMap patch for production environment
 configMapGenerator:

@@ -18,8 +18,6 @@ replicas:
     count: 2
   - name: celeryworker
     count: 2
-  - name: nginx
-    count: 2
 
 # ConfigMap patch for staging environment
 configMapGenerator:

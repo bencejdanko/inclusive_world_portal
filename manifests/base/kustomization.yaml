@@ -66,6 +66,7 @@ configMapGenerator:
       - USE_DOCKER=yes
       - IPYTHONDIR=/app/.ipython
       - DJANGO_ADMIN_URL=admin/
+      - SENTRY_DSN=
 
 images:
   - name: bencejdanko/inclusive-world-portal

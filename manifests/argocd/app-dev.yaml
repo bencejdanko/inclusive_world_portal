@@ -12,8 +12,8 @@ spec:
   project: default
   
   source:
-    repoURL: https://github.com/your-org/inclusive_world_portal.git  # CHANGE THIS
-    targetRevision: develop  # or main
+    repoURL: https://github.com/bencejdanko/inclusive_world_portal.git 
+    targetRevision: main  # or main
     path: manifests/overlays/dev
   
   destination:

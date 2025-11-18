@@ -43,9 +43,10 @@ resources:
   - nginx/service.yaml
   - nginx/ingress.yaml
 
-commonLabels:
-  app.kubernetes.io/name: inclusive-world-portal
-  app.kubernetes.io/managed-by: argocd
+labels:
+  - pairs:
+      app.kubernetes.io/name: inclusive-world-portal
+      app.kubernetes.io/managed-by: argocd
 
 images:
   - name: bencejdanko/inclusive-world-portal

@@ -5,11 +5,12 @@ namespace: inclusive-world-portal-staging
 
 namePrefix: staging-
 
-bases:
+resources:
   - ../../base
 
-commonLabels:
-  environment: staging
+labels:
+  - pairs:
+      environment: staging
 
 # Replica adjustments for staging
 replicas:
@@ -23,11 +24,27 @@ replicas:
 # ConfigMap patch for staging environment
 configMapGenerator:
   - name: inclusive-world-config
-    behavior: merge
+    behavior: replace
     literals:
       - DJANGO_DEBUG=False
       - DJANGO_ALLOWED_HOSTS=staging.inclusive-world-portal.example.com
       - ENVIRONMENT=staging
+      - DJANGO_SETTINGS_MODULE=config.settings.production
+      - POSTGRES_DB=inclusive_world_portal
+      - POSTGRES_USER=postgres
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_URL=redis://redis:6379/0
+      - AWS_STORAGE_BUCKET_NAME=inclusive-world-media
+      - AWS_S3_ENDPOINT_URL=http://minio:9000
+      - AWS_S3_REGION_NAME=us-east-1
+      - AWS_S3_CUSTOM_DOMAIN=
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - CELERY_RESULT_BACKEND=redis://redis:6379/0
+      - USE_DOCKER=yes
+      - IPYTHONDIR=/app/.ipython
 
 # Image tag override
 images:

@@ -32,3 +32,4 @@ data:
   # Application Settings
   USE_DOCKER: "yes"
   IPYTHONDIR: "/app/.ipython"
+  DJANGO_ADMIN_URL: "admin/"

@@ -38,9 +38,6 @@ resources:
   - celery/worker-hpa.yaml
   
   # Nginx
-  - nginx/configmap.yaml
-  - nginx/deployment.yaml
-  - nginx/service.yaml
   - nginx/ingress.yaml
 
 labels:

@@ -65,6 +65,7 @@ configMapGenerator:
       - CELERY_RESULT_BACKEND=redis://redis:6379/0
       - USE_DOCKER=yes
       - IPYTHONDIR=/app/.ipython
+      - DJANGO_ADMIN_URL=admin/
 
 images:
   - name: bencejdanko/inclusive-world-portal

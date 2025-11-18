@@ -15,13 +15,13 @@ spec:
   project: default
   
   source:
-    repoURL: https://github.com/your-org/inclusive_world_portal.git  # CHANGE THIS
-    targetRevision: staging
-    path: manifests/overlays/staging
+    repoURL: https://github.com/bencejdanko/inclusive_world_portal.git
+    targetRevision: main
+    path: manifests/base
   
   destination:
     server: https://kubernetes.default.svc
-    namespace: inclusive-world-portal-staging
+    namespace: inclusive-world-portal
   
   syncPolicy:
     automated:

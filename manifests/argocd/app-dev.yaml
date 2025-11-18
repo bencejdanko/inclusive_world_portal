@@ -13,12 +13,12 @@ spec:
   
   source:
     repoURL: https://github.com/bencejdanko/inclusive_world_portal.git 
-    targetRevision: main  # or main
-    path: manifests/overlays/dev
+    targetRevision: main
+    path: manifests/base
   
   destination:
     server: https://kubernetes.default.svc
-    namespace: inclusive-world-portal-dev
+    namespace: inclusive-world-portal
   
   syncPolicy:
     automated:

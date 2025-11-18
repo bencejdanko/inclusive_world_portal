@@ -16,9 +16,9 @@ spec:
   project: default
   
   source:
-    repoURL: https://github.com/your-org/inclusive_world_portal.git  # CHANGE THIS
-    targetRevision: main  # or production branch
-    path: manifests/overlays/production
+    repoURL: https://github.com/bencejdanko/inclusive_world_portal.git
+    targetRevision: main
+    path: manifests/base
   
   destination:
     server: https://kubernetes.default.svc

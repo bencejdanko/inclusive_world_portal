@@ -7,7 +7,7 @@ metadata:
     app: django
 spec:
   accessModes:
-  - ReadWriteMany  # Need RWX if multiple replicas access same volume
+  - ReadWriteOnce
   resources:
     requests:
       storage: 5Gi
@@ -22,7 +22,7 @@ metadata:
     app: django
 spec:
   accessModes:
-  - ReadWriteMany  # Need RWX if multiple replicas access same volume
+  - ReadWriteOnce 
   resources:
     requests:
       storage: 10Gi

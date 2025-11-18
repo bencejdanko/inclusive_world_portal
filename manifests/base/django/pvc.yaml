@@ -1,0 +1,29 @@
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: static-files
+  namespace: inclusive-world-portal
+  labels:
+    app: django
+spec:
+  accessModes:
+  - ReadWriteMany  # Need RWX if multiple replicas access same volume
+  resources:
+    requests:
+      storage: 5Gi
+  # storageClassName: ""  # Specify in environment overlay
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-files
+  namespace: inclusive-world-portal
+  labels:
+    app: django
+spec:
+  accessModes:
+  - ReadWriteMany  # Need RWX if multiple replicas access same volume
+  resources:
+    requests:
+      storage: 10Gi
+  # storageClassName: ""  # Specify in environment overlay

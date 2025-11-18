@@ -2,7 +2,7 @@ import pytest
 from django.utils import timezone
 from django.contrib.auth import get_user_model
 from inclusive_world_portal.portal.models import (
-    Program, Enrollment, UserNotification
+    Program, Enrollment
 )
 
 User = get_user_model()
@@ -24,17 +24,29 @@ def test_enrollment_bumps_program_enrolled():
     assert p.enrolled == 1
 
 @pytest.mark.django_db
-def test_user_notification_read_timestamp():
-    u = User.objects.create(username="c", email="c@example.com")
-    from inclusive_world_portal.portal.models import Notification, UserNotification
-    n = Notification.objects.create(message="hi")
-    link = UserNotification.objects.create(user=u, notification=n, is_read=False)
-    assert link.read_at is None
-    link.is_read = True
-    link.save()
-    assert link.read_at is not None
-    ts = link.read_at
-    # flipping back to unread clears read_at
-    link.is_read = False
-    link.save()
-    assert link.read_at is None
+def test_notification_system():
+    """Test that django-notifications-hq is working correctly."""
+    from notifications.signals import notify
+    
+    sender = User.objects.create(username="sender", email="sender@example.com")
+    recipient = User.objects.create(username="recipient", email="recipient@example.com")
+    
+    # Send a notification
+    notify.send(
+        sender=sender,
+        recipient=recipient,
+        verb="test notification",
+        description="This is a test"
+    )
+    
+    # Check that the notification was created
+    notifications = recipient.notifications.all()
+    assert notifications.count() == 1
+    
+    notification = notifications.first()
+    assert notification.verb == "test notification"
+    assert notification.unread is True
+    
+    # Mark as read
+    notification.mark_as_read()
+    assert notification.unread is False

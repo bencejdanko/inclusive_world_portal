@@ -1,0 +1,63 @@
+apiVersion: argoproj.io/v1alpha1
+kind: AppProject
+metadata:
+  name: inclusive-world-portal
+  namespace: argocd
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+spec:
+  description: Inclusive World Portal Application Project
+  
+  # Source repositories
+  sourceRepos:
+    - 'https://github.com/your-org/inclusive_world_portal.git'  # CHANGE THIS
+  
+  # Destinations
+  destinations:
+    - namespace: 'inclusive-world-portal*'
+      server: https://kubernetes.default.svc
+    - namespace: argocd
+      server: https://kubernetes.default.svc
+  
+  # Cluster resource whitelist
+  clusterResourceWhitelist:
+    - group: ''
+      kind: Namespace
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRole
+    - group: 'rbac.authorization.k8s.io'
+      kind: ClusterRoleBinding
+  
+  # Namespace resource whitelist (allow all by default)
+  namespaceResourceWhitelist:
+    - group: '*'
+      kind: '*'
+  
+  # Roles for access control
+  roles:
+    # Developers can view and sync dev environment
+    - name: developers
+      description: Developers with access to dev environment
+      policies:
+        - p, proj:inclusive-world-portal:developers, applications, get, inclusive-world-portal/*, allow
+        - p, proj:inclusive-world-portal:developers, applications, sync, inclusive-world-portal/*-dev, allow
+      groups:
+        - developers
+    
+    # DevOps can view and sync all environments
+    - name: devops
+      description: DevOps team with full access
+      policies:
+        - p, proj:inclusive-world-portal:devops, applications, *, inclusive-world-portal/*, allow
+      groups:
+        - devops
+        - platform-team
+    
+    # ReadOnly access for monitoring
+    - name: readonly
+      description: ReadOnly access for monitoring and observability
+      policies:
+        - p, proj:inclusive-world-portal:readonly, applications, get, inclusive-world-portal/*, allow
+      groups:
+        - monitoring
+        - sre

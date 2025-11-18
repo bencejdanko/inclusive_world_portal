@@ -1,0 +1,78 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: celerybeat
+  namespace: inclusive-world-portal
+  labels:
+    app: celerybeat
+    component: scheduler
+spec:
+  replicas: 1  # Only one beat scheduler should run
+  selector:
+    matchLabels:
+      app: celerybeat
+  strategy:
+    type: Recreate  # Ensure only one instance runs at a time
+  template:
+    metadata:
+      labels:
+        app: celerybeat
+        component: scheduler
+    spec:
+      initContainers:
+      - name: wait-for-redis
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z redis 6379; do
+            echo "Waiting for Redis..."
+            sleep 2
+          done
+          echo "Redis is ready!"
+      - name: wait-for-postgres
+        image: busybox:1.36
+        command:
+        - sh
+        - -c
+        - |
+          until nc -z postgres 5432; do
+            echo "Waiting for PostgreSQL..."
+            sleep 2
+          done
+          echo "PostgreSQL is ready!"
+      containers:
+      - name: celerybeat
+        image: your-registry/inclusive-world-portal:latest  # REPLACE WITH YOUR IMAGE
+        command:
+        - celery
+        - -A
+        - config.celery_app
+        - beat
+        - -l
+        - info
+        - --scheduler
+        - django_celery_beat.schedulers:DatabaseScheduler
+        envFrom:
+        - configMapRef:
+            name: inclusive-world-config
+        - secretRef:
+            name: inclusive-world-secrets
+        env:
+        - name: DATABASE_URL
+          value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)"
+        volumeMounts:
+        - name: celerybeat-schedule
+          mountPath: /app/celerybeat-schedule
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "500m"
+      volumes:
+      - name: celerybeat-schedule
+        persistentVolumeClaim:
+          claimName: celerybeat-schedule

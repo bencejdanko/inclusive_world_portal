@@ -2,8 +2,11 @@
 
 A management portal for the Inclusive World team.
 
-[![Built with Cookiecutter Django](https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter)](https://github.com/cookiecutter/cookiecutter-django/)
-[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
+
+[![CI](https://github.com/bencejdanko/inclusive_world_portal/actions/workflows/ci.yml/badge.svg)](https://github.com/bencejdanko/inclusive_world_portal/actions/workflows/ci.yml)
+[![Docker Build and Test](https://github.com/bencejdanko/inclusive_world_portal/actions/workflows/docker.yml/badge.svg)](https://github.com/bencejdanko/inclusive_world_portal/actions/workflows/docker.yml)
+[![Security Scan](https://github.com/bencejdanko/inclusive_world_portal/actions/workflows/security-scan.yml/badge.svg)](https://github.com/bencejdanko/inclusive_world_portal/actions/workflows/security-scan.yml)
+[![Build and Deploy](https://github.com/bencejdanko/inclusive_world_portal/actions/workflows/build-and-deploy.yml/badge.svg)](https://github.com/bencejdanko/inclusive_world_portal/actions/workflows/build-and-deploy.yml)
 
 ## Developers
 

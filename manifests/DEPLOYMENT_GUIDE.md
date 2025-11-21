@@ -193,11 +193,11 @@ python3 -c 'from django.core.management.utils import get_random_secret_key; prin
 
 ```bash
 # Create namespace first
-kubectl create namespace inclusive-world-portal-dev
+kubectl create namespace inclusive-world-portal
 
 # Create secrets
 kubectl create secret generic inclusive-world-secrets \
-  --namespace=inclusive-world-portal-dev \
+  --namespace=inclusive-world-portal \
   --from-literal=DJANGO_SECRET_KEY='your-generated-secret-key' \
   --from-literal=POSTGRES_PASSWORD='dev-postgres-password' \
   --from-literal=MINIO_ROOT_USER='minioadmin' \

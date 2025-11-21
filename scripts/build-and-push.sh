@@ -11,7 +11,7 @@ YELLOW='\033[1;33m'
 NC='\033[0m' # No Color
 
 # Configuration
-REGISTRY=${1:-"your-registry"}
+REGISTRY=bencejdanko
 TAG=${2:-"$(git rev-parse --short HEAD)"}
 IMAGE_NAME="inclusive-world-portal"
 FULL_IMAGE="${REGISTRY}/${IMAGE_NAME}:${TAG}"

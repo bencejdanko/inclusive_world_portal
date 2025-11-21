@@ -46,7 +46,7 @@ spec:
           done
           echo "Redis is ready!"
       - name: run-migrations
-        image: bencejdanko/inclusive-world-portal:latest
+        image: bencejdanko/inclusive-world-portal:f71b9f3 
         command:
         - python
         - manage.py
@@ -62,7 +62,7 @@ spec:
           value: "postgres://$(POSTGRES_USER):$(POSTGRES_PASSWORD)@$(POSTGRES_HOST):$(POSTGRES_PORT)/$(POSTGRES_DB)"
       containers:
       - name: django
-        image: bencejdanko/inclusive-world-portal:latest
+        image: bencejdanko/inclusive-world-portal:f71b9f3 
         ports:
         - containerPort: 8000
           name: http

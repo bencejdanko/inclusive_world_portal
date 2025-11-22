@@ -71,4 +71,4 @@ configMapGenerator:
 images:
   - name: bencejdanko/inclusive-world-portal
     newName: bencejdanko/inclusive-world-portal
-    newTag: latest
+    newTag: f71b9f3

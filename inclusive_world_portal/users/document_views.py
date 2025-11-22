@@ -136,7 +136,7 @@ class DocumentEditorView(LoginRequiredMixin, FormView):
         return initial
     
     def get_context_data(self, **kwargs):
-        from survey.models import Survey
+        from inclusive_world_portal.survey.models import Survey
         
         context = super().get_context_data(**kwargs)
         target_user = self.get_target_user()
@@ -239,7 +239,7 @@ def autogenerate_document_from_survey(request):
             target_user = request.user
         
         # Get the survey and user's responses
-        from survey.models import Survey, Response, Answer
+        from inclusive_world_portal.survey.models import Survey, Response, Answer
         
         try:
             survey = Survey.objects.get(id=survey_id)

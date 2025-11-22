@@ -1,0 +1,13 @@
+from django.views.generic import TemplateView
+
+from inclusive_world_portal.survey.models import Response
+
+
+class ConfirmView(TemplateView):
+    template_name = "survey/confirm.html"
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context["uuid"] = str(kwargs["uuid"])
+        context["response"] = Response.objects.get(interview_uuid=context["uuid"])
+        return context

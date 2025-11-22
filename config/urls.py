@@ -24,7 +24,7 @@ urlpatterns = [
     path("surveys/", survey_views.survey_list_view, name="survey-list"),
     
     # Django Survey - Survey creation and taking (other URLs)
-    path("surveys/", include("survey.urls")),
+    path("surveys/", include("inclusive_world_portal.survey.urls")),
     
     # Your stuff: custom urls includes go here
     path("pay/checkout/", pay.create_checkout, name="checkout"),

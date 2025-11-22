@@ -699,20 +699,6 @@ wheels = [
 ]
 
 [[package]]
-name = "django-survey-and-report"
-version = "1.4.11"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "django" },
-    { name = "pytz" },
-    { name = "pyyaml" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/b4/94/8c76b68869ca2cc76c16f5809995947e48d9cf918d624060a0c4acd03361/django_survey_and_report-1.4.11.tar.gz", hash = "sha256:68a96303ae97a0dc68a187d7ec3f2c572f65bba9b1b4e7a0ca484629f729bad7", size = 242797 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/08/dd/7898efc1616b744332637b67ed9377aeeeff3881988397cd09bd2470eee1/django_survey_and_report-1.4.11-py3-none-any.whl", hash = "sha256:69d17fa7949b33fc9a391b7502be444226c9aa598911379769e114387b811a40", size = 297474 },
-]
-
-[[package]]
 name = "django-timezone-field"
 version = "7.1"
 source = { registry = "https://pypi.org/simple" }
@@ -934,7 +920,6 @@ dependencies = [
     { name = "django-quill-editor" },
     { name = "django-redis" },
     { name = "django-storages" },
-    { name = "django-survey-and-report" },
     { name = "gunicorn" },
     { name = "hiredis" },
     { name = "markdown" },
@@ -991,7 +976,6 @@ requires-dist = [
     { name = "django-quill-editor", specifier = ">=0.1.42" },
     { name = "django-redis", specifier = "==6.0.0" },
     { name = "django-storages", specifier = "==1.14.4" },
-    { name = "django-survey-and-report", specifier = "==1.4.11" },
     { name = "gunicorn", specifier = "==23.0.0" },
     { name = "hiredis", specifier = "==3.3.0" },
     { name = "markdown", specifier = ">=3.7" },
@@ -1554,15 +1538,6 @@ dependencies = [
 sdist = { url = "https://files.pythonhosted.org/packages/87/c7/5e1547c44e31da50a460df93af11a535ace568ef89d7a811069ead340c4a/python-slugify-8.0.4.tar.gz", hash = "sha256:59202371d1d05b54a9e7720c5e038f928f45daaffe41dd10822f3907b937c856", size = 10921 }
 wheels = [
     { url = "https://files.pythonhosted.org/packages/a4/62/02da182e544a51a5c3ccf4b03ab79df279f9c60c5e82d5e8bec7ca26ac11/python_slugify-8.0.4-py2.py3-none-any.whl", hash = "sha256:276540b79961052b66b7d116620b36518847f52d5fd9e3a70164fc8c50faa6b8", size = 10051 },
-]
-
-[[package]]
-name = "pytz"
-version = "2025.2"
-source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/f8/bf/abbd3cdfb8fbc7fb3d4d38d320f2441b1e7cbe29be4f23797b4a2b5d8aac/pytz-2025.2.tar.gz", hash = "sha256:360b9e3dbb49a209c21ad61809c7fb453643e048b38924c765813546746e81c3", size = 320884 }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/81/c4/34e93fe5f5429d7570ec1fa436f1986fb1f00c3e0f43a589fe2bbcd22c3f/pytz-2025.2-py2.py3-none-any.whl", hash = "sha256:5ddf76296dd8c44c26eb8f4b6f35488f3ccbf6fbbd7adee0b7262d43f0ec2f00", size = 509225 },
 ]
 
 [[package]]

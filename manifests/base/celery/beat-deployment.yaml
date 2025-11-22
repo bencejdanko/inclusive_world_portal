@@ -44,7 +44,7 @@ spec:
           echo "PostgreSQL is ready!"
       containers:
       - name: celerybeat
-        image: bencejdanko/inclusive-world-portal:latest
+        image: bencejdanko/inclusive-world-portal:7a1a885
         command:
         - celery
         - -A

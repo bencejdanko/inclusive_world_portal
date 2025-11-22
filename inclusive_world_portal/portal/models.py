@@ -361,7 +361,7 @@ class RoleEnrollmentRequirement(models.Model):
             missing.append("Complete your profile")
         
         # Check required surveys
-        from survey.models import Response
+        from inclusive_world_portal.survey.models import Response
         for survey in self.required_surveys.all():
             # Check if user has completed this survey
             user_responses = Response.objects.filter(

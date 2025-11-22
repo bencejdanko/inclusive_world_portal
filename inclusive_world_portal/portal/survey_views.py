@@ -5,7 +5,7 @@ Provides robust, pre-computed survey data to avoid template logic issues.
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.db.models import Prefetch
-from survey.models import Survey, Response
+from inclusive_world_portal.survey.models import Survey, Response
 
 
 class SurveyItemData:

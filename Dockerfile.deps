@@ -1,0 +1,19 @@
+# syntax=docker/dockerfile:1
+# Dockerfile.deps - Python dependencies image
+# Build: docker build -f Dockerfile.deps -t bencejdanko/inclusive-world-portal-deps:latest .
+# Push: docker push bencejdanko/inclusive-world-portal-deps:latest
+# Rebuild: When pyproject.toml or uv.lock changes
+
+FROM bencejdanko/inclusive-world-portal-base:latest
+
+WORKDIR /app
+
+# Copy ONLY dependency files (for better layer caching)
+COPY pyproject.toml uv.lock ./
+
+# Install Python dependencies with cache mount for faster rebuilds
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --frozen --no-install-project --no-dev
+
+# This image now contains all Python dependencies installed in /app/.venv
+# The next layer (Dockerfile) will just copy application code

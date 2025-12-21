@@ -10,18 +10,20 @@ SECRET_KEY = env(
     "DJANGO_SECRET_KEY",
     default="kIcQKN57LtVRQpLtYx9V2PJmjz2eRPIS2yRxY31CIi7aKMa8WsXskVdXKtpkZgpT",
 )
-ALLOWED_HOSTS = ["localhost", "0.0.0.0", "127.0.0.1", "https://ffbdb9f96d3c.ngrok-free.app"]  # noqa: S104
+ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["localhost", "0.0.0.0", "127.0.0.1"])  # noqa: S104
 
 # CSRF
 # ------------------------------------------------------------------------------
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:8000",
-    "http://localhost:8080",
-    "http://localhost:8002",
-    "http://127.0.0.1:8000",
-    "http://127.0.0.1:8080",
-    "https://ffbdb9f96d3c.ngrok-free.app"
-]
+CSRF_TRUSTED_ORIGINS = env.list(
+    "DJANGO_CSRF_TRUSTED_ORIGINS",
+    default=[
+        "http://localhost:8000",
+        "http://localhost:8080",
+        "http://localhost:8002",
+        "http://127.0.0.1:8000",
+        "http://127.0.0.1:8080",
+    ]
+)
 
 # CACHES
 # ------------------------------------------------------------------------------

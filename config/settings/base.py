@@ -27,13 +27,6 @@ DEBUG = env.bool("DJANGO_DEBUG", False)
 TIME_ZONE = "America/Los_Angeles"
 # https://docs.djangoproject.com/en/dev/ref/settings/#language-code
 LANGUAGE_CODE = "en-us"
-# https://docs.djangoproject.com/en/dev/ref/settings/#languages
-# from django.utils.translation import gettext_lazy as _
-# LANGUAGES = [
-#     ('en', _('English')),
-#     ('fr-fr', _('French')),
-#     ('pt-br', _('Portuguese')),
-# ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#site-id
 SITE_ID = 1
 # https://docs.djangoproject.com/en/dev/ref/settings/#use-i18n
@@ -89,6 +82,8 @@ THIRD_PARTY_APPS = [
     "django_quill",
     "notifications",
     "survey",  # django-survey-and-report
+    "hijack",
+    "hijack.contrib.admin",
 ]
 
 LOCAL_APPS = [
@@ -99,6 +94,15 @@ LOCAL_APPS = [
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
+
+# django-hijack configuration
+# ------------------------------------------------------------------------------
+# https://django-hijack.readthedocs.io/en/stable/configuration.html
+HIJACK_ALLOW_GET_REQUESTS = True
+HIJACK_LOGIN_REDIRECT_URL = "/users/dashboard/"
+HIJACK_LOGOUT_REDIRECT_URL = "/admin/"
+HIJACK_DISPLAY_ADMIN_BUTTON = True
+HIJACK_USE_BOOTSTRAP = True
 
 # MIGRATIONS
 # ------------------------------------------------------------------------------
@@ -153,6 +157,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "allauth.account.middleware.AccountMiddleware",
+    "hijack.middleware.HijackUserMiddleware",
 
     # Custom middleware
     "django_htmx.middleware.HtmxMiddleware"
@@ -182,9 +187,6 @@ MEDIA_URL = "/media/"
 # STORAGES
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#storages
-# MinIO/S3 Storage Configuration (Required)
-
-# AWS S3 / MinIO Settings
 AWS_ACCESS_KEY_ID = env("AWS_ACCESS_KEY_ID")
 AWS_SECRET_ACCESS_KEY = env("AWS_SECRET_ACCESS_KEY")
 AWS_STORAGE_BUCKET_NAME = env("AWS_STORAGE_BUCKET_NAME", default="inclusive-world-media")
@@ -192,20 +194,16 @@ AWS_S3_ENDPOINT_URL = env("AWS_S3_ENDPOINT_URL", default=None)  # For MinIO: htt
 AWS_S3_REGION_NAME = env("AWS_S3_REGION_NAME", default="us-east-1")
 AWS_S3_CUSTOM_DOMAIN = env("AWS_S3_CUSTOM_DOMAIN", default=None)
 AWS_S3_USE_SSL = env.bool("AWS_S3_USE_SSL", default=True)
-# Set URL protocol for django-storages based on USE_SSL setting
-AWS_S3_URL_PROTOCOL = "https:" if AWS_S3_USE_SSL else "http:"
-AWS_S3_SIGNATURE_VERSION = env("AWS_S3_SIGNATURE_VERSION", default="s3v4")
+AWS_S3_SIGNATURE_VERSION = "s3v4"
 AWS_S3_FILE_OVERWRITE = False
 AWS_DEFAULT_ACL = None
 AWS_QUERYSTRING_AUTH = True
 AWS_QUERYSTRING_EXPIRE = 3600  # 1 hour
-# MinIO / S3 compatibility tweaks
-# Use path-style addressing (bucket in path) which works reliably with MinIO
-AWS_S3_ADDRESSING_STYLE = env("AWS_S3_ADDRESSING_STYLE", default="path")
-# Some S3-compatible endpoints behave better with force path style enabled
-AWS_S3_FORCE_PATH_STYLE = env.bool("AWS_S3_FORCE_PATH_STYLE", default=True)
+# MinIO compatibility - use path-style addressing (bucket in URL path)
+AWS_S3_ADDRESSING_STYLE = "path"
+AWS_S3_FORCE_PATH_STYLE = True
 
-# Storage backends - Always use S3/MinIO
+# Storage backends
 STORAGES = {
     "default": {
         "BACKEND": "storages.backends.s3boto3.S3Boto3Storage",
@@ -468,9 +466,6 @@ TEX_DIRECTORY.mkdir(parents=True, exist_ok=True)
 
 # Survey export settings
 EXCEL_COMPATIBLE_CSV = True  # Open CSV in Excel without separator issues
-CHOICES_SEPARATOR = "|"  # Separator for question choices
+CHOICES_SEPARATOR = ","  # Separator for question choices
 USER_DID_NOT_ANSWER = "Left blank"  # What to show when user doesn't answer
 SURVEY_DEFAULT_PIE_COLOR = "blue!50"  # Default color for PDF pie charts
-
-# Your stuff...
-# ------------------------------------------------------------------------------

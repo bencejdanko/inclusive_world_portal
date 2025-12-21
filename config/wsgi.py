@@ -24,7 +24,9 @@ from django.core.wsgi import get_wsgi_application
 # inclusive_world_portal directory.
 BASE_DIR = Path(__file__).resolve(strict=True).parent.parent
 sys.path.append(str(BASE_DIR / "inclusive_world_portal"))
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.production")
+
+# Default to local settings for development, can be overridden by DJANGO_SETTINGS_MODULE env var
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "config.settings.local")
 
 # This application object is used by any WSGI server configured to use this
 # file. This includes Django's development server, if the WSGI_APPLICATION

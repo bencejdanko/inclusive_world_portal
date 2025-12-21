@@ -1,7 +1,0 @@
-apiVersion: v1
-kind: Namespace
-metadata:
-  name: inclusive-world-portal
-  labels:
-    name: inclusive-world-portal
-    app: inclusive-world-portal

@@ -1,0 +1,152 @@
+name: Simple Deployment
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+      - staging
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  test-and-lint:
+    name: Test and Lint
+    runs-on: ubuntu-latest
+    
+    services:
+      postgres:
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: inclusive_world_portal
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+      
+      redis:
+        image: redis:7-alpine
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 6379:6379
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          enable-cache: true
+      
+      - name: Install dependencies
+        run: uv sync --frozen
+      
+      - name: Run linting (ruff check)
+        run: uv run ruff check .
+      
+      - name: Run format check (ruff format)
+        run: uv run ruff format --check .
+      
+      - name: Run type checking (mypy)
+        run: uv run mypy inclusive_world_portal
+        continue-on-error: true  # Make this non-blocking for now
+      
+      - name: Check for missing migrations
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/inclusive_world_portal
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SETTINGS_MODULE: config.settings.test
+          DJANGO_SECRET_KEY: test-secret-key-for-ci
+        run: uv run python manage.py makemigrations --check --dry-run
+      
+      - name: Run database migrations
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/inclusive_world_portal
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SETTINGS_MODULE: config.settings.test
+          DJANGO_SECRET_KEY: test-secret-key-for-ci
+        run: uv run python manage.py migrate --no-input
+      
+      - name: Run tests with coverage
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/inclusive_world_portal
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SETTINGS_MODULE: config.settings.test
+          DJANGO_SECRET_KEY: test-secret-key-for-ci
+        run: uv run pytest --cov=inclusive_world_portal --cov-report=xml --cov-report=term-missing
+      
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        if: github.event_name == 'push'
+        with:
+          file: ./coverage.xml
+          fail_ci_if_error: false
+      
+      - name: Collect static files (smoke test)
+        env:
+          DATABASE_URL: postgres://postgres:postgres@localhost:5432/inclusive_world_portal
+          REDIS_URL: redis://localhost:6379/0
+          DJANGO_SETTINGS_MODULE: config.settings.test
+          DJANGO_SECRET_KEY: test-secret-key-for-ci
+          AWS_ACCESS_KEY_ID: test
+          AWS_SECRET_ACCESS_KEY: test
+          AWS_STORAGE_BUCKET_NAME: test
+        run: uv run python manage.py collectstatic --no-input --clear
+
+  # This job would be triggered on successful test completion
+  # You would customize this with your actual deployment target
+  deploy:
+    name: Deploy to Server
+    runs-on: ubuntu-latest
+    needs: test-and-lint
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/staging' || github.ref == 'refs/heads/develop')
+    
+    steps:
+      - name: Deploy notification
+        run: |
+          echo "🚀 Deployment would happen here"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Commit: ${{ github.sha }}"
+          echo ""
+          echo "Example deployment steps:"
+          echo "  1. SSH to server"
+          echo "  2. cd /path/to/app && git pull"
+          echo "  3. make down && make up"
+          echo "  4. uv sync --frozen"
+          echo "  5. uv run python manage.py migrate --no-input"
+          echo "  6. uv run python manage.py collectstatic --no-input"
+          echo "  7. sudo systemctl restart your-app"
+      
+      # Uncomment and customize for actual SSH deployment
+      # - name: Deploy to server
+      #   uses: appleboy/ssh-action@v1.0.0
+      #   with:
+      #     host: ${{ secrets.DEPLOY_HOST }}
+      #     username: ${{ secrets.DEPLOY_USER }}
+      #     key: ${{ secrets.DEPLOY_SSH_KEY }}
+      #     script: |
+      #       cd /var/www/inclusive_world_portal
+      #       git pull origin ${{ github.ref_name }}
+      #       make down
+      #       make up
+      #       source .venv/bin/activate  # or use uv directly
+      #       uv sync --frozen
+      #       uv run python manage.py migrate --no-input
+      #       uv run python manage.py collectstatic --no-input --clear
+      #       sudo systemctl restart inclusive-world-portal

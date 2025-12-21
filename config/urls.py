@@ -30,12 +30,12 @@ urlpatterns = [
     path("pay/checkout/", pay.create_checkout, name="checkout"),
     path("stripe/webhook/", pay.stripe_webhook, name="stripe-webhook"),
 
-
-
     # Media files
     *static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT),
+    
+    # django-hijack URLs for user impersonation
+    path("hijack/", include("hijack.urls")),
 ]
-
 
 if settings.DEBUG:
     # This allows the error pages to be debugged during development, just visit
@@ -64,10 +64,4 @@ if settings.DEBUG:
         urlpatterns = [
             path("__debug__/", include(debug_toolbar.urls)),
             *urlpatterns,
-        ]
-    
-    # django-hijack URLs for user impersonation
-    if "hijack" in settings.INSTALLED_APPS:
-        urlpatterns += [
-            path("hijack/", include("hijack.urls")),
         ]

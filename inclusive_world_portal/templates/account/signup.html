@@ -1,5 +1,5 @@
 {% extends "allauth/layouts/entrance.html" %}
-{% load i18n allauth %}
+{% load i18n allauth crispy_forms_tags %}
 
 {% block head_title %}{% trans "Sign Up" %}{% endblock head_title %}
 {% block auth_title %}{% trans "Sign Up" %}{% endblock auth_title %}
@@ -22,24 +22,7 @@
       {# Hidden field for role - ensure value is preserved #}
       <input type="hidden" name="role" value="{{ request.GET.role|default:'member' }}" />
     {% else %}
-      <div class="form-group">
-        {% if field.field.required %}
-          <label for="{{ field.id_for_label }}" class="form-label form-label-required">
-            {{ field.label }} <span style="color: var(--color-error);">*</span>
-          </label>
-        {% else %}
-          <label for="{{ field.id_for_label }}" class="form-label">
-            {{ field.label }}
-          </label>
-        {% endif %}
-        {{ field }}
-        {% if field.help_text %}
-          <span class="form-help-text">{{ field.help_text }}</span>
-        {% endif %}
-        {% if field.errors %}
-          <span class="form-error">{{ field.errors.0 }}</span>
-        {% endif %}
-      </div>
+      {{ field|as_crispy_field }}
     {% endif %}
   {% endfor %}
   

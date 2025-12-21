@@ -1,5 +1,5 @@
 {% extends "allauth/layouts/entrance.html" %}
-{% load i18n allauth %}
+{% load i18n allauth crispy_forms_tags %}
 
 {% block head_title %}{% trans "Sign In" %}{% endblock head_title %}
 {% block auth_title %}{% trans "Log In" %}{% endblock auth_title %}
@@ -8,35 +8,13 @@
 <form method="post" action="{% url 'account_login' %}" class="auth-form">
   {% csrf_token %}
   
-  {# Display non-field errors (e.g., invalid login, inactive account) #}
-  {% if form.non_field_errors %}
-    <div class="alert alert-error" style="margin-bottom: var(--space-lg);">
-      {% for error in form.non_field_errors %}
-        {{ error }}
-      {% endfor %}
-    </div>
-  {% endif %}
-  
-  {% for field in form.visible_fields %}
-    <div class="form-group">
-      <label for="{{ field.id_for_label }}" class="form-label form-label-required">
-        {{ field.label }} <span style="color: var(--color-error);">*</span>
-      </label>
-      {{ field }}
-      {% if field.help_text %}
-        <span class="form-help-text">{{ field.help_text }}</span>
-      {% endif %}
-      {% if field.errors %}
-        <span class="form-error">{{ field.errors.0 }}</span>
-      {% endif %}
-    </div>
-  {% endfor %}
+  {{ form|crispy }}
   
   {% if redirect_field_value %}
     <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}" />
   {% endif %}
   
-  <div style="margin-bottom: var(--space-md); text-align: right;">
+  <div class="mb-md text-end">
     <a href="{% url 'account_reset_password' %}" class="auth-link">{% trans "Forgot Password?" %}</a>
   </div>
   

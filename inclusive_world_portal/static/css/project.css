@@ -357,6 +357,7 @@ textarea:focus {
   align-items: flex-start;
   gap: var(--space-sm);
   margin-bottom: var(--space-md);
+  padding-left: 1.75rem;
 }
 
 .form-check-input {
@@ -391,6 +392,21 @@ textarea:focus {
   line-height: 1.5;
   color: var(--color-foreground);
   flex: 1;
+}
+
+/* Survey-specific form check styles */
+.form-check input[type="checkbox"],
+.form-check input[type="radio"] {
+  width: 18px;
+  height: 18px;
+  margin-top: 2px;
+  cursor: pointer;
+}
+
+.form-check label {
+  cursor: pointer;
+  margin-left: var(--space-sm);
+  color: var(--color-brand-black-olive);
 }
 
 /* Special handling for checkbox fields in forms */
@@ -436,6 +452,70 @@ textarea:focus {
   font-size: 0.9375rem;
   color: var(--color-muted-foreground);
   margin: 0;
+}
+
+/* Survey/Question Cards */
+.question-card {
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: var(--shadow-sm);
+  transition: all 0.2s ease;
+  margin-bottom: var(--space-lg);
+}
+
+.question-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--color-brand-splashy-aqua);
+}
+
+.question-label-text {
+  color: var(--color-brand-black-olive);
+  font-size: 1.05rem;
+  margin-bottom: var(--space-sm);
+  display: block;
+}
+
+.text-required {
+  color: var(--color-brand-berry);
+}
+
+.question-input textarea {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  padding: 12px 14px;
+  border: 1px solid var(--color-border);
+  font-family: inherit;
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.question-input textarea:focus {
+  outline: none;
+  border-color: var(--color-brand-splashy-aqua);
+  box-shadow: 0 0 0 3px rgba(0, 139, 156, 0.1);
+}
+
+.question-input input[type="text"],
+.question-input input[type="number"],
+.question-input input[type="email"],
+.question-input input[type="date"] {
+  width: 100%;
+  border-radius: var(--radius-lg);
+  padding: 10px 14px;
+  border: 1px solid var(--color-border);
+  font-size: 1rem;
+  transition: border-color 0.2s ease;
+}
+
+.question-input input[type="text"]:focus,
+.question-input input[type="number"]:focus,
+.question-input input[type="email"]:focus,
+.question-input input[type="date"]:focus {
+  outline: none;
+  border-color: var(--color-brand-splashy-aqua);
+  box-shadow: 0 0 0 3px rgba(0, 139, 156, 0.1);
 }
 
 /* ============================================
@@ -1147,8 +1227,20 @@ textarea:focus {
   text-align: center;
 }
 
+.text-end {
+  text-align: right;
+}
+
 .text-muted {
   color: var(--color-muted-foreground);
+}
+
+.text-error {
+  color: var(--color-error);
+}
+
+.text-nowrap {
+  white-space: nowrap;
 }
 
 .font-semibold {
@@ -1157,6 +1249,38 @@ textarea:focus {
 
 .font-bold {
   font-weight: 700;
+}
+
+/* ============================================
+   PROFILE & AVATAR UTILITIES
+   ============================================ */
+.profile-picture {
+  max-width: 200px;
+}
+
+.profile-picture-preview {
+  max-width: 200px;
+  max-height: 200px;
+}
+
+.profile-avatar {
+  width: 200px;
+  height: 200px;
+  min-width: 200px;
+  min-height: 200px;
+  flex-shrink: 0;
+}
+
+.profile-avatar-text {
+  font-size: 4rem;
+  line-height: 1;
+}
+
+/* ============================================
+   FLEX UTILITIES
+   ============================================ */
+.flex-shrink-0 {
+  flex-shrink: 0;
 }
 
 /* ============================================

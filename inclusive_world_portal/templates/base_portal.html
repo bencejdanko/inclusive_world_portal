@@ -66,11 +66,7 @@
         <div class="sidebar-header">
           <img src="{% static 'images/iw-banner.png' %}" 
                alt="Inclusive World" 
-               class="sidebar-logo"
-               onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">
-          <div style="display:none; text-align: center;">
-            <h5 style="color: #e84855; font-weight: bold;">Inclusive World</h5>
-          </div>
+               class="sidebar-logo">
           
             <div class="sidebar-username">@{{ request.user.username }}</div>
             {% if request.user.name %}

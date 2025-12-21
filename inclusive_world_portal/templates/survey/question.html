@@ -1,14 +1,14 @@
 {% for form in response_form %}
-<div class="question-card {% if form.errors %}border-danger{% endif %}" style="background: var(--color-card-bg); border: 1px solid var(--color-border); border-radius: 12px; padding: 24px; box-shadow: var(--shadow-sm); transition: all 0.2s ease;">
+<div class="question-card {% if form.errors %}border-danger{% endif %}">
   <div class="question-label mb-3">
-    <label class="form-label fw-semibold" style="color: var(--color-brand-black-olive); font-size: 1.05rem; margin-bottom: 8px; display: block;">
+    <label class="form-label fw-semibold question-label-text">
       {{ form.label|safe }}
       {% if form.field.required %}
-        <span style="color: var(--color-brand-berry); margin-left: 4px;">*</span>
+        <span class="text-required ms-1">*</span>
       {% endif %}
     </label>
     {% if form.errors %}
-      <div class="alert alert-danger py-2 px-3 mb-2" style="font-size: 0.9rem;">
+      <div class="alert alert-danger py-2 px-3 mb-2">
         <i class="bi bi-exclamation-triangle-fill me-2"></i>
         <strong>{% for error in form.errors %}{{ error }}{% endfor %}</strong>
       </div>
@@ -17,7 +17,7 @@
   
   <div class="question-input">
     {% if form.field.widget.input_type == 'select' %}
-      <select name="{{form.name}}" class="form-select" style="border-radius: 8px; padding: 10px 14px; border: 1px solid var(--color-border);"{% if form.field.widget.attrs.disabled %} disabled{% endif %}>
+      <select name="{{form.name}}" class="form-select"{% if form.field.widget.attrs.disabled %} disabled{% endif %}>
         {% for field in form %}
           {{ field }}
         {% endfor %}
@@ -29,7 +29,7 @@
     {% elif form.field.widget.input_type == 'checkbox' or form.field.widget.input_type == 'radio' %}
       <div class="d-flex flex-column gap-2">
         {% for field in form %}
-          <div class="form-check" style="padding-left: 1.75rem;">
+          <div class="form-check">
             {{ field }}
           </div>
         {% endfor %}
@@ -42,61 +42,3 @@
   </div>
 </div>
 {% endfor %}
-
-<style>
-  .question-card:hover {
-    box-shadow: var(--shadow-md);
-    border-color: var(--color-brand-splashy-aqua);
-  }
-  
-  .question-input textarea {
-    width: 100%;
-    border-radius: 8px;
-    padding: 12px 14px;
-    border: 1px solid var(--color-border);
-    font-family: inherit;
-    font-size: 1rem;
-    transition: border-color 0.2s ease;
-  }
-  
-  .question-input textarea:focus {
-    outline: none;
-    border-color: var(--color-brand-splashy-aqua);
-    box-shadow: 0 0 0 3px rgba(0, 139, 156, 0.1);
-  }
-  
-  .question-input input[type="text"],
-  .question-input input[type="number"],
-  .question-input input[type="email"],
-  .question-input input[type="date"] {
-    width: 100%;
-    border-radius: 8px;
-    padding: 10px 14px;
-    border: 1px solid var(--color-border);
-    font-size: 1rem;
-    transition: border-color 0.2s ease;
-  }
-  
-  .question-input input[type="text"]:focus,
-  .question-input input[type="number"]:focus,
-  .question-input input[type="email"]:focus,
-  .question-input input[type="date"]:focus {
-    outline: none;
-    border-color: var(--color-brand-splashy-aqua);
-    box-shadow: 0 0 0 3px rgba(0, 139, 156, 0.1);
-  }
-  
-  .form-check input[type="checkbox"],
-  .form-check input[type="radio"] {
-    width: 18px;
-    height: 18px;
-    margin-top: 2px;
-    cursor: pointer;
-  }
-  
-  .form-check label {
-    cursor: pointer;
-    margin-left: 8px;
-    color: var(--color-brand-black-olive);
-  }
-</style>

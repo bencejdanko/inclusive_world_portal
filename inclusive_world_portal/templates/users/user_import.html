@@ -13,8 +13,8 @@
     max-width: 100%;
     overflow-x: auto;
     background: white;
-    padding: 20px;
-    border-radius: 8px;
+    padding: var(--space-xl);
+    border-radius: var(--radius-lg);
   }
   
   #spreadsheet {
@@ -23,67 +23,9 @@
   
   .action-buttons {
     background: white;
-    padding: 20px;
-    border-top: 2px solid #dee2e6;
-    margin-top: 20px;
-  }
-  
-  .btn-import {
-    background: #008B9C;
-    color: white;
-    border: none;
-    padding: 10px 24px;
-    border-radius: 4px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 1rem;
-  }
-  
-  .btn-import:hover {
-    background: #006A78;
-  }
-  
-  .btn-import:disabled {
-    background: #6c757d;
-    cursor: not-allowed;
-  }
-  
-  .error-message {
-    background: #f8d7da;
-    color: #721c24;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    border: 1px solid #f5c6cb;
-  }
-  
-  .success-message {
-    background: #d4edda;
-    color: #155724;
-    padding: 12px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    border: 1px solid #c3e6cb;
-  }
-  
-  .info-box {
-    background: #d1ecf1;
-    color: #0c5460;
-    padding: 16px;
-    border-radius: 4px;
-    margin-bottom: 20px;
-    border: 1px solid #bee5eb;
-  }
-  
-  .info-box h5 {
-    margin-top: 0;
-    font-size: 1rem;
-    font-weight: 600;
-  }
-  
-  .info-box ul {
-    margin-bottom: 0;
-    padding-left: 20px;
+    padding: var(--space-xl);
+    border-top: 2px solid var(--color-border);
+    margin-top: var(--space-xl);
   }
   
   .validation-errors {
@@ -91,20 +33,15 @@
     overflow-y: auto;
   }
   
-  .validation-errors ul {
-    margin: 0;
-    padding-left: 20px;
-  }
-  
   /* Customize jspreadsheet colors to match theme */
   .jexcel > thead > tr > td {
-    background-color: #008B9C !important;
+    background-color: var(--color-brand-splashy-aqua) !important;
     color: white !important;
     font-weight: 600;
   }
   
   .jexcel > tbody > tr > td.readonly {
-    background-color: #f8f9fa;
+    background-color: var(--color-muted);
   }
 </style>
 {% endblock %}
@@ -149,7 +86,7 @@
           <i class="fas fa-trash"></i> Clear All
         </button>
       </div>
-      <button type="button" class="btn-import" onclick="submitImport()" id="importBtn">
+      <button type="button" class="btn btn-primary" onclick="submitImport()" id="importBtn">
         <i class="fas fa-upload"></i> Import Users
       </button>
     </div>
@@ -328,11 +265,11 @@ async function submitImport() {
 
 function showMessage(message, type) {
   const container = document.getElementById('messageContainer');
-  const alertClass = type === 'success' ? 'success-message' : 'error-message';
+  const alertClass = type === 'success' ? 'alert-success' : 'alert-error';
   const icon = type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle';
   
   container.innerHTML = `
-    <div class="${alertClass}">
+    <div class="alert ${alertClass}">
       <i class="fas ${icon}"></i> ${message}
     </div>
   `;
@@ -351,7 +288,7 @@ function showValidationErrors(errors) {
   const errorList = errors.map(err => `<li>${err}</li>`).join('');
   
   container.innerHTML = `
-    <div class="error-message">
+    <div class="alert alert-error">
       <h5><i class="fas fa-exclamation-triangle"></i> Validation Errors</h5>
       <div class="validation-errors">
         <ul>${errorList}</ul>

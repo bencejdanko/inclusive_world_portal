@@ -11,7 +11,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ('portal', '0001_initial'),
-        ('survey', '0015_alter_answer_id_alter_category_id_alter_question_id_and_more'),
+        ('survey', '0014_survey_redirect_url'),
         migrations.swappable_dependency(settings.AUTH_USER_MODEL),
     ]
 

@@ -7,10 +7,10 @@ help: ## Show this help message
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 up: ## Start backing services (Postgres, Redis, Minio)
-	docker-compose up -d
+	docker compose up -d
 
 down: ## Stop backing services
-	docker-compose down
+	docker compose down
 
 install: ## Install dependencies using uv
 	uv sync
@@ -34,7 +34,7 @@ test: ## Run tests
 	uv run --env-file .env pytest
 
 reset: ## Destroy all data (volumes) and restart services
-	docker-compose down --remove-orphans
+	docker compose down --remove-orphans
 	docker volume rm inclusive_world_portal_postgres_data || true
 	docker volume rm inclusive_world_portal_redis_data || true
 	docker volume rm inclusive_world_portal_minio_data || true

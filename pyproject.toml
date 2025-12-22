@@ -144,6 +144,7 @@ dev = [
     "psycopg[binary]==3.2.11",
     "pytest==8.4.2",
     "pytest-django==4.11.1",
+    "pytest-playwright==0.7.2",
     "pytest-sugar==1.1.1",
     "ruff==0.14.2",
     "sphinx==8.2.3",
@@ -192,6 +193,7 @@ dependencies = [
     "redis==6.4.0",
     "sentry-sdk==2.42.1",
     "stripe>=13.0.1",
+    "types-markdown>=3.10.0.20251106",
     "weasyprint>=66.0",
     "whitenoise==6.11.0",
 ]

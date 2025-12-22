@@ -30,6 +30,9 @@ class NotificationListView(LoginRequiredMixin, ListView):
     
     def get_queryset(self):
         user = self.request.user
+        if not hasattr(user, 'notifications'):
+            from notifications.models import Notification
+            return Notification.objects.none()
         qs = user.notifications.all()
         
         # Filter by status
@@ -43,7 +46,10 @@ class NotificationListView(LoginRequiredMixin, ListView):
     
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['unread_count'] = self.request.user.notifications.unread().count()
+        if hasattr(self.request.user, 'notifications'):
+            context['unread_count'] = self.request.user.notifications.unread().count()
+        else:
+            context['unread_count'] = 0
         context['current_status'] = self.request.GET.get('status', 'all')
         return context
 
@@ -162,7 +168,7 @@ class CreateBulkNotificationView(LoginRequiredMixin, UserPassesTestMixin, FormVi
     
     def test_func(self):
         """Only managers can create bulk notifications."""
-        return self.request.user.role == User.Role.MANAGER
+        return hasattr(self.request.user, 'role') and self.request.user.role == User.Role.MANAGER
     
     def form_valid(self, form):
         """
@@ -173,7 +179,7 @@ class CreateBulkNotificationView(LoginRequiredMixin, UserPassesTestMixin, FormVi
         level = form.cleaned_data['level']
         
         # Determine recipients
-        recipients = []
+        recipients: list[User] = []
         
         # Add users by role
         target_roles = form.cleaned_data.get('target_roles', [])
@@ -201,9 +207,13 @@ class CreateBulkNotificationView(LoginRequiredMixin, UserPassesTestMixin, FormVi
         # Remove duplicates
         recipients = list(set(recipients))
         # Ensure requester is included if they selected their own role and are active
-        if target_roles and self.request.user.role in target_roles and self.request.user.status == User.Status.ACTIVE:
+        if target_roles and hasattr(self.request.user, 'role') and hasattr(self.request.user, 'status') and \
+           self.request.user.role in target_roles and self.request.user.status == User.Status.ACTIVE:
             if self.request.user not in recipients:
-                recipients.append(self.request.user)
+                from django.contrib.auth import get_user_model
+                UserModel = get_user_model()
+                if isinstance(self.request.user, UserModel):
+                    recipients.append(self.request.user)
         
         if not recipients:
             messages.error(self.request, 'No recipients selected.')

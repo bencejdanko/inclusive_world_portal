@@ -40,7 +40,7 @@ def test_notification_system():
     )
     
     # Check that the notification was created
-    notifications = recipient.notifications.all()
+    notifications = recipient.notifications.all()  # type: ignore[attr-defined]
     assert notifications.count() == 1
     
     notification = notifications.first()

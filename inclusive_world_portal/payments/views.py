@@ -13,7 +13,9 @@ def create_checkout(request):
         success_url=request.build_absolute_uri("/"),   # swap to your success page
         cancel_url=request.build_absolute_uri("/"),    # swap to your cancel page
     )
-    return redirect(session.url, permanent=False)
+    if session.url:
+        return redirect(session.url, permanent=False)
+    return redirect("/", permanent=False)
 
 @csrf_exempt
 def stripe_webhook(request):

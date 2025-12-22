@@ -55,7 +55,7 @@ def get_doc_list():
         })
     
     # Sort by order
-    docs.sort(key=lambda x: x['order'])
+    docs.sort(key=lambda x: x['order'] if isinstance(x['order'], int) else 999)
     return docs
 
 

@@ -5,7 +5,6 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.utils.safestring import mark_safe
 
-from inclusive_world_portal.users.models import User
 from inclusive_world_portal.portal.models import Program
 
 User = get_user_model()
@@ -86,6 +85,8 @@ class BulkNotificationForm(forms.Form):
     
     def clean(self):
         cleaned_data = super().clean()
+        if cleaned_data is None:
+            return cleaned_data
         target_roles = cleaned_data.get('target_roles')
         target_programs = cleaned_data.get('target_programs')
         target_users = cleaned_data.get('target_users')

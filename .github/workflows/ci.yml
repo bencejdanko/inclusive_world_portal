@@ -1,80 +1,107 @@
 name: CI
 
-# Enable Buildkit and let compose use it to speed up image building
-env:
-  DOCKER_BUILDKIT: 1
-  COMPOSE_DOCKER_CLI_BUILD: 1
-
 on:
-  pull_request:
-    branches: ['main']
-    paths-ignore: ['docs/**']
-
   push:
-    branches: ['main']
-    paths-ignore: ['docs/**']
-
-concurrency:
-  group: ${{ github.head_ref || github.run_id }}
-  cancel-in-progress: true
+    branches:
+      - main
+      - master
+  pull_request:
+    branches:
+      - main
+      - master
 
 jobs:
-  linter:
+  test:
     runs-on: ubuntu-latest
-    steps:
-      - name: Checkout Code Repository
-        uses: actions/checkout@v5
-
-      - name: Set up Python
-        uses: actions/setup-python@v6
-        with:
-          python-version-file: '.python-version'
-      - name: Run pre-commit
-        uses: pre-commit/action@v3.0.1
-
-  # With no caching at all the entire ci process takes 3m to complete!
-  pytest:
-    runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     services:
-      redis:
-        image: redis:7.2
-        ports:
-          - 6379:6379
       postgres:
-        image: postgres:17
+        image: postgres:17-alpine
+        env:
+          POSTGRES_DB: inclusive_world_portal
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
         ports:
           - 5432:5432
-        env:
-          POSTGRES_PASSWORD: postgres
+        # Set health checks to wait until postgres has started
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
 
-    env:
-      REDIS_URL: 'redis://localhost:6379/0'
-      # postgres://user:password@host:port/database
-      DATABASE_URL: 'postgres://postgres:postgres@localhost:5432/postgres'
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+      minio:
+        image: minio/minio:latest
+        env:
+          MINIO_ROOT_USER: minioadmin
+          MINIO_ROOT_PASSWORD: minioadmin
+        ports:
+          - 9000:9000
+          - 9001:9001
+        options: >-
+          --health-cmd "curl -f http://localhost:9000/minio/health/live"
+          --health-interval 30s
+          --health-timeout 10s
+          --health-retries 3
+        # Start the server
+        cmd: server /data --console-address ":9001"
 
     steps:
-      - name: Checkout Code Repository
-        uses: actions/checkout@v5
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
         with:
-          enable-cache: "true"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
 
-      - name: Set up Python
-        uses: actions/setup-python@v6
+      - name: Set up Python 3.13
+        uses: actions/setup-python@v5
         with:
-          python-version-file: ".python-version"
+          python-version: "3.13"
 
-      - name: Install dependencies
-        run: uv sync --locked
+      - name: Install Dependencies
+        run: uv sync
 
-      - name: Check DB Migrations
-        run: uv run python manage.py makemigrations --check
+      - name: Create .env file
+        run: |
+          echo "DATABASE_URL=postgres://postgres:postgres@localhost:5432/inclusive_world_portal" >> .env
+          echo "REDIS_URL=redis://localhost:6379/0" >> .env
+          echo "DJANGO_SECRET_KEY=dummy_secret_key_for_ci_testing_only" >> .env
+          echo "DJANGO_DEBUG=False" >> .env
+          echo "DJANGO_ALLOWED_HOSTS=localhost,127.0.0.1" >> .env
+          echo "AWS_ACCESS_KEY_ID=minioadmin" >> .env
+          echo "AWS_SECRET_ACCESS_KEY=minioadmin" >> .env
+          echo "AWS_S3_ENDPOINT_URL=http://localhost:9000" >> .env
+          echo "AWS_STORAGE_BUCKET_NAME=inclusive-world-media" >> .env
 
-      - name: Run DB Migrations
-        run: uv run python manage.py migrate
+      - name: Setup MinIO Buckets
+        run: |
+          docker run --network host --entrypoint /bin/sh minio/mc:latest -c "\
+          /usr/bin/mc alias set myminio http://localhost:9000 minioadmin minioadmin; \
+          /usr/bin/mc mb myminio/inclusive-world-media --ignore-existing; \
+          /usr/bin/mc anonymous set public myminio/inclusive-world-media;"
 
-      - name: Test with pytest
-        run: uv run pytest
+      - name: Check for Missing Migrations
+        run: uv run --env-file .env python manage.py makemigrations --check
+
+      - name: Check Static Files Collection
+        run: uv run --env-file .env python manage.py collectstatic --noinput
+
+      - name: Run Type Checks
+        run: make mypy
+
+      - name: Run Tests
+        run: make pytest

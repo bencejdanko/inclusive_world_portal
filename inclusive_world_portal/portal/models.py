@@ -64,7 +64,7 @@ class Program(models.Model):
         ]
 
     @property
-    def available_spots(self) -> int:
+    def available_spots(self) -> int | None:
         if self.capacity is None:
             return None
         return max(self.capacity - self.enrolled, 0)
@@ -321,7 +321,7 @@ class RoleEnrollmentRequirement(models.Model):
         unique=True,
         help_text="User role this requirement applies to"
     )
-    required_surveys = models.ManyToManyField(
+    required_surveys: models.ManyToManyField = models.ManyToManyField(
         'survey.Survey',
         blank=True,
         related_name="enrollment_requirements",

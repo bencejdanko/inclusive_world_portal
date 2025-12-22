@@ -2,15 +2,13 @@
 
 A management portal for the Inclusive World team.
 
-### Type checks
+### Testing
 
-Running type checks with mypy:
+```bash
+make mypy
+make pytest
+```
 
-    uv run mypy inclusive_world_portal
-
-#### Running tests with pytest
-
-    uv run pytest
 
 ## Deployment on Google EC2 Instance
 
@@ -61,12 +59,15 @@ Copy paste in env file
 # start service infrastructure
 make up 
 
-# install dependencies if not already installed
-make install
+# install (production) dependencies if not already installed
+make install-prod
 
 # make migrations and deploy to database if needed
 make makemigrations
 make migrate
+
+# ensure static files are built
+make collectstatic
 
 # run django
 make run
@@ -75,3 +76,24 @@ make run
 make reset
 make migrate # then you can re migrate
 ```
+
+manage process with pm2
+
+```bash
+# install node
+curl -fsSL https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+source ~/.nvm/nvm.sh
+nvm install --lts
+nvm use --lts
+
+# start process
+pm2 start make --name "make-run" -- run
+
+# check status
+pm2 list
+pm2 logs make-run
+
+
+```
+
+> TIP: if you are getting errors on packages syncs, to install playwright properly, use `uv run playwright install-dep`

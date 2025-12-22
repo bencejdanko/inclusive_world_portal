@@ -16,7 +16,7 @@ def get_navigation_items(user):
     role = user.role
     
     # Common items for all roles
-    common_items = []
+    common_items: list[dict[str, object]] = []
     
     # Member navigation
     if role == 'member':

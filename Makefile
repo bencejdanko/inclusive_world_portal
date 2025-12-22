@@ -1,19 +1,22 @@
 .PHONY: help up down install run runserver rundev migrate makemigrations superuser test reset celery-worker celery-beat shell dbshell collectstatic
 
-help: ## Show this help message
+help:
 	@echo 'Usage: make [target]'
 	@echo ''
 	@echo 'Available targets:'
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  %-20s %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
-up: ## Start backing services (Postgres, Redis, Minio)
+up:
 	docker compose up -d
 
-down: ## Stop backing services
+down:
 	docker compose down
 
-install: ## Install dependencies using uv
-	uv sync
+install-dev:
+	uv sync 
+
+install-prod:
+	uv sync --no-dev
 
 run:
 	RUN_CELERY_WORKERS=true uv run --env-file .env honcho -f Procfile.dev start
@@ -30,7 +33,10 @@ collectstatic: ## Collect static files (required after static file changes)
 superuser: ## Create Django superuser
 	uv run --env-file .env manage.py createsuperuser
 
-test: ## Run tests
+mypy:
+	uv run --env-file .env mypy .
+
+pytest: 
 	uv run --env-file .env pytest
 
 reset: ## Destroy all data (volumes) and restart services

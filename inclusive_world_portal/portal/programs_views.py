@@ -56,7 +56,7 @@ def programs_view(request):
             })
         
         # Note: users_with_active_opd removed - legacy OPD system replaced with Document model
-        users_with_active_opd = set()  # Keep for template compatibility
+        users_with_active_opd: set[int] = set()  # Keep for template compatibility
         
         # For volunteers who are program leads, also get enrollments in programs they DON'T lead
         regular_enrollments = None

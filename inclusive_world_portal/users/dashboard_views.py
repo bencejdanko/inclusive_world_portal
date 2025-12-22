@@ -46,19 +46,23 @@ class MemberDashboardView(LoginRequiredMixin, TemplateView):
         enrollment_settings = EnrollmentSettings.get_settings()
         
         # Check enrollment requirements
-        meets_requirements, missing_items = user.enrollment_requirements_status
+        meets_requirements, missing_items = user.enrollment_requirements_status if hasattr(user, 'enrollment_requirements_status') else (True, [])
+        
+        # Get notification counts safely
+        unread_count = user.notifications.unread().count() if hasattr(user, 'notifications') else 0
+        recent = user.notifications.unread()[:5] if hasattr(user, 'notifications') else []
         
         # Add member-specific data
         context.update({
-            'profile_complete': user.profile_is_complete,
+            'profile_complete': user.profile_is_complete if hasattr(user, 'profile_is_complete') else False,
             'meets_enrollment_requirements': meets_requirements,
             'missing_enrollment_items': missing_items,
-            'can_purchase': user.can_purchase_programs,
+            'can_purchase': user.can_purchase_programs if hasattr(user, 'can_purchase_programs') else False,
             'enrollment_open': enrollment_settings.enrollment_open,
             'enrollment_closure_reason': enrollment_settings.closure_reason,
             # Notifications
-            'unread_notifications_count': user.notifications.unread().count(),
-            'recent_notifications': user.notifications.unread()[:5],
+            'unread_notifications_count': unread_count,
+            'recent_notifications': recent,
             # TODO: Add program enrollments
             # TODO: Add upcoming sessions
             # TODO: Add recent activities
@@ -77,11 +81,15 @@ class VolunteerDashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         
+        # Get notification counts safely
+        unread_count = user.notifications.unread().count() if hasattr(user, 'notifications') else 0
+        recent = user.notifications.unread()[:5] if hasattr(user, 'notifications') else []
+        
         # Add volunteer-specific data
         context.update({
             # Notifications
-            'unread_notifications_count': user.notifications.unread().count(),
-            'recent_notifications': user.notifications.unread()[:5],
+            'unread_notifications_count': unread_count,
+            'recent_notifications': recent,
             # TODO: Add upcoming volunteer sessions
             # TODO: Add assigned members
             # TODO: Add training requirements
@@ -100,11 +108,15 @@ class PersonCenteredManagerDashboardView(LoginRequiredMixin, TemplateView):
         context = super().get_context_data(**kwargs)
         user = self.request.user
         
+        # Get notification counts safely
+        unread_count = user.notifications.unread().count() if hasattr(user, 'notifications') else 0
+        recent = user.notifications.unread()[:5] if hasattr(user, 'notifications') else []
+        
         # Add PCM-specific data
         context.update({
             # Notifications
-            'unread_notifications_count': user.notifications.unread().count(),
-            'recent_notifications': user.notifications.unread()[:5],
+            'unread_notifications_count': unread_count,
+            'recent_notifications': recent,
             # TODO: Add caseload
             # TODO: Add pending reviews
             # TODO: Add reports
@@ -122,12 +134,15 @@ class ManagerDashboardView(LoginRequiredMixin, TemplateView):
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         user = self.request.user
+        # Get notification counts safely
+        unread_count = user.notifications.unread().count() if hasattr(user, 'notifications') else 0
+        recent = user.notifications.unread()[:5] if hasattr(user, 'notifications') else []
         
         # Add manager-specific data
         context.update({
             # Notifications
-            'unread_notifications_count': user.notifications.unread().count(),
-            'recent_notifications': user.notifications.unread()[:5],
+            'unread_notifications_count': unread_count,
+            'recent_notifications': recent,
             # TODO: Add organization stats
             # TODO: Add financial overview
             # TODO: Add staff overview

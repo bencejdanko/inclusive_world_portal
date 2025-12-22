@@ -46,7 +46,7 @@ class DocumentListView(LoginRequiredMixin, ListView):
         target_username = self.request.GET.get('user')
         if target_username:
             # Only managers/PCMs can view other users' documents
-            if self.request.user.role not in ['manager', 'person_centered_manager']:
+            if not hasattr(self.request.user, 'role') or self.request.user.role not in ['manager', 'person_centered_manager']:
                 messages.error(self.request, _('You do not have permission to view other users\' documents.'))
                 return self.request.user
             
@@ -63,7 +63,7 @@ class DocumentListView(LoginRequiredMixin, ListView):
         queryset = Document.objects.filter(user=target_user).select_related('created_by', 'source_survey')
         
         # Non-managers/PCMs can only see published documents
-        if self.request.user.role not in ['manager', 'person_centered_manager']:
+        if not hasattr(self.request.user, 'role') or self.request.user.role not in ['manager', 'person_centered_manager']:
             queryset = queryset.filter(published=True)
         
         return queryset
@@ -174,9 +174,13 @@ class DocumentEditorView(LoginRequiredMixin, FormView):
             messages.success(self.request, _('Document updated successfully!'))
         else:
             # Create new document - always set created_by since only managers/PCMs can create
+            # Ensure the user is of User type, not AnonymousUser
+            from django.contrib.auth import get_user_model
+            UserModel = get_user_model()
+            created_by = self.request.user if isinstance(self.request.user, UserModel) else None
             document = Document.objects.create(
                 user=target_user,
-                created_by=self.request.user,
+                created_by=created_by,
                 title=title,
                 content=content,
                 state=state

@@ -216,10 +216,10 @@ def checkout_view(request):
     # Add rank to each program and sort
     programs_with_rank = []
     for program in programs:
-        program.rank = rank_map.get(str(program.program_id), 999)
+        program.rank = rank_map.get(str(program.program_id), 999)  # type: ignore[attr-defined]
         programs_with_rank.append(program)
     
-    programs_with_rank.sort(key=lambda p: p.rank)
+    programs_with_rank.sort(key=lambda p: p.rank)  # type: ignore[attr-defined]
     
     # Calculate total
     total_amount = sum(program.fee for program in programs_with_rank)
@@ -326,7 +326,7 @@ def enrollment_success_view(request):
     """
     Display success page after enrollment.
     """
-    context = {}
+    context: dict[str, object] = {}
     return render(request, 'portal/enrollment_success.html', context)
 
 
@@ -734,7 +734,7 @@ def manager_program_add_user_view(request, program_id):
     
     # GET request - search users
     query = request.GET.get('q', '').strip()
-    users = []
+    users: list[object] = []
     enrolled_user_ids = []
     
     if query:
@@ -742,11 +742,11 @@ def manager_program_add_user_view(request, program_id):
         from django.db.models import Q
         
         # Search for users by name, username, or email
-        users = User.objects.filter(
+        users = list(User.objects.filter(
             Q(username__icontains=query) |
             Q(email__icontains=query) |
             Q(name__icontains=query)
-        ).order_by('name', 'username')[:20]
+        ).order_by('name', 'username')[:20])
         
         # Get list of already enrolled user IDs
         from .models import Enrollment
@@ -1318,7 +1318,7 @@ def all_members_view(request):
     can_edit_support_needs = is_manager_or_pcm or is_volunteer_lead
     
     # Note: users_with_active_opd removed - legacy OPD system replaced with Document model
-    users_with_active_opd = set()  # Keep for template compatibility
+    users_with_active_opd: set[int] = set()  # Keep for template compatibility
     
     # Build program volunteers mapping and buddy assignments for the enrollments partial
     program_volunteers = {}
@@ -1608,7 +1608,7 @@ def all_volunteers_view(request):
     ]
     
     # Note: users_with_active_opd removed - legacy OPD system replaced with Document model
-    users_with_active_opd = set()  # Keep for template compatibility
+    users_with_active_opd: set[int] = set()  # Keep for template compatibility
     
     # Get all available programs for filter dropdown
     # For volunteer leads, only show programs they lead

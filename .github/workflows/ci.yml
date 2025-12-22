@@ -41,22 +41,6 @@ jobs:
           --health-timeout 5s
           --health-retries 5
 
-      minio:
-        image: minio/minio:latest
-        env:
-          MINIO_ROOT_USER: minioadmin
-          MINIO_ROOT_PASSWORD: minioadmin
-        ports:
-          - 9000:9000
-          - 9001:9001
-        options: >-
-          --health-cmd "curl -f http://localhost:9000/minio/health/live"
-          --health-interval 30s
-          --health-timeout 10s
-          --health-retries 3
-        # Start the server
-        cmd: server /data --console-address ":9001"
-
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
@@ -86,6 +70,20 @@ jobs:
           echo "AWS_SECRET_ACCESS_KEY=minioadmin" >> .env
           echo "AWS_S3_ENDPOINT_URL=http://localhost:9000" >> .env
           echo "AWS_STORAGE_BUCKET_NAME=inclusive-world-media" >> .env
+
+      - name: Start MinIO
+        run: |
+          docker run -d \
+            --name minio \
+            -p 9000:9000 \
+            -p 9001:9001 \
+            -e MINIO_ROOT_USER=minioadmin \
+            -e MINIO_ROOT_PASSWORD=minioadmin \
+            minio/minio:latest \
+            server /data --console-address ":9001"
+          
+          # Wait for MinIO to be ready
+          timeout 30s bash -c 'until curl -sf http://localhost:9000/minio/health/live; do sleep 1; done'
 
       - name: Setup MinIO Buckets
         run: |

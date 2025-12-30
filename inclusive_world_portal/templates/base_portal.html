@@ -56,19 +56,16 @@
 </head>
 
 <body class="{% block bodyclass %}{% endblock bodyclass %}">
+  {% include 'components/app_banner.html' %}
   {% block body %}
   
   {% if request.user.is_authenticated %}
     <div class="app-wrapper">
       <!-- Sidebar Navigation -->
       <aside class="sidebar" id="sidebar">
-        <!-- Sidebar Header with Logo -->
+        <!-- Sidebar Header -->
         <div class="sidebar-header">
-          <img src="{% static 'images/iw-banner.png' %}" 
-               alt="Inclusive World" 
-               class="sidebar-logo">
-          
-            <div class="sidebar-username">@{{ request.user.username }}</div>
+          <div class="sidebar-username">@{{ request.user.username }}</div>
             {% if request.user.name %}
               <div class="sidebar-display-name">{{ request.user.name }}</div>
             {% endif %}
@@ -123,10 +120,6 @@
 
         <!-- Logout at Bottom -->
         <div class="sidebar-footer">
-          <a href="{% url 'portal:howto_index' %}" class="nav-link">
-            <i class="bi bi-book"></i>
-            <span>{% translate "How To" %}</span>
-          </a>
           <a href="{% url 'account_logout' %}" class="logout-link">
             <i class="bi bi-box-arrow-right"></i>
             <span>{% translate "Logout" %}</span>

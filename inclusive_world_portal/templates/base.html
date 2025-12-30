@@ -64,8 +64,9 @@ document.addEventListener('htmx:configRequest', (e) => {
 {% endblock javascript %}
 </head>
 <body class="{% block bodyclass %}{% endblock bodyclass %}">
+  {% include 'components/app_banner.html' %}
   {% block body %}
-  <div class="mb-1">
+  <div>
     <nav class="navbar navbar-expand-md navbar-light bg-light">
       <div class="container-fluid">
         <button class="navbar-toggler navbar-toggler-right"

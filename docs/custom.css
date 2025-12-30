@@ -1,0 +1,206 @@
+:root {
+  --color-brand-berry: #7F4857;
+  --color-brand-blue-peacock: #00494F;
+  --color-brand-black-olive: #404040;
+  --color-brand-davys-grey: #595959;
+  --color-brand-anti-flash-white: #F2F2F2;
+  --color-brand-splashy-aqua: #008B9C;
+  --color-brand-ardent-coral: #E97568;
+  --color-dark-blue-peacock: #003338;
+  --color-dark-berry: #5B333F;
+  
+  --md-primary-fg-color: var(--color-brand-blue-peacock);
+  --md-primary-fg-color--light: var(--color-brand-splashy-aqua);
+  --md-primary-fg-color--dark: var(--color-dark-blue-peacock);
+  --md-accent-fg-color: var(--color-brand-berry);
+  --md-accent-fg-color--transparent: rgba(127, 72, 87, 0.1);
+  
+  --md-text-font: 'Montserrat', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  --md-code-font: 'Courier New', monospace;
+}
+
+/* Apply Montserrat font */
+@font-face {
+  font-family: 'Montserrat';
+  src: url('/static/fonts/Montserrat-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Catamaran';
+  src: url('/static/fonts/Catamaran-VariableFont_wght.ttf') format('truetype');
+  font-weight: 100 900;
+  font-display: swap;
+}
+
+/* Header customization */
+.md-header {
+  background-color: var(--color-brand-blue-peacock);
+}
+
+.md-header__button.md-logo {
+  filter: brightness(0) invert(1);
+}
+
+/* Repository source link in header */
+.md-header__source {
+  color: white;
+}
+
+.md-source {
+  color: white;
+}
+
+.md-source__repository {
+  color: white !important;
+}
+
+.md-source__icon svg {
+  fill: white;
+}
+
+.md-source__facts {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.md-source:hover {
+  opacity: 0.8;
+}
+
+/* Navigation tabs */
+.md-tabs {
+  background-color: var(--color-brand-blue-peacock);
+}
+
+/* Tab links - inactive state */
+.md-tabs__link {
+  color: rgba(255, 255, 255, 0.7);
+  opacity: 0.7;
+}
+
+/* Tab links - hover state */
+.md-tabs__link:hover {
+  color: rgba(255, 255, 255, 0.9);
+  opacity: 1;
+}
+
+/* Tab links - active state */
+.md-tabs__item--active .md-tabs__link {
+  color: #FFFFFF;
+  opacity: 1;
+  font-weight: 600;
+}
+
+/* Active navigation items */
+.md-nav__item--active > .md-nav__link {
+  color: var(--color-brand-blue-peacock);
+}
+
+.md-nav__link:hover {
+  color: var(--color-brand-splashy-aqua);
+}
+
+/* Links */
+a {
+  color: var(--color-brand-blue-peacock);
+}
+
+a:hover {
+  color: var(--color-brand-splashy-aqua);
+}
+
+/* Buttons */
+.md-button {
+  background-color: var(--color-brand-blue-peacock);
+  border-color: var(--color-brand-blue-peacock);
+}
+
+.md-button:hover {
+  background-color: var(--color-dark-blue-peacock);
+  border-color: var(--color-dark-blue-peacock);
+}
+
+.md-button--primary {
+  background-color: var(--color-brand-berry);
+  border-color: var(--color-brand-berry);
+  color: white;
+}
+
+.md-button--primary:hover {
+  background-color: var(--color-dark-berry);
+  border-color: var(--color-dark-berry);
+}
+
+/* Code blocks */
+.md-typeset code {
+  background-color: var(--color-brand-anti-flash-white);
+  color: var(--color-brand-black-olive);
+}
+
+/* Admonitions */
+.md-typeset .admonition.note {
+  border-left-color: var(--color-brand-blue-peacock);
+}
+
+.md-typeset .admonition.warning {
+  border-left-color: var(--color-brand-ardent-coral);
+}
+
+/* Search box */
+.md-search__input {
+  border-radius: 0.5rem;
+}
+
+.md-search__input:focus {
+  border-color: var(--color-brand-splashy-aqua);
+}
+
+/* Dark mode overrides */
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: var(--color-brand-splashy-aqua);
+  --md-accent-fg-color: var(--color-brand-ardent-coral);
+}
+
+/* Table of contents */
+.md-nav--secondary .md-nav__link--active {
+  color: var(--color-brand-blue-peacock);
+  border-left-color: var(--color-brand-blue-peacock);
+}
+
+/* Style the social icon "Go to Portal" button to be larger and show text */
+.md-social {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.md-social__link {
+  display: inline-flex !important;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4rem 1rem !important;
+  border-radius: 0.3rem;
+  transition: all 0.2s ease;
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.md-social__link:hover {
+  transform: translateY(-2px);
+}
+
+.md-social__link svg {
+  width: 1.5rem !important;
+  height: 1.5rem !important;
+  fill: white;
+}
+
+/* Add text after the icon */
+.md-social__link::after {
+  content: attr(title);
+  display: inline-block;
+  color: white;
+  font-family: var(--md-text-font);
+  white-space: nowrap;
+}

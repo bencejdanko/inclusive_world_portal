@@ -80,6 +80,7 @@ THIRD_PARTY_APPS = [
     "django_celery_beat",
     "django_htmx",
     "django_quill",
+    "import_export",
     "notifications",
     "survey",  # django-survey-and-report
     "hijack",

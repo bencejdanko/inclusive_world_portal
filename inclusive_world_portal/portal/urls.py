@@ -4,7 +4,6 @@ URL configuration for the portal app.
 from django.urls import path
 from . import views
 from . import programs_views
-from . import howto_views
 from . import enrollment_settings_views
 
 app_name = "portal"
@@ -45,10 +44,6 @@ urlpatterns = [
     # AJAX endpoints for enrollment management
     path("ajax/enrollment/update-status/", views.ajax_update_enrollment_status, name="ajax_update_enrollment_status"),
     path("ajax/enrollment/update-buddy/", views.ajax_update_buddy_assignment, name="ajax_update_buddy_assignment"),
-    
-    # How To documentation
-    path("howto/", howto_views.howto_index, name="howto_index"),
-    path("howto/<slug:slug>/", howto_views.howto_detail, name="howto_detail"),
     
     # Enrollment Settings (Manager only)
     path("enrollment-settings/", enrollment_settings_views.enrollment_settings_view, name="enrollment_settings"),

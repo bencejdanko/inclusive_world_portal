@@ -3,10 +3,12 @@ from django.conf import settings
 from django.contrib import admin
 from django.contrib.auth import admin as auth_admin
 from django.utils.translation import gettext_lazy as _
+from import_export.admin import ImportExportModelAdmin
 
 from .forms import UserAdminChangeForm
 from .forms import UserAdminCreationForm
 from .models import User
+from .resources import UserResource
 
 if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
     # Force the `admin` sign in process to go through the `django-allauth` workflow:
@@ -16,7 +18,8 @@ if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
 
 
 @admin.register(User)
-class UserAdmin(auth_admin.UserAdmin):
+class UserAdmin(ImportExportModelAdmin, auth_admin.UserAdmin):
+    resource_class = UserResource
     form = UserAdminChangeForm
     add_form = UserAdminCreationForm
     fieldsets = (

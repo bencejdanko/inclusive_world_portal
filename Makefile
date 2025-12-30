@@ -1,4 +1,4 @@
-.PHONY: help up down install run runserver rundev migrate makemigrations superuser test reset celery-worker celery-beat shell dbshell collectstatic
+.PHONY: help up down install-dev install-prod run migrate makemigrations superuser test reset celery-worker celery-beat shell dbshell docs collectstatic
 
 help:
 	@echo 'Usage: make [target]'
@@ -12,14 +12,14 @@ up:
 down:
 	docker compose down
 
-install-dev:
+install-dev: ## Install all dependencies, including developer packages
 	uv sync 
 
-install-prod:
+install-prod: ## Install only necessary packages, no developer packages
 	uv sync --no-dev
 
-run:
-	RUN_CELERY_WORKERS=true uv run --env-file .env honcho -f Procfile.dev start
+run: ## Run the Django server, celery workers, and beat worker
+	RUN_CELERY_WORKERS=true uv run --env-file .env honcho -f Procfile start
 
 migrate: ## Run database migrations
 	uv run --env-file .env manage.py migrate
@@ -27,16 +27,19 @@ migrate: ## Run database migrations
 makemigrations: ## Create new migrations
 	uv run --env-file .env manage.py makemigrations
 
-collectstatic: ## Collect static files (required after static file changes)
+docs: ## Build documentation with MkDocs
+	uv run mkdocs build
+
+collectstatic: docs ## Collect static files (required after static file changes)
 	uv run --env-file .env manage.py collectstatic --noinput
 
 superuser: ## Create Django superuser
 	uv run --env-file .env manage.py createsuperuser
 
-mypy:
+mypy: ## Run mypy tests
 	uv run --env-file .env mypy .
 
-pytest: 
+pytest: ## Run pytest tests
 	uv run --env-file .env pytest
 
 reset: ## Destroy all data (volumes) and restart services

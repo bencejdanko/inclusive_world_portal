@@ -147,8 +147,6 @@ dev = [
     "pytest-playwright==0.7.2",
     "pytest-sugar==1.1.1",
     "ruff==0.14.2",
-    "sphinx==8.2.3",
-    "sphinx-autobuild==2025.8.25",
     "watchfiles==1.1.1",
     "werkzeug[watchdog]==3.1.3",
 ]
@@ -159,7 +157,7 @@ version = "0.1.0"
 description = "A management portal for the Inclusive World team."
 readme = "README.md"
 
-license = { text = "Not open source" }
+license = { text = "MIT" }
 authors = [
   { name = "Bence Danko", email = "bence.danko@inclusiveworld.org" },
 ]
@@ -176,6 +174,7 @@ dependencies = [
     "django-crispy-forms==2.4",
     "django-environ==0.12.0",
     "django-htmx>=1.26.0",
+    "django-import-export>=4.3.0",
     "django-model-utils==5.0.0",
     "django-notifications-hq @ git+https://github.com/django-notifications/django-notifications.git",
     "django-quill-editor>=0.1.42",
@@ -185,7 +184,8 @@ dependencies = [
     "gunicorn==23.0.0",
     "hiredis==3.3.0",
     "honcho==2.0.0",
-    "markdown>=3.7",
+    "mkdocs==1.6.1",
+    "mkdocs-material==9.5.48",
     "pdf2image>=1.17.0",
     "pillow==12.0.0",
     "psycopg[c]==3.2.11",
@@ -193,7 +193,6 @@ dependencies = [
     "redis==6.4.0",
     "sentry-sdk==2.42.1",
     "stripe>=13.0.1",
-    "types-markdown>=3.10.0.20251106",
     "weasyprint>=66.0",
     "whitenoise==6.11.0",
 ]

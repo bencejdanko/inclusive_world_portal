@@ -19,10 +19,6 @@ from .dashboard_views import (
     pcm_dashboard_view,
     manager_dashboard_view,
 )
-from .import_views import (
-    user_import_view,
-    process_user_import,
-)
 from .notification_views import (
     notification_list_view,
     notification_detail,
@@ -73,10 +69,6 @@ urlpatterns = [
     # Document Viewing (requires login)
     path("documents/view/<uuid:document_id>/", view=view_published_document, name="view_published_document"),
     path("documents/pdf/<uuid:document_id>/", view=serve_document_pdf, name="serve_document_pdf"),
-    
-    # User Import (manager only)
-    path("import/", view=user_import_view, name="user_import"),
-    path("import/process/", view=process_user_import, name="process_user_import"),
         
     # User detail (must be last as it's a catch-all pattern)
     path("<str:username>/", view=user_detail_view, name="detail"),

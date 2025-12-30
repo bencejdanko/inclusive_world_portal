@@ -1,12 +1,20 @@
 from django.contrib import admin
+from import_export.admin import ImportExportModelAdmin
 from .models import (
     Program, Enrollment, AttendanceRecord,
     ProgramVolunteerLead, BuddyAssignment, Payment, EnrollmentSettings,
     RoleEnrollmentRequirement, Document
 )
+from .resources import ProgramResource, EnrollmentResource
 
 # Basic registrations
-admin.site.register(Enrollment)
+@admin.register(Enrollment)
+class EnrollmentAdmin(ImportExportModelAdmin):
+    resource_class = EnrollmentResource
+    list_display = ("user", "program", "status", "enrolled_at")
+    list_filter = ("status", "program")
+    search_fields = ("user__username", "user__name", "program__name")
+    
 admin.site.register(AttendanceRecord)
 admin.site.register(ProgramVolunteerLead)
 admin.site.register(BuddyAssignment)
@@ -16,7 +24,8 @@ admin.site.register(Payment)
 
 # add filters and search
 @admin.register(Program)
-class ProgramAdmin(admin.ModelAdmin):
+class ProgramAdmin(ImportExportModelAdmin):
+    resource_class = ProgramResource
     list_display = ("name", "capacity", "enrolled", "archived")
     list_filter = ("archived", "enrollment_status")
     search_fields = ("name",)

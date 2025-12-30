@@ -1,0 +1,106 @@
+site_name: Inclusive World Portal Documentation
+site_description: Documentation for the Inclusive World Portal project
+site_author: Inclusive World Team
+
+# Repository
+repo_url: https://github.com/bencejdanko/inclusive_world_portal
+repo_name: bencejdanko/inclusive_world_portal
+
+theme:
+  name: material
+  favicon: ../static/images/favicons/favicon.ico
+  logo: ../static/images/favicons/apple-touch-icon.png
+  font:
+    text: Montserrat
+    code: Catamaran
+  palette:
+    # Light mode
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: custom
+      accent: custom
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+
+# Build output directory (will be collected by Django's collectstatic)
+site_dir: staticfiles/docs
+
+# Custom CSS for brand styling
+extra_css:
+  - custom.css
+
+# Extra configuration
+extra:
+  social:
+    - icon: material/arrow-left-circle
+      link: /
+      name: Go to Portal
+
+# Documentation navigation
+nav:
+  - Home: index.md
+  - User Guides:
+      - Overview: user-guides/index.md
+      - Member:
+          - Overview: user-guides/member/overview.md
+          - Register: user-guides/member/register.md
+          - Enrolling in Programs: user-guides/member/enroll.md
+          - Paying Fees: user-guides/member/pay-fees.md
+          - View your Enrollments: user-guides/member/view-enrollments.md
+          - View your One Page Description: user-guides/member/view-opd.md
+          - View your Attendance history: user-guides/member/view-attendance.md
+          - View your Surveys: user-guides/member/view-surveys.md
+          - Completing Surveys: user-guides/member/complete-surveys.md
+      - Volunteer:
+          - Overview: user-guides/volunteer/overview.md
+          - View Programs: user-guides/volunteer/view-programs.md
+          - Edit Programs: user-guides/volunteer/edit-programs.md
+          - Assign Buddies: user-guides/volunteer/assign-buddies.md
+          - Edit Attendance: user-guides/volunteer/edit-attendance.md
+          - Generate Reports: user-guides/volunteer/generate-reports.md
+          - View Surveys: user-guides/volunteer/view-program-surveys.md
+      - Administrator:
+          - Importing Data: user-guides/admin/importing-data.md
+  - Specification:
+      - Overview: specification/index.md
+      - Summary: specification/summary.md
+  - Developer Documentation:
+      - Overview: dev-docs/index.md
+      - Getting Started: dev-docs/01-dev-getting-started.md
+      - Deployment: dev-docs/02-dev-deployment.md
+  - Data Migrations:
+      - Overview: data-migrations/index.md
+      - User Data Migration: data-migrations/preparing-data.md
+# Markdown extensions
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - tables
+  - toc:
+      permalink: true

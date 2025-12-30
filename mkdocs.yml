@@ -79,6 +79,8 @@ nav:
           - Generate Reports: user-guides/volunteer/generate-reports.md
           - View Surveys: user-guides/volunteer/view-program-surveys.md
       - Administrator:
+          - Admin Access Panel: user-guides/admin/access-panel.md
+          - Impersonating Users: user-guides/admin/impersonate-users.md
           - Importing Data: user-guides/admin/importing-data.md
   - Specification:
       - Overview: specification/index.md

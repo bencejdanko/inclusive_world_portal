@@ -58,7 +58,7 @@ class FormDetail(View):
 
         if not survey.editable_answers and form.response is not None:
             LOGGER.info("Redirects to survey list after trying to edit non editable answer.")
-            return redirect(reverse("survey-list"))
+            return redirect(reverse("forms:survey-list"))
         context = {"response_form": form, "survey": survey, "categories": categories}
         if form.is_valid():
             return self.treat_valid_form(form, kwargs, request, survey)
@@ -72,9 +72,9 @@ class FormDetail(View):
             template_name = survey.template
         else:
             if survey.is_all_in_one_page():
-                template_name = "tasks/one_page_survey.html"
+                template_name = "forms/one_page_form.html"
             else:
-                template_name = "tasks/survey.html"
+                template_name = "forms/form.html"
         return render(request, template_name, context)
 
     def treat_valid_form(self, form, kwargs, request, survey):
@@ -102,10 +102,14 @@ class FormDetail(View):
             return redirect(next_url)
         del request.session[session_key]
         if response is None:
-            return redirect(reverse("survey-list"))
+            return redirect(reverse("forms:survey-list"))
         next_ = request.session.get("next", None)
         if next_ is not None:
             if "next" in request.session:
                 del request.session["next"]
             return redirect(next_)
-        return redirect(survey.redirect_url or "survey-confirmation", uuid=response.interview_uuid)
+        
+        # Redirect to custom URL or confirmation page
+        if survey.redirect_url:
+            return redirect(survey.redirect_url)
+        return redirect("forms:survey-confirmation", uuid=response.interview_uuid)

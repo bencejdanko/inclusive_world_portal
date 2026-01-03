@@ -24,7 +24,7 @@ def survey_available(func):
             msg = "Form is not published anymore. It was published until: '%s'."
             logging.warning(msg, survey.expire_date)
             messages.warning(request, _("This form has expired for new submissions."))
-            return redirect(reverse("survey-list"))
+            return redirect(reverse("forms:survey-list"))
         if survey.publish_date > date.today():
             msg = "Form is not yet published. It is due: '%s'."
             logging.warning(msg, survey.publish_date)

@@ -44,10 +44,9 @@ class QuestionForm(forms.ModelForm):
     
     class Meta:
         model = Question
-        fields = ['text', 'order', 'required', 'type', 'choices']
+        fields = ['text', 'required', 'type', 'choices']
         widgets = {
             'text': forms.Textarea(attrs={'class': 'form-control', 'rows': 2}),
-            'order': forms.NumberInput(attrs={'class': 'form-control'}),
             'required': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'type': forms.Select(attrs={'class': 'form-select'}),
             'choices': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
@@ -244,11 +243,11 @@ class ResponseForm(models.ModelForm):
         """Get the URL for the next step."""
         if self.has_next_step():
             context = {"id": self.survey.id, "step": self.step + 1}
-            return reverse("survey-detail-step", kwargs=context)
+            return reverse("forms:survey-detail-step", kwargs=context)
 
     def current_step_url(self):
         """Get the URL for the current step."""
-        return reverse("survey-detail-step", kwargs={"id": self.survey.id, "step": self.step})
+        return reverse("forms:survey-detail-step", kwargs={"id": self.survey.id, "step": self.step})
 
     def save(self, commit=True):
         """Save the response object."""

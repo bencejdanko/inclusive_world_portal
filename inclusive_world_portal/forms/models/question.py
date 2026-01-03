@@ -64,8 +64,8 @@ class Question(models.Model):
     )
 
     text = models.TextField(_("Text"))
-    order = models.IntegerField(_("Order"))
-    required = models.BooleanField(_("Required"))
+    order = models.IntegerField(_("Order"), null=True, blank=True)
+    required = models.BooleanField(_("Required"), default=False)
     survey = models.ForeignKey(Form, on_delete=models.CASCADE, verbose_name=_("Form"), related_name="questions")
     type = models.CharField(_("Type"), max_length=200, choices=QUESTION_TYPES, default=TEXT)
     choices = models.TextField(_("Choices"), blank=True, null=True, help_text=CHOICES_HELP_TEXT)
@@ -76,11 +76,19 @@ class Question(models.Model):
         ordering = ("survey", "order")
 
     def save(self, *args, **kwargs):
-        """Validate choices before saving."""
+        """Validate choices before saving and auto-set order."""
         if self.type in [Question.RADIO, Question.SELECT, Question.SELECT_MULTIPLE]:
             # Only validate if choices is not empty
             if self.choices and self.choices.strip():
                 validate_choices(self.choices)
+        
+        # Auto-increment order if not set
+        if self.order is None:
+            max_order = Question.objects.filter(survey=self.survey).aggregate(
+                models.Max('order')
+            )['order__max']
+            self.order = (max_order or 0) + 1
+        
         super().save(*args, **kwargs)
 
     def get_clean_choices(self):

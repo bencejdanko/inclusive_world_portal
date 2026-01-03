@@ -137,13 +137,9 @@
                     </button>
                   </div>
                   <div class="row">
-                    <div class="col-md-8 mb-2">
+                    <div class="col-md-10 mb-2">
                       <label class="form-label">Question Text</label>
                       {{ form.text }}
-                    </div>
-                    <div class="col-md-2 mb-2">
-                      <label class="form-label">Order</label>
-                      {{ form.order }}
                     </div>
                     <div class="col-md-2 mb-2">
                       <label class="form-label">Type</label>
@@ -194,27 +190,85 @@ let questionTotalForms = parseInt(document.querySelector('#id_questions-TOTAL_FO
 
 function addQuestion() {
   const formset = document.getElementById('question-formset');
-  const newForm = document.querySelector('.question-form-row').cloneNode(true);
+  const formTemplate = document.querySelector('.question-form-row');
   
-  // Update form index
-  const formRegex = /questions-\d+-/g;
-  newForm.innerHTML = newForm.innerHTML.replace(formRegex, `questions-${questionTotalForms}-`);
-  newForm.setAttribute('data-form-idx', questionTotalForms);
-  
-  // Clear values
-  newForm.querySelectorAll('input, textarea, select').forEach(input => {
-    if (input.type !== 'checkbox') {
-      input.value = '';
-    } else {
-      input.checked = false;
+  if (!formTemplate) {
+    // No existing forms, create a new empty one
+    const emptyFormHTML = `
+      <div class="question-form-row border p-3 mb-3 rounded bg-light" data-form-idx="${questionTotalForms}">
+        <div class="d-flex justify-content-between mb-2">
+          <h6 class="text-muted">Question #${questionTotalForms + 1}</h6>
+          <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeForm(this, 'question')">
+            <i class="bi bi-trash"></i> Remove
+          </button>
+        </div>
+        <div class="row">
+          <div class="col-md-10 mb-2">
+            <label class="form-label">Question Text</label>
+            <textarea name="questions-${questionTotalForms}-text" class="form-control" rows="2" id="id_questions-${questionTotalForms}-text"></textarea>
+          </div>
+          <div class="col-md-2 mb-2">
+            <label class="form-label">Type</label>
+            <select name="questions-${questionTotalForms}-type" class="form-select" id="id_questions-${questionTotalForms}-type">
+              <option value="text">text (multiple line)</option>
+              <option value="short-text">short text (one line)</option>
+              <option value="radio">radio</option>
+              <option value="select">select</option>
+              <option value="select-multiple">Select Multiple</option>
+              <option value="select_image">Select Image</option>
+              <option value="integer">integer</option>
+              <option value="float">float</option>
+              <option value="date">date</option>
+            </select>
+          </div>
+          <div class="col-md-6 mb-2">
+            <label class="form-label">Choices (comma-separated)</label>
+            <textarea name="questions-${questionTotalForms}-choices" class="form-control" rows="3" id="id_questions-${questionTotalForms}-choices"></textarea>
+            <small class="form-text text-muted">For radio, select, or multiple choice questions</small>
+          </div>
+          <div class="col-md-2 mb-2">
+            <div class="form-check mt-4">
+              <input type="checkbox" name="questions-${questionTotalForms}-required" class="form-check-input" id="id_questions-${questionTotalForms}-required">
+              <label class="form-check-label" for="id_questions-${questionTotalForms}-required">Required</label>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+    formset.insertAdjacentHTML('beforeend', emptyFormHTML);
+  } else {
+    const newForm = formTemplate.cloneNode(true);
+    
+    // Update form index in all name and id attributes
+    const formRegex = RegExp('questions-(\\d+)-', 'g');
+    newForm.innerHTML = newForm.innerHTML.replace(formRegex, `questions-${questionTotalForms}-`);
+    newForm.setAttribute('data-form-idx', questionTotalForms);
+    
+    // Clear all input values
+    newForm.querySelectorAll('input, textarea, select').forEach(input => {
+      const inputName = input.getAttribute('name');
+      // Skip management form fields
+      if (inputName && !inputName.includes('DELETE') && !inputName.includes('id')) {
+        if (input.type === 'checkbox') {
+          input.checked = false;
+        } else {
+          input.value = '';
+        }
+      }
+    });
+    
+    // Remove hidden ID field if present (it's for existing objects)
+    const idInput = newForm.querySelector('input[name*="-id"]');
+    if (idInput) {
+      idInput.remove();
     }
-  });
-  
-  // Update header
-  newForm.querySelector('h6').textContent = `Question #${questionTotalForms + 1}`;
-  
-  // Append to formset
-  formset.appendChild(newForm);
+    
+    // Update question number header
+    newForm.querySelector('h6').textContent = `Question #${questionTotalForms + 1}`;
+    
+    // Append to formset
+    formset.appendChild(newForm);
+  }
   
   // Update total forms count
   questionTotalForms++;
@@ -233,10 +287,20 @@ function removeForm(button, type) {
     // Just remove from DOM if it's a new form
     formRow.remove();
     
-    // Update total forms count
+    // Update total forms count only for new forms
     questionTotalForms--;
     document.querySelector('#id_questions-TOTAL_FORMS').value = questionTotalForms;
+    
+    // Renumber remaining questions
+    renumberQuestions();
   }
+}
+
+function renumberQuestions() {
+  const visibleQuestions = document.querySelectorAll('.question-form-row:not([style*="display: none"])');
+  visibleQuestions.forEach((row, idx) => {
+    row.querySelector('h6').textContent = `Question #${idx + 1}`;
+  });
 }
 </script>
 

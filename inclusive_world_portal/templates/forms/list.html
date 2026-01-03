@@ -510,7 +510,7 @@ function toggleSurveyDetails(rowElement) {
 function confirmDelete(surveyId, surveyName) {
   if (confirm("Are you sure you want to delete the form \"" + surveyName + "\"? This action cannot be undone.")) {
     const form = document.getElementById('deleteForm');
-    form.action = "{% url 'forms:survey-delete' 0 %}".replace('0', surveyId);
+    form.action = `/forms/${surveyId}/delete/`;
     form.submit();
   }
 }

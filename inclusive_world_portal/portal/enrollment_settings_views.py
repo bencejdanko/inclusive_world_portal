@@ -11,7 +11,7 @@ from django.utils.translation import gettext_lazy as _
 from django.views.decorators.http import require_http_methods
 
 from .models import EnrollmentSettings, RoleEnrollmentRequirement
-from survey.models import Survey
+from inclusive_world_portal.forms.models import Form
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ def enrollment_settings_view(request):
     role_requirements = RoleEnrollmentRequirement.objects.all().prefetch_related('required_surveys')
     
     # Get all available surveys
-    available_surveys = Survey.objects.filter(is_published=True).order_by('name')
+    available_surveys = Form.objects.filter(is_published=True).order_by('name')
     
     context = {
         'settings': settings,

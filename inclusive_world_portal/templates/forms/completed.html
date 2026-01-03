@@ -1,4 +1,4 @@
-{% extends 'survey/base.html' %}
+{% extends 'tasks/base.html' %}
 {% load i18n %}
 
 {% block title %}{% trans "Task completed" %}{% endblock title %}
@@ -21,8 +21,8 @@
       </span>
     </div>
     
-    <a href="{% url 'survey-list' %}" class="btn btn-berry btn-lg">
-      <i class="bi bi-arrow-left-circle me-2"></i>{% trans "Back to Tasks" %}
+    <a href="/forms/" class="btn btn-berry btn-lg">
+      <i class="bi bi-arrow-left-circle me-2"></i>{% trans "Back to Forms" %}
     </a>
   </div>
 </div>

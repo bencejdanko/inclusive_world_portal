@@ -1,0 +1,261 @@
+{% extends 'base_portal.html' %}
+{% load i18n %}
+
+{% block title %}{% if is_edit %}Edit Form{% else %}Create Form{% endif %}{% endblock %}
+
+{% block page_title %}{% if is_edit %}Edit Form{% else %}Create New Form{% endif %}{% endblock page_title %}
+
+{% block content %}
+<div class="container mt-4">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex justify-content-between align-items-center mb-4">
+        <a href="{% url 'forms:survey-list' %}" class="btn btn-outline-secondary">
+          <i class="bi bi-arrow-left me-2"></i>Back to Forms
+        </a>
+      </div>
+
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{% if message.tags %}{{ message.tags }}{% else %}info{% endif %} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+          </div>
+        {% endfor %}
+      {% endif %}
+
+      <form method="post" id="surveyForm">
+        {% csrf_token %}
+        
+        <!-- Survey Details Section -->
+        <div class="card mb-4">
+          <div class="card-header bg-primary text-white">
+            <h5 class="mb-0"><i class="bi bi-info-circle me-2"></i>Form Details</h5>
+          </div>
+          <div class="card-body">
+            <div class="row">
+              <div class="col-md-12 mb-3">
+                <label for="{{ form.name.id_for_label }}" class="form-label fw-bold">Name *</label>
+                {{ form.name }}
+                {% if form.name.errors %}
+                  <div class="text-danger small">{{ form.name.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-12 mb-3">
+                <label for="{{ form.description.id_for_label }}" class="form-label fw-bold">Description *</label>
+                {{ form.description }}
+                {% if form.description.errors %}
+                  <div class="text-danger small">{{ form.description.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.publish_date.id_for_label }}" class="form-label fw-bold">Publish Date *</label>
+                {{ form.publish_date }}
+                {% if form.publish_date.errors %}
+                  <div class="text-danger small">{{ form.publish_date.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.expire_date.id_for_label }}" class="form-label fw-bold">Expire Date *</label>
+                {{ form.expire_date }}
+                {% if form.expire_date.errors %}
+                  <div class="text-danger small">{{ form.expire_date.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.display_method.id_for_label }}" class="form-label fw-bold">Display Method</label>
+                {{ form.display_method }}
+                {% if form.display_method.errors %}
+                  <div class="text-danger small">{{ form.display_method.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-6 mb-3">
+                <label for="{{ form.template.id_for_label }}" class="form-label fw-bold">Template (optional)</label>
+                {{ form.template }}
+                {% if form.template.errors %}
+                  <div class="text-danger small">{{ form.template.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-12 mb-3">
+                <label for="{{ form.redirect_url.id_for_label }}" class="form-label fw-bold">Redirect URL (optional)</label>
+                {{ form.redirect_url }}
+                <small class="form-text text-muted">URL to redirect users after completing the Form</small>
+                {% if form.redirect_url.errors %}
+                  <div class="text-danger small">{{ form.redirect_url.errors }}</div>
+                {% endif %}
+              </div>
+
+              <div class="col-md-12">
+                <div class="form-check mb-2">
+                  {{ form.is_published }}
+                  <label class="form-check-label fw-bold" for="{{ form.is_published.id_for_label }}">
+                    Published (users can see and answer it)
+                  </label>
+                </div>
+
+                <div class="form-check mb-2">
+                  {{ form.need_logged_user }}
+                  <label class="form-check-label fw-bold" for="{{ form.need_logged_user.id_for_label }}">
+                    Require Login
+                  </label>
+                </div>
+
+                <div class="form-check">
+                  {{ form.editable_answers }}
+                  <label class="form-check-label fw-bold" for="{{ form.editable_answers.id_for_label }}">
+                    Allow users to edit their answers
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Questions Section -->
+        <div class="card mb-4">
+          <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+            <h5 class="mb-0"><i class="bi bi-question-circle me-2"></i>Questions</h5>
+            <button type="button" class="btn btn-sm btn-light" onclick="addQuestion()">
+              <i class="bi bi-plus-circle me-1"></i>Add Question
+            </button>
+          </div>
+          <div class="card-body">
+            <div id="question-formset">
+              {{ question_formset.management_form }}
+              {% for form in question_formset %}
+                <div class="question-form-row border p-3 mb-3 rounded bg-light" data-form-idx="{{ forloop.counter0 }}">
+                  <div class="d-flex justify-content-between mb-2">
+                    <h6 class="text-muted">Question #{{ forloop.counter }}</h6>
+                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="removeForm(this, 'question')">
+                      <i class="bi bi-trash"></i> Remove
+                    </button>
+                  </div>
+                  <div class="row">
+                    <div class="col-md-8 mb-2">
+                      <label class="form-label">Question Text</label>
+                      {{ form.text }}
+                    </div>
+                    <div class="col-md-2 mb-2">
+                      <label class="form-label">Order</label>
+                      {{ form.order }}
+                    </div>
+                    <div class="col-md-2 mb-2">
+                      <label class="form-label">Type</label>
+                      {{ form.type }}
+                    </div>
+                    <div class="col-md-6 mb-2">
+                      <label class="form-label">Choices (comma-separated)</label>
+                      {{ form.choices }}
+                      <small class="form-text text-muted">For radio, select, or multiple choice questions</small>
+                    </div>
+                    <div class="col-md-2 mb-2">
+                      <div class="form-check mt-4">
+                        {{ form.required }}
+                        <label class="form-check-label" for="{{ form.required.id_for_label }}">Required</label>
+                      </div>
+                    </div>
+                  </div>
+                  {% if form.DELETE %}
+                    <div style="display:none;">{{ form.DELETE }}</div>
+                  {% endif %}
+                  {% if form.id %}
+                    <div style="display:none;">{{ form.id }}</div>
+                  {% endif %}
+                </div>
+              {% endfor %}
+            </div>
+            <small class="text-muted">Add questions that users will answer in this to do.</small>
+          </div>
+        </div>
+
+        <!-- Submit Buttons -->
+        <div class="d-flex justify-content-between mb-5">
+          <a href="{% url 'forms:survey-list' %}" class="btn btn-secondary">
+            <i class="bi bi-x-circle me-2"></i>Cancel
+          </a>
+          <button type="submit" class="btn btn-primary">
+            <i class="bi bi-check-circle me-2"></i>{% if is_edit %}Update Form{% else %}Create Form{% endif %}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<script>
+// Get the total forms count for questions
+let questionTotalForms = parseInt(document.querySelector('#id_questions-TOTAL_FORMS').value);
+
+function addQuestion() {
+  const formset = document.getElementById('question-formset');
+  const newForm = document.querySelector('.question-form-row').cloneNode(true);
+  
+  // Update form index
+  const formRegex = /questions-\d+-/g;
+  newForm.innerHTML = newForm.innerHTML.replace(formRegex, `questions-${questionTotalForms}-`);
+  newForm.setAttribute('data-form-idx', questionTotalForms);
+  
+  // Clear values
+  newForm.querySelectorAll('input, textarea, select').forEach(input => {
+    if (input.type !== 'checkbox') {
+      input.value = '';
+    } else {
+      input.checked = false;
+    }
+  });
+  
+  // Update header
+  newForm.querySelector('h6').textContent = `Question #${questionTotalForms + 1}`;
+  
+  // Append to formset
+  formset.appendChild(newForm);
+  
+  // Update total forms count
+  questionTotalForms++;
+  document.querySelector('#id_questions-TOTAL_FORMS').value = questionTotalForms;
+}
+
+function removeForm(button, type) {
+  const formRow = button.closest(`.${type}-form-row`);
+  const deleteInput = formRow.querySelector(`input[name*='DELETE']`);
+  
+  if (deleteInput) {
+    // Mark for deletion if it exists in database
+    deleteInput.checked = true;
+    formRow.style.display = 'none';
+  } else {
+    // Just remove from DOM if it's a new form
+    formRow.remove();
+    
+    // Update total forms count
+    questionTotalForms--;
+    document.querySelector('#id_questions-TOTAL_FORMS').value = questionTotalForms;
+  }
+}
+</script>
+
+<style>
+.card-header h5 {
+  margin: 0;
+}
+
+.form-label {
+  font-weight: 500;
+  margin-bottom: 0.3rem;
+}
+
+.question-form-row {
+  transition: all 0.3s ease;
+}
+
+.question-form-row:hover {
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+</style>
+{% endblock %}

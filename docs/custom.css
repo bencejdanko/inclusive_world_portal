@@ -102,8 +102,11 @@
 }
 
 /* Links */
+
 a {
   color: var(--color-brand-blue-peacock);
+  text-decoration: underline !important;
+
 }
 
 a:hover {

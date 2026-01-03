@@ -30,7 +30,6 @@
           {{ form.name|as_crispy_field }}
           {{ form.email|as_crispy_field }}
           {{ form.phone_no|as_crispy_field }}
-          {{ form.bio|as_crispy_field }}
           {{ form.age|as_crispy_field }}
           {{ form.grade|as_crispy_field }}
           {{ form.profile_picture|as_crispy_field }}
@@ -46,30 +45,7 @@
         </div>
       </div>
       
-      <div class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0">Parent/Guardian Information</h5>
-        </div>
-        <div class="card-body">
-          {{ form.parent_guardian_name|as_crispy_field }}
-          {{ form.parent_guardian_phone|as_crispy_field }}
-          {{ form.parent_guardian_email|as_crispy_field }}
-        </div>
-      </div>
-      
-      <div class="card mb-4">
-        <div class="card-header">
-          <h5 class="mb-0">Emergency Contact Information</h5>
-        </div>
-        <div class="card-body">
-          {{ form.emergency_contact_first_name|as_crispy_field }}
-          {{ form.emergency_contact_last_name|as_crispy_field }}
-          {{ form.emergency_contact_relationship|as_crispy_field }}
-          {{ form.emergency_contact_phone|as_crispy_field }}
-          {{ form.emergency_contact_secondary_phone|as_crispy_field }}
-          {{ form.emergency_contact_email|as_crispy_field }}
-        </div>
-      </div>
+      <!-- Parent/Guardian and Emergency Contact sections removed -->
             
             <div class="d-flex gap-2">
               <button type="submit" class="btn btn-primary">Update Profile</button>

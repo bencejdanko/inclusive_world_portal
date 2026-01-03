@@ -89,8 +89,8 @@ def get_navigation_items(user):
                 'icon_class': 'bi bi-calendar-check',
             },
             {
-                'label': _('Tasks'),
-                'url': '/surveys',
+                'label': _('Forms'),
+                'url': '/forms/',
                 'icon_class': 'bi bi-file-earmark-bar-graph',
             },
         ]
@@ -188,8 +188,8 @@ def get_navigation_items(user):
             ])
         
         nav_items.append({
-            'label': _('Tasks'),
-            'url': '/surveys',
+            'label': _('Forms'),
+            'url': '/forms/',
             'icon_class': 'bi bi-file-earmark-bar-graph',
         })
         
@@ -277,8 +277,8 @@ def get_navigation_items(user):
                 'icon_class': 'bi bi-people-fill',
             },
             {
-                'label': _('Tasks'),
-                'url': '/surveys',
+                'label': _('Forms'),
+                'url': '/forms/',
                 'icon_class': 'bi bi-file-earmark-bar-graph',
             },
         ]
@@ -370,8 +370,8 @@ def get_navigation_items(user):
                 'icon_class': 'bi bi-gear',
             },
             {
-                'label': _('Tasks'),
-                'url': '/surveys',
+                'label': _('Forms'),
+                'url': '/forms/',
                 'icon_class': 'bi bi-file-earmark-bar-graph',
             },
         ]

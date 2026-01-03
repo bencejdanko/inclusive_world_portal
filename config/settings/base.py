@@ -66,7 +66,6 @@ DJANGO_APPS = [
     "django.contrib.sites",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    # "django.contrib.humanize", # Handy template tags
     "django.contrib.admin",
     "django.forms",
 ]
@@ -76,13 +75,11 @@ THIRD_PARTY_APPS = [
     "allauth",
     "allauth.account",
     "allauth.mfa",
-    "allauth.socialaccount",
     "django_celery_beat",
     "django_htmx",
     "django_quill",
     "import_export",
     "notifications",
-    "survey",  # django-survey-and-report
     "hijack",
     "hijack.contrib.admin",
 ]
@@ -91,13 +88,13 @@ LOCAL_APPS = [
     "inclusive_world_portal.users",
     "inclusive_world_portal.payments",
     "inclusive_world_portal.portal",
-    # Your stuff: custom apps go here
+    "inclusive_world_portal.forms", 
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 
-# django-hijack configuration
-# ------------------------------------------------------------------------------
+# django-hijack configuration------------------------------------------------------------------------------
+# 
 # https://django-hijack.readthedocs.io/en/stable/configuration.html
 HIJACK_ALLOW_GET_REQUESTS = True
 HIJACK_LOGIN_REDIRECT_URL = "/users/dashboard/"
@@ -455,18 +452,12 @@ STRIPE_PUBLIC_KEY = env("STRIPE_PUBLIC_KEY", default=env("PUBLIC_STRIPE_PUBLISHA
 STRIPE_SECRET_KEY = env("STRIPE_SECRET_KEY", default="")
 STRIPE_WEBHOOK_SECRET = env("STRIPE_WEBHOOK_SECRET", default="")
 
-# DJANGO-SURVEY-AND-REPORT SETTINGS
+# SURVEY SETTINGS
 # ------------------------------------------------------------------------------
-# Directories for survey exports
-CSV_DIRECTORY = BASE_DIR / "survey_exports" / "csv"
-TEX_DIRECTORY = BASE_DIR / "survey_exports" / "tex"
 
-# Ensure directories exist
-CSV_DIRECTORY.mkdir(parents=True, exist_ok=True)
-TEX_DIRECTORY.mkdir(parents=True, exist_ok=True)
 
 # Survey export settings
 EXCEL_COMPATIBLE_CSV = True  # Open CSV in Excel without separator issues
 CHOICES_SEPARATOR = ","  # Separator for question choices
 USER_DID_NOT_ANSWER = "Left blank"  # What to show when user doesn't answer
-SURVEY_DEFAULT_PIE_COLOR = "blue!50"  # Default color for PDF pie charts
+DEFAULT_SURVEY_PUBLISHING_DURATION = 7  # Default survey duration in days

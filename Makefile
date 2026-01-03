@@ -42,7 +42,10 @@ mypy: ## Run mypy tests
 pytest: ## Run pytest tests
 	uv run --env-file .env pytest
 
-reset: ## Destroy all data (volumes) and restart services
+reset-migrations: ## Remove all migration files
+	find inclusive_world_portal -path "*/migrations/*.py" -not -name "__init__.py" -delete
+
+reset: reset-migrations ## Destroy all data (volumes), restart services and remove migrations
 	docker compose down --remove-orphans
 	docker volume rm inclusive_world_portal_postgres_data || true
 	docker volume rm inclusive_world_portal_redis_data || true

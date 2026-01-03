@@ -1,6 +1,5 @@
-{% extends 'survey/base.html' %}
+{% extends 'tasks/base.html' %}
 {% load i18n %}
-{% load survey_extras %}
 {% load static %}
 
 {% block title %}{{survey.name}}{% endblock title %}
@@ -10,13 +9,13 @@
 {% block extrajs %}
   {{response_form.media}}
   {% if asset_context.flatpickr %}
-    <script type="text/javascript" src="{% static 'survey/js/flatpickr.min.js' %}"></script>
+    <script type="text/javascript" src="{% static 'tasks/js/flatpickr.min.js' %}"></script>
   {% endif %}
 {% endblock %}
 
 {% block extracss %}
   {% if asset_context.flatpickr %}
-    <link href="{% static 'survey/css/flatpickr.min.css'%}" rel="stylesheet" type="text/css"/>
+    <link href="{% static 'tasks/css/flatpickr.min.css'%}" rel="stylesheet" type="text/css"/>
   {% endif %}
 {% endblock %}
 
@@ -32,14 +31,14 @@
   {% endif %}
 
   {% if step and step != 0 %}
-    <form action="{% url 'survey-detail-step' id=survey.id step=step %}" method="post">
+    <form action="{% url 'forms:survey-detail-step' id=survey.id step=step %}" method="post">
   {% else %}
-    <form action="{% url 'survey-detail' id=survey.id %}" method="post">
+    <form action="{% url 'forms:survey-detail' id=survey.id %}" method="post">
   {% endif %}
     {% csrf_token %}
     
     <div class="questions-wrapper">
-      {% include "survey/question.html" %}
+      {% include "forms/question.html" %}
     </div>
 
     {% if survey.editable_answers or response_form.response is None %}

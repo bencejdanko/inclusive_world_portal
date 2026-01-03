@@ -8,7 +8,6 @@ from import_export.admin import ImportExportModelAdmin
 from .forms import UserAdminChangeForm
 from .forms import UserAdminCreationForm
 from .models import User
-from .resources import UserResource
 
 if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
     # Force the `admin` sign in process to go through the `django-allauth` workflow:
@@ -19,7 +18,6 @@ if settings.DJANGO_ADMIN_FORCE_ALLAUTH:
 
 @admin.register(User)
 class UserAdmin(ImportExportModelAdmin, auth_admin.UserAdmin):
-    resource_class = UserResource
     form = UserAdminChangeForm
     add_form = UserAdminCreationForm
     fieldsets = (

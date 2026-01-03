@@ -1,0 +1,63 @@
+{% extends 'tasks/base.html' %}
+{% load i18n %}
+{% load static %}
+
+{% block title %}{{survey.name}}{% endblock title %}
+
+{% block page_title %}{{survey.name}}{% endblock page_title %}
+
+{% block extrajs %}
+  {{response_form.media}}
+  {% if asset_context.flatpickr %}
+    <script type="text/javascript" src="{% static 'tasks/js/flatpickr.min.js' %}"></script>
+  {% endif %}
+{% endblock %}
+
+{% block extracss %}
+  {% if asset_context.flatpickr %}
+    <link href="{% static 'tasks/css/flatpickr.min.css'%}" rel="stylesheet" type="text/css"/>
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div class="survey-container">
+  {% if survey.description %}
+    <div class="alert alert-info mb-4">
+      <i class="bi bi-info-circle me-2"></i>
+      <span>{{survey.description|safe}}</span>
+    </div>
+  {% endif %}
+
+  <form action="{% url 'forms:survey-detail' id=survey.id %}" method="post">
+    {% csrf_token %}
+    
+    <div class="questions-wrapper">
+      {% include "forms/question.html" %}
+    </div>
+
+    {% if survey.editable_answers or response_form.response is None %}
+      <div class="d-flex justify-content-end mt-4">
+        <button type="submit" class="btn btn-berry btn-lg">
+          <i class="bi bi-check-circle me-2"></i>{% trans "Submit Survey" %}
+        </button>
+      </div>
+    {% else %}
+      <div class="alert alert-warning mt-4">
+        <i class="bi bi-lock me-2"></i>{% trans "This survey does not allow editing answers after submission." %}
+      </div>
+    {% endif %}
+  </form>
+</div>
+
+<style>
+  .survey-container {
+    max-width: 900px;
+  }
+  
+  .questions-wrapper {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+  }
+</style>
+{% endblock %}

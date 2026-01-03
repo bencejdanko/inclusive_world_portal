@@ -61,24 +61,10 @@ class User(AbstractUser):
     
     # Profile Information
     phone_no = CharField(_("Phone Number"), max_length=64, blank=True)
-    bio = TextField(_("Bio"), blank=True)
     age = IntegerField(_("Age"), null=True, blank=True)
     grade = CharField(_("Grade"), max_length=64, blank=True)
     profile_picture = ImageField(_("Profile Picture"), upload_to="profile_pictures/", blank=True, null=True)
     support_needs = TextField(_("Support Needs"), blank=True, help_text=_("Special accommodations or support requirements"))
-    
-    # Parent/Guardian Information
-    parent_guardian_name = CharField(_("Parent/Guardian Name"), max_length=255, blank=True)
-    parent_guardian_phone = CharField(_("Parent/Guardian Phone"), max_length=64, blank=True)
-    parent_guardian_email = EmailField(_("Parent/Guardian Email"), blank=True)
-    
-    # Emergency Contact Information
-    emergency_contact_first_name = CharField(_("Emergency Contact First Name"), max_length=255, blank=True)
-    emergency_contact_last_name = CharField(_("Emergency Contact Last Name"), max_length=255, blank=True)
-    emergency_contact_relationship = CharField(_("Emergency Contact Relationship"), max_length=255, blank=True)
-    emergency_contact_phone = CharField(_("Emergency Contact Phone"), max_length=64, blank=True)
-    emergency_contact_secondary_phone = CharField(_("Emergency Contact Secondary Phone"), max_length=64, blank=True)
-    emergency_contact_email = EmailField(_("Emergency Contact Email"), blank=True)
     
     phone_confirmed_at = DateTimeField(_("Phone Confirmed At"), null=True, blank=True)
 
@@ -99,7 +85,6 @@ class User(AbstractUser):
             self.email,
             self.phone_no,
             self.age,
-            self.parent_guardian_name or self.emergency_contact_first_name,  # At least one contact
         ]
         return all(field for field in required_fields)
     

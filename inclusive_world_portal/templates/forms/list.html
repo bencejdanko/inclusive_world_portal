@@ -1,9 +1,9 @@
 {% extends 'base_portal.html' %}
 {% load i18n %}
 
-{% block title %}Tasks{% endblock %}
+{% block title %}Forms{% endblock %}
 
-{% block page_title %}Tasks{% endblock page_title %}
+{% block page_title %}Forms{% endblock page_title %}
 
 {% block content %}
 <div class="tasks-container">
@@ -16,19 +16,31 @@
     {% endfor %}
   {% endif %}
 
+  <!-- Header with Add Task button for managers -->
+  <div class="tasks-header mb-4">
+    {% if request.user.role == 'manager' or request.user.role == 'person_centered_manager' %}
+      <a href="{% url 'forms:survey-create' %}" class="btn-add-task">
+        <i class="bi bi-plus-circle me-2"></i>Add Form
+      </a>
+    {% endif %}
+  </div>
+
   {% if survey_items %}
     <!-- Tasks Table with Collapsible Rows -->
     <div class="tasks-table">
-      <div class="tasks-table-header">
+      <div class="tasks-table-header {% if request.user.role == 'manager' or request.user.role == 'person_centered_manager' %}has-manager-actions{% endif %}">
         <div></div>
         <div>Task Name</div>
         <div>Deadline</div>
         <div>Status</div>
         <div></div>
+        {% if request.user.role == 'manager' or request.user.role == 'person_centered_manager' %}
+          <div>Manage</div>
+        {% endif %}
       </div>
       {% for item in survey_items %}
         <div class="survey-item">
-          <div class="survey-row" onclick="toggleSurveyDetails(this)">
+          <div class="survey-row {% if request.user.role == 'manager' or request.user.role == 'person_centered_manager' %}has-actions{% endif %}" onclick="toggleSurveyDetails(this)">
             <div class="chevron-icon">
               <i class="bi bi-chevron-down"></i>
             </div>
@@ -58,6 +70,22 @@
                 {% trans item.action_text %}
               </a>
             </div>
+            {% if request.user.role == 'manager' or request.user.role == 'person_centered_manager' %}
+              <div class="survey-manage-actions">
+                <a href="{% url 'forms:survey-edit' item.id %}" 
+                   class="btn-icon btn-icon-edit" 
+                   title="Edit"
+                   onclick="event.stopPropagation()">
+                  <i class="bi bi-pencil"></i>
+                </a>
+                <button type="button"
+                        class="btn-icon btn-icon-delete"
+                        title="Delete"
+                        onclick="event.stopPropagation(); confirmDelete({{ item.id }}, '{{ item.name|escapejs }}')">
+                  <i class="bi bi-trash"></i>
+                </button>
+              </div>
+            {% endif %}
           </div>
           <div class="survey-details">
             {% if item.description %}
@@ -91,19 +119,68 @@
       <div class="empty-state-icon">
         <i class="bi bi-clipboard-data"></i>
       </div>
-      <h3 class="empty-state-title">No Tasks Available</h3>
+      <h3 class="empty-state-title">No Forms Available</h3>
       <p class="empty-state-text">
-        {% trans "No tasks are currently available for your role." %}
+        {% trans "No forms are needed from you at this time." %}
       </p>
     </div>
   {% endif %}
 </div>
+
+<!-- Hidden delete form -->
+<form id="deleteForm" method="post" style="display: none;">
+  {% csrf_token %}
+</form>
 
 <style>
   /* Tasks Container */
   .tasks-container {
     max-width: 1200px;
     margin: 0 auto;
+  }
+
+  /* Tasks Header */
+  .tasks-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: var(--space-lg);
+  }
+
+  .tasks-title {
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: var(--color-brand-blue-peacock);
+    margin: 0;
+  }
+
+  .tasks-subtitle {
+    color: var(--color-muted-foreground);
+    margin: 0.25rem 0 0 0;
+    font-size: 0.95rem;
+  }
+
+  .btn-add-task {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.75rem 1.5rem;
+    background: var(--color-brand-berry);
+    color: white;
+    border: none;
+    border-radius: var(--radius-lg);
+    font-weight: 600;
+    font-size: 0.95rem;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  }
+
+  .btn-add-task:hover {
+    background: var(--color-dark-berry);
+    color: white;
+    text-decoration: none;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
   }
 
   /* Tasks Table */
@@ -135,6 +212,10 @@
     letter-spacing: 0.5px;
   }
 
+  .tasks-table-header.has-manager-actions {
+    grid-template-columns: 30px 2fr 180px 150px 140px 100px;
+  }
+
   .survey-item {
     border-bottom: 1px solid var(--color-border);
   }
@@ -152,6 +233,10 @@
     transition: background-color 0.2s ease;
     cursor: pointer;
     user-select: none;
+  }
+
+  .survey-row.has-actions {
+    grid-template-columns: 30px 2fr 180px 150px 140px 100px;
   }
 
   .survey-row:hover {
@@ -180,7 +265,6 @@
   .survey-deadline {
     font-size: 0.9rem;
   }
-
 
   .survey-status {
     font-size: 0.9rem;
@@ -232,6 +316,48 @@
     color: white;
     text-decoration: none;
     transform: translateY(-1px);
+  }
+
+  /* Manager Actions */
+  .survey-manage-actions {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+  }
+
+  .btn-icon {
+    padding: 0.5rem;
+    background: transparent;
+    border: 1px solid;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+  }
+
+  .btn-icon-edit {
+    color: var(--color-brand-blue-peacock);
+    border-color: var(--color-brand-blue-peacock);
+    text-decoration: none;
+  }
+
+  .btn-icon-edit:hover {
+    background: var(--color-brand-blue-peacock);
+    color: white;
+  }
+
+  .btn-icon-delete {
+    color: #dc2626;
+    border-color: #dc2626;
+  }
+
+  .btn-icon-delete:hover {
+    background: #dc2626;
+    color: white;
   }
 
   /* Expandable survey details section */
@@ -322,8 +448,15 @@
 
   /* Responsive adjustments */
   @media (max-width: 768px) {
+    .tasks-header {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: var(--space-md);
+    }
+
     .tasks-table-header,
-    .survey-row {
+    .survey-row,
+    .survey-row.has-actions {
       grid-template-columns: 24px 1fr 100px;
       gap: var(--space-sm);
       padding: var(--space-sm) var(--space-md);
@@ -331,8 +464,10 @@
 
     .tasks-table-header div:nth-child(3),
     .tasks-table-header div:nth-child(4),
+    .tasks-table-header div:nth-child(6),
     .survey-row .survey-deadline,
-    .survey-row .survey-status {
+    .survey-row .survey-status,
+    .survey-row .survey-manage-actions {
       display: none;
     }
 
@@ -369,6 +504,14 @@ function toggleSurveyDetails(rowElement) {
   } else {
     surveyItem.classList.remove('expanded');
     detailsElement.classList.remove('expanded');
+  }
+}
+
+function confirmDelete(surveyId, surveyName) {
+  if (confirm("Are you sure you want to delete the form \"" + surveyName + "\"? This action cannot be undone.")) {
+    const form = document.getElementById('deleteForm');
+    form.action = "{% url 'forms:survey-delete' 0 %}".replace('0', surveyId);
+    form.submit();
   }
 }
 </script>

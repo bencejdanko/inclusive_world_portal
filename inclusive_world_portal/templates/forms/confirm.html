@@ -1,4 +1,4 @@
-{% extends 'survey/base.html' %}
+{% extends 'tasks/base.html' %}
 {% load i18n %}
 
 {% block title %}{% trans "Task submitted" %}{% endblock title %}
@@ -26,8 +26,8 @@
       </div>
     {% endif %}
     
-    <a href="{% url 'survey-list' %}" class="btn btn-lg" style="background-color: var(--color-brand-berry); color: white; border: none; padding: 12px 32px; border-radius: 8px; font-weight: 500; text-decoration: none; display: inline-block;">
-      <i class="bi bi-arrow-left-circle me-2"></i>{% trans "Back to Tasks" %}
+    <a href="/forms/" class="btn btn-lg" style="background-color: var(--color-brand-berry); color: white; border: none; padding: 12px 32px; border-radius: 8px; font-weight: 500; text-decoration: none; display: inline-block;">
+      <i class="bi bi-arrow-left-circle me-2"></i>{% trans "Back to Forms" %}
     </a>
   </div>
 </div>

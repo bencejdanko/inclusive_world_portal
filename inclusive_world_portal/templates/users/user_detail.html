@@ -28,8 +28,8 @@
             
             {% if object == request.user %}
               <a class="btn btn-primary w-100 mb-2" href="{% url 'users:update' %}">Edit Profile</a>
-              <a class="btn btn-success w-100 mb-2" href="/surveys">
-                View Tasks & Surveys
+              <a class="btn btn-success w-100 mb-2" href="/forms/">
+                View Forms & Surveys
               </a>
               <div class="d-grid gap-2">
                 <a class="btn btn-outline-secondary btn-sm" href="{% url 'account_email' %}">Manage Email</a>
@@ -63,73 +63,15 @@
               <div class="col-sm-4 fw-bold">Grade:</div>
               <div class="col-sm-8">{{ object.grade|default:"Not provided" }}</div>
             </div>
-            {% if object.bio %}
-              <div class="row">
-                <div class="col-sm-4 fw-bold">Bio:</div>
-                <div class="col-sm-8">{{ object.bio }}</div>
-              </div>
-            {% endif %}
           </div>
         </div>
         
         {% if object == request.user or request.user.role == 'manager' or request.user.role == 'person_centered_manager' or request.user.is_staff %}
           <!-- Parent/Guardian Information -->
-          <div class="card mb-4">
-            <div class="card-header">
-              <h5 class="mb-0">Parent/Guardian Information</h5>
-            </div>
-            <div class="card-body">
-              <div class="row mb-2">
-                <div class="col-sm-4 fw-bold">Name:</div>
-                <div class="col-sm-8">{{ object.parent_guardian_name|default:"Not provided" }}</div>
-              </div>
-              <div class="row mb-2">
-                <div class="col-sm-4 fw-bold">Phone:</div>
-                <div class="col-sm-8">{{ object.parent_guardian_phone|default:"Not provided" }}</div>
-              </div>
-              <div class="row mb-2">
-                <div class="col-sm-4 fw-bold">Email:</div>
-                <div class="col-sm-8">{{ object.parent_guardian_email|default:"Not provided" }}</div>
-              </div>
-            </div>
-          </div>
+          <!-- Removed as per request -->
           
           <!-- Emergency Contact Information -->
-          <div class="card mb-4">
-            <div class="card-header">
-              <h5 class="mb-0">Emergency Contact Information</h5>
-            </div>
-            <div class="card-body">
-              <div class="row mb-2">
-                <div class="col-sm-4 fw-bold">Name:</div>
-                <div class="col-sm-8">
-                  {% if object.emergency_contact_first_name or object.emergency_contact_last_name %}
-                    {{ object.emergency_contact_first_name }} {{ object.emergency_contact_last_name }}
-                  {% else %}
-                    Not provided
-                  {% endif %}
-                </div>
-              </div>
-              <div class="row mb-2">
-                <div class="col-sm-4 fw-bold">Relationship:</div>
-                <div class="col-sm-8">{{ object.emergency_contact_relationship|default:"Not provided" }}</div>
-              </div>
-              <div class="row mb-2">
-                <div class="col-sm-4 fw-bold">Phone:</div>
-                <div class="col-sm-8">{{ object.emergency_contact_phone|default:"Not provided" }}</div>
-              </div>
-              {% if object.emergency_contact_secondary_phone %}
-                <div class="row mb-2">
-                  <div class="col-sm-4 fw-bold">Secondary Phone:</div>
-                  <div class="col-sm-8">{{ object.emergency_contact_secondary_phone }}</div>
-                </div>
-              {% endif %}
-              <div class="row mb-2">
-                <div class="col-sm-4 fw-bold">Email:</div>
-                <div class="col-sm-8">{{ object.emergency_contact_email|default:"Not provided" }}</div>
-              </div>
-            </div>
-          </div>
+          <!-- Removed as per request -->
         {% endif %}
       </div>
     </div>

@@ -205,7 +205,7 @@ class Document(models.Model):
         help_text="Current state of the document"
     )
     source_survey = models.ForeignKey(
-        'survey.Survey',
+        'portal_forms.Form',
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
@@ -322,7 +322,7 @@ class RoleEnrollmentRequirement(models.Model):
         help_text="User role this requirement applies to"
     )
     required_surveys: models.ManyToManyField = models.ManyToManyField(
-        'survey.Survey',
+        'portal_forms.Form',
         blank=True,
         related_name="enrollment_requirements",
         help_text="Surveys that must be completed before registration"
@@ -361,7 +361,7 @@ class RoleEnrollmentRequirement(models.Model):
             missing.append("Complete your profile")
         
         # Check required surveys
-        from survey.models import Response
+        from inclusive_world_portal.forms.models import Response
         for survey in self.required_surveys.all():
             # Check if user has completed this survey
             user_responses = Response.objects.filter(

@@ -5,7 +5,7 @@ Provides robust, pre-computed survey data to avoid template logic issues.
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.db.models import Prefetch
-from survey.models import Survey, Response
+from inclusive_world_portal.forms.models import Form, Response
 
 
 class SurveyItemData:
@@ -119,7 +119,7 @@ def survey_list_view(request):
         to_attr='user_responses_list'
     )
     
-    surveys_queryset = Survey.objects.filter(
+    surveys_queryset = Form.objects.filter(
         is_published=True
     ).prefetch_related(user_responses_prefetch).order_by('-expire_date', 'name')
     
@@ -153,4 +153,4 @@ def survey_list_view(request):
         'required_survey_ids': required_survey_ids,
     }
     
-    return render(request, 'survey/list.html', context)
+    return render(request, 'forms/list.html', context)

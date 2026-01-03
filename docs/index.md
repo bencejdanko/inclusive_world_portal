@@ -1,5 +1,7 @@
 # Inclusive World Documentation
 
+![Heart in hands](images/slides/newslide1.jpg)
+
 ## [User Guides](/docs/user-guides/)
 
 If you are a user of the application, these guides should help you answer questions about how to navigate and use the site.

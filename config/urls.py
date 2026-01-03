@@ -50,11 +50,11 @@ urlpatterns = [
     # Portal - Programs and Enrollment
     path("portal/", include("inclusive_world_portal.portal.urls", namespace="portal")),
     
-    # Custom survey list view (overrides django-survey default)
-    path("surveys/", survey_views.survey_list_view, name="survey-list"),
+    # Custom survey list view (overrides default)
+    path("forms/", survey_views.survey_list_view, name="survey-list"),
     
-    # Django Survey - Survey creation and taking (other URLs)
-    path("surveys/", include("survey.urls")),
+    # Forms - Survey creation and taking (with namespace for management views)
+    path("forms/", include("inclusive_world_portal.forms.urls", namespace="forms")),
     
     # Your stuff: custom urls includes go here
     path("pay/checkout/", pay.create_checkout, name="checkout"),

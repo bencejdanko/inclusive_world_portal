@@ -82,6 +82,7 @@ nav:
           - Admin Access Panel: user-guides/admin/access-panel.md
           - Impersonating Users: user-guides/admin/impersonate-users.md
           - Importing Data: user-guides/admin/importing-data.md
+          - Creating Tasks: user-guides/admin/create-task.md
   - Specification:
       - Overview: specification/index.md
       - Summary: specification/summary.md
